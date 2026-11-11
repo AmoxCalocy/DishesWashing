@@ -1,0 +1,49 @@
+# Godot 4 generated cache (also contains export credentials).
+# Keep project.godot, export_presets.cfg, *.uid and asset-side *.import files.
+# https://docs.godotengine.org/en/stable/tutorials/best_practices/version_control_systems.html
+.godot/
+*.translation
+
+# Blender numbered backup copies. Keep the editable *.blend sources and *.glb.
+*.blend[0-9]
+*.blend[0-9][0-9]
+
+# Game build output folders at the repository root.
+# Asset exports under Assets/ remain versioned.
+/[Bb]uild/
+/[Bb]uilds/
+/[Ee]xport/
+/[Ee]xports/
+/[Dd]ist/
+
+# Python bytecode produced by the Blender tooling.
+__pycache__/
+*.pyc
+*.pyo
+
+# Temporary files and local logs.
+/[Tt]mp/
+/[Tt]emp/
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Local environment values. Commit sanitized templates when needed.
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Local IDE state.
+.idea/
+.vs/
+
+# Operating system metadata.
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
