@@ -6,10 +6,10 @@
 
 | 文件 | 用途 |
 | --- | --- |
-| [sponge-standard.blend](../Assets/Tools/sponge-standard.blend) | 可编辑源模型，包含已打包贴图和压缩形态键 |
-| [sponge-standard.glb](../Assets/Tools/sponge-standard.glb) | Godot 资产，贴图内嵌，无外部图片依赖 |
-| [Textures](../Assets/Tools/Textures) | 黄色层、绿色层各自的颜色、切线法线和粗糙度 PNG，均为 1024 × 1024 |
-| [build_standard_sponge.py](../Tools/build_standard_sponge.py) | 建模、展开 UV、程序材质烘焙、导出与预览脚本 |
+| [sponge-standard.blend](../../../Assets/Tools/sponge-standard.blend) | 可编辑源模型，包含已打包贴图和压缩形态键 |
+| [sponge-standard.glb](../../../Assets/Tools/sponge-standard.glb) | Godot 资产，贴图内嵌，无外部图片依赖 |
+| [Textures](../../../Assets/Tools/Textures) | 黄色层、绿色层各自的颜色、切线法线和粗糙度 PNG，均为 1024 × 1024 |
+| [build_standard_sponge.py](../../../Tools/build_standard_sponge.py) | 建模、展开 UV、程序材质烘焙、导出与预览脚本 |
 | [独立正反面](sponge-standard-overview.png) | 左侧展示黄色层，右侧翻转展示绿色擦洗面 |
 | [收纳状态](sponge-standard-rest.png) | 海绵放在现有灰盒收纳位 |
 | [近距离清洁](sponge-standard-clean.png) | 与标准餐盘在 Clean_Anchor 下的实际画面占比 |

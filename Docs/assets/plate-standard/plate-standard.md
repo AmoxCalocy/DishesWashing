@@ -6,9 +6,9 @@
 
 | 文件 | 用途 |
 | --- | --- |
-| [plate-standard.blend](../Assets/Dishes/plate-standard.blend) | 可编辑源模型；`01_Plate_Asset` 是资产，`90_Preview_Studio` 是预览布光与副本 |
-| [plate-standard.glb](../Assets/Dishes/plate-standard.glb) | Godot 导入资产，仅含餐盘网格、材质和定位节点 |
-| [build_standard_plate.py](../Tools/build_standard_plate.py) | 旋转截面建模、UV、导出、几何检查和预览生成脚本 |
+| [plate-standard.blend](../../../Assets/Dishes/plate-standard.blend) | 可编辑源模型；`01_Plate_Asset` 是资产，`90_Preview_Studio` 是预览布光与副本 |
+| [plate-standard.glb](../../../Assets/Dishes/plate-standard.glb) | Godot 导入资产，仅含餐盘网格、材质和定位节点 |
+| [build_standard_plate.py](../../../Tools/build_standard_plate.py) | 旋转截面建模、UV、导出、几何检查和预览生成脚本 |
 | [正反面预览](plate-standard-overview.png) | 左侧正面，右侧背面；均为同一份网格 |
 | [普通拿起](plate-standard-carry.png) | 现有工作台相机与 Carry_Anchor |
 | [近距离清洁](plate-standard-clean.png) | 现有工作台相机与 Clean_Anchor |

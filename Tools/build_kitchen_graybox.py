@@ -2,7 +2,7 @@
 
 Run from any directory:
     blender --background --factory-startup --python build_kitchen_graybox.py
-Outputs are relative to this script's project, in Assets/Graybox and Docs.
+Outputs are relative to this script's project, in Assets/Graybox and Docs/assets/kitchen-graybox.
 """
 
 import math
@@ -15,8 +15,9 @@ from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "Assets" / "Graybox"
-DOCS = ROOT / "Docs"
+DOCS = ROOT / "Docs" / "assets" / "kitchen-graybox"
 ASSETS.mkdir(parents=True, exist_ok=True)
+DOCS.mkdir(parents=True, exist_ok=True)
 
 bpy.ops.object.select_all(action="SELECT")
 bpy.ops.object.delete(use_global=False)
@@ -333,7 +334,7 @@ hold_proxy.hide_render = True
 hold_proxy.hide_set(True)
 
 scene.camera = overview
-scene["reference"] = "Docs/kitchen-scene-reference.png"
+scene["reference"] = "Docs/references/kitchen-scene-reference.png"
 scene["graybox_dimensions_m"] = "counter 2.60 x 0.80; surface z=0.90; eye z=1.62"
 scene["scope"] = "Blockout geometry, markers and camera; gameplay and collision setup belong in Godot"
 for area in bpy.context.screen.areas:

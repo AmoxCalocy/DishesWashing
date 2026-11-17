@@ -16,7 +16,8 @@ from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "Assets" / "Dishes"
-DOCS = ROOT / "Docs"
+DOCS = ROOT / "Docs" / "assets" / "plate-standard"
+DOCS.mkdir(parents=True, exist_ok=True)
 ASSETS.mkdir(parents=True, exist_ok=True)
 SEGMENTS = 128
 PIVOT_HEIGHT = 0.012

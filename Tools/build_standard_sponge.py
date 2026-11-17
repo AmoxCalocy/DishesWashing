@@ -16,7 +16,8 @@ from mathutils import Vector
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "Assets" / "Tools"
 TEXTURES = ASSETS / "Textures"
-DOCS = ROOT / "Docs"
+DOCS = ROOT / "Docs" / "assets" / "sponge-standard"
+DOCS.mkdir(parents=True, exist_ok=True)
 TEXTURES.mkdir(parents=True, exist_ok=True)
 bpy.ops.object.select_all(action="SELECT")
 bpy.ops.object.delete(use_global=False)
