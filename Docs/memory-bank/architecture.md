@@ -1,18 +1,21 @@
 # 项目架构与文件职责
 
-> 更新日期：2026-11-23｜基于实施计划第 1 步已核查、用户已验收的厨房展示基线
+> 更新日期：2026-11-23｜第 1～2 步已由用户验收
 
 ## 当前实现边界
 
-项目目前是厨房场景查看器。运行链路为 [project.godot](../../project.godot)加载 [kitchen-demo.tscn](../../Scenes/kitchen-demo.tscn)，场景根节点挂载 [kitchen_viewer.gd](../../Scripts/kitchen_viewer.gd)。场景引用独立 GLB，不在运行时打开 Blender 总场景或执行建模脚本。
+项目默认入口现为 [project.godot](../../project.godot)加载 [kitchen-game.tscn](../../Scenes/kitchen-game.tscn)。此场景继承 [kitchen-demo.tscn](../../Scenes/kitchen-demo.tscn)的布局，在自身根节点覆盖为空脚本并隐藏 ViewerOverlay，复用已有 GLB、相机和灯光而不启用展示输入。用户已于 2026-11-23 确认第 2 步验证通过。
 
-WASD、鼠标直接看向、玩家碰撞、拿取与清洗、订单、评分和存档是已规划的基础游戏功能，尚无对应运行实现。后续可玩入口应与已有展示器分开；本文件不提前创建或指定这些未来脚本。
+单独打开 kitchen-demo.tscn 按 F6，仍由 [kitchen_viewer.gd](../../Scripts/kitchen_viewer.gd)控制展示。两个入口分别实例化节点，原展示场景与浏览脚本未改；场景不在运行时打开 Blender 总场景或执行建模脚本。
+
+WASD、鼠标直接看向、玩家碰撞、拿取与清洗、订单、评分和存档仍是已规划功能，尚无运行实现。后续脚本与节点接入独立可玩文件，本步未创建玩家或餐具状态脚本。
 
 ## 入口、运行文件与元数据
 
 | 文件 | 当前作用 |
 | --- | --- |
-| [project.godot](../../project.godot) | 项目名称、主场景、窗口与 Compatibility 渲染配置；关闭 .blend 自动导入。当前视口为 1600 × 900、窗口覆盖为 1280 × 720。 |
+| [project.godot](../../project.godot) | 项目配置，F5 默认启动 kitchen-game.tscn；关闭 .blend 自动导入，沿用 Compatibility、1600 × 900 视口和 1280 × 720 窗口覆盖。 |
+| [Scenes/kitchen-game.tscn](../../Scenes/kitchen-game.tscn) | 手工维护的可玩入口，继承展示布局、明确清除根浏览脚本并隐藏 ViewerOverlay。现有生成器不写入此文件，后续玩法在这里接入。 |
 | [Scenes/kitchen-demo.tscn](../../Scenes/kitchen-demo.tscn) | 已组装的展示场景，引用房间壳、独立道具与餐具 GLB，保存摆放、灯光、环境、相机和展示提示。由 Godot 组装脚本生成，会被重建覆盖。 |
 | [Scripts/kitchen_viewer.gd](../../Scripts/kitchen_viewer.gd) | 场景浏览控制：1～4 预设机位、R 复位、右键拖动、角度限制、Esc 和失焦释放鼠标。没有玩家行走或清洗逻辑。 |
 | [Scripts/kitchen_viewer.gd.uid](../../Scripts/kitchen_viewer.gd.uid) | 上述脚本的 Godot 稳定资源标识元数据，随脚本保留。 |
@@ -33,6 +36,8 @@ WASD、鼠标直接看向、玩家碰撞、拿取与清洗、订单、评分和�
 | [Tools/capture_kitchen_demo.gd](../../Tools/capture_kitchen_demo.gd) | 在图形模式实例化现有展示场景，调用两个预设视角，覆盖 Docs/scenes/kitchen-demo/godot-player.png 和 godot-overview.png；不重建场景，不支持无头截图。 |
 
 生成依赖按“独立资产源文件及导出 → Blender 总场景与房间壳 → Godot 导入 → Godot 场景组装 → 运行或截图”理解。只改独立 GLB 后可重新导入该资源；若槽位、节点名或摆放变化，还需同步组装逻辑。不要假定修改 Blender 总场景会自动改变 Godot 中的独立实例。
+
+现有三个总场景工具的输出均不包含 kitchen-game.tscn 或 project.godot。可玩入口会继承重建后的展示布局，但其根脚本覆盖与提示隐藏保存在独立文件；如果生成器改变脚本挂载位置或 ViewerOverlay 路径，需同时回归该隔离约定，不能仅凭文件未被覆盖就认定输入仍隔离。
 
 ## 独立资产生成器
 
@@ -80,12 +85,13 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 | --- | --- |
 | [game-design-document.md](game-design-document.md) | 当前目标玩法与验收规则，包括 WASD、两种持有状态、清洗、泡沫评分与 MVP 边界；不能据此推断功能已完成。 |
 | [tech-stack.md](tech-stack.md) | 固定工具链、运行状态与配置分离、交互、存档和验证方案。 |
-| [implementation-plan.md](implementation-plan.md) | 62 个实施步骤与各步验证条件，第 1 步已通过。 |
+| [implementation-plan.md](implementation-plan.md) | 62 个实施步骤与验证条件，第 1～2 步已通过，第 3 步未开始。 |
 | [progress.md](progress.md) | 实际完成记录、测试执行者及来源、当前状态与后续衔接。 |
 | [architecture.md](architecture.md) | 当前文件职责、依赖和重建边界；新增或改变职责时更新。 |
 | [Docs/README.md](../README.md) | 文档导航，连接 memory-bank、资产说明、场景说明与参考图。 |
 | [Docs/kitchen-asset-plan.md](../kitchen-asset-plan.md) | 资产制作范围与交付进度，包括原操作区灰盒说明。 |
 | [厨房场景说明](../scenes/kitchen-demo/kitchen-demo.md) | 现有展示场景的打开方式、位置、布局、重建步骤与历史验证。 |
+| [可玩入口说明](../scenes/kitchen-game/kitchen-game.md) | 新入口的 F5/F6 使用区别、继承边界、生成输出清单与第 2 步用户验收方法。 |
 | [餐盘说明](../assets/plate-standard/plate-standard.md)、[马克杯说明](../assets/mug-standard/mug-standard.md) | 对应餐具尺寸、原点、节点和资产接入说明。 |
 | [海绵说明](../assets/sponge-standard/sponge-standard.md)、[泵瓶说明](../assets/soap-dispenser/soap-dispenser.md) | 工具结构、动画或形态、定位、材质与历史预览。 |
 | [水槽说明](../assets/sink-countertop/sink-countertop.md)、[龙头说明](../assets/faucet-pullout/faucet-pullout.md) | 安装、开孔、活动部件、喷嘴及软管接入限制。 |
@@ -97,7 +103,7 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 
 ## 已确认的架构洞察
 
-1. **展示输入与玩家控制需要分开。** 浏览脚本用数字键切机位、右键拖相机；基础游戏用数字键选工具、右键旋转餐具，且要加入 WASD 与鼠标直接看向。沿用同一个控制入口会导致冲突，第 2 步应先隔离场景，不能把展示器验收等同于移动验收。
+1. **展示输入与玩家控制分别接入。** 浏览脚本用数字键切机位、右键拖相机，基础游戏将用这些键选工具和旋转餐具。第 2 步用继承场景清除根浏览脚本并隐藏提示，用户已确认此隔离及原展示操作正常；后续控制写在可玩入口，移动功能仍须单独实现和验收。
 2. **场景生成器拥有其输出。** Godot 组装脚本会覆盖主展示场景，Blender 组装脚本会覆盖总场景、房间壳与预览。直接改生成结果而不处理生成器，重建会丢失改动；独立可玩逻辑应避开这些覆盖路径。
 3. **定位节点描述姿态，不描述占用。** 槽位保存的是完整餐具根变换，不能再加半高；它们没有兼容、占用、清洁门槛或订单完成逻辑。后续运行状态需另建，不能靠场景节点存在就认定功能已完成。
 4. **实例共享资产，任务状态应独立。** 现有盘杯复用模型资源。以后污渍、泡沫、施液和位置状态不能存进共享材质或配置导致多件联动；第 3 步先分离配置与运行状态。

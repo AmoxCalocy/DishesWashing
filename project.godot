@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="洗碗时光 · 厨房场景"
-run/main_scene="res://Scenes/kitchen-demo.tscn"
+run/main_scene="res://Scenes/kitchen-game.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [display]

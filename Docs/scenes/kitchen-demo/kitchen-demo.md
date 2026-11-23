@@ -4,7 +4,7 @@
 
 ## 打开与查看
 
-在 Godot 4.7.2 项目管理器中导入项目根目录的 [project.godot](../../../project.godot)，等待 GLB 导入完成后打开项目，按 **F5** 运行。主场景已设置为 [kitchen-demo.tscn](../../../Scenes/kitchen-demo.tscn)，也可在编辑器中打开它并按 F6 查看当前场景。初次运行使用 Compatibility 渲染器。
+在 Godot 4.7.2 项目管理器中导入项目根目录的 [project.godot](../../../project.godot)，等待 GLB 导入后，打开 [kitchen-demo.tscn](../../../Scenes/kitchen-demo.tscn)并按 **F6** 运行展示器。项目的 F5 默认入口现为独立的 [厨房可玩入口](../kitchen-game/kitchen-game.md)，不启用下面的展示器操作。两个入口均使用 Compatibility 渲染器。
 
 | 操作 | 效果 |
 | --- | --- |

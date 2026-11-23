@@ -18,6 +18,7 @@
 | 场景 | 说明与打开方式 | 预览 |
 | --- | --- | --- |
 | 简单厨房场景 | [Godot 运行、Blender 编辑与组装说明](scenes/kitchen-demo/kitchen-demo.md) | [Godot 全貌](scenes/kitchen-demo/godot-overview.png) / [Godot 玩家视角](scenes/kitchen-demo/godot-player.png) / [Blender 全貌](scenes/kitchen-demo/kitchen-demo-overview.png) |
+| 厨房可玩入口 | [F5 入口、生成边界与第 2 步验收](scenes/kitchen-game/kitchen-game.md) | 复用厨房布局，第 2 步已由用户验收 |
 
 ## 模型说明与预览
 
@@ -66,7 +67,8 @@ Docs/
 │   ├── rack-and-tray/
 │   └── order-clipboard/
 ├── scenes/
-│   └── kitchen-demo/
+│   ├── kitchen-demo/
+│   └── kitchen-game/
 └── references/
 ```
 

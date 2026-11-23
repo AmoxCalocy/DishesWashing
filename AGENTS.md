@@ -2,9 +2,11 @@
 
 ## Project Structure & Scope
 
-This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. The current application is a kitchen scene viewer; washing gameplay remains planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
+This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry scene; player movement and washing gameplay remain planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
 
-- `project.godot`: project entry point; main scene is `Scenes/kitchen-demo.tscn`.
+- `project.godot`: project entry point; main scene is `Scenes/kitchen-game.tscn`.
+- `Scenes/kitchen-game.tscn`: hand-authored gameplay entry inheriting the kitchen layout, with the viewer script removed and viewer overlay hidden. Generators must not overwrite this file.
+- `Scenes/kitchen-demo.tscn`: generated viewer scene; open it separately to inspect assets and use viewer controls.
 - `Scripts/`: runtime GDScript, currently `kitchen_viewer.gd`.
 - `Tools/`: Blender generators, Godot assembly scripts, and PowerShell texture tooling.
 - `Assets/`: editable `.blend` sources, exported `.glb` models, and textures, grouped by purpose.
@@ -23,7 +25,7 @@ $blenderExe = 'D:\Blender\blender.exe'
 & $godotExe --headless --path . --quit-after 60
 ```
 
-These commands assemble/render the kitchen, import resources, rebuild the Godot scene, and smoke-test startup, respectively. Run Python generators through Blender, not standalone Python. Preserve manual edits before rebuilding: generators overwrite outputs. Open `project.godot` and press F5 for interactive viewing.
+These commands assemble/render the kitchen, import resources, rebuild the viewer scene, and smoke-test the default gameplay entry, respectively. Run Python generators through Blender, not standalone Python. Preserve manual edits before rebuilding: generators overwrite outputs. Open `project.godot` and press F5 for the gameplay entry; open `Scenes/kitchen-demo.tscn` and press F6 for interactive viewing. Gameplay entry currently has no player controls.
 
 ## Coding Style & Naming Conventions
 
