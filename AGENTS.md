@@ -36,6 +36,14 @@ After importing new scripts/resources, verify configuration and runtime-state is
 
 Success prints `RUNTIME_STATE_OK` and exits with code 0. It checks independent dish/region/slot/tool data, fresh initial values, and unchanged shared configuration without modifying scenes or saves.
 
+Verify weighted cleanliness and the actual 95% requirement separately:
+
+```powershell
+& $godotExe --headless --path . --script Tools/verify_cleanliness.gd
+```
+
+Success prints `CLEANLINESS_OK` and exits with code 0. It checks unequal initial stain amounts, zero dirt, per-region bounds, foam independence, and 94.9%/95%/95.1% boundaries. Use `DishState.meets_cleanliness_requirement()` for the cleanliness gate; the rounded display percentage must not authorize placement. Full slot-placement rules remain planned.
+
 ## Coding Style & Naming Conventions
 
 Use tabs in GDScript and four spaces in Python/PowerShell. Prefer typed GDScript signatures, `snake_case` functions/scripts, and kebab-case asset filenames such as `plate-standard.glb`. Preserve exported node names, including `Rack_Slot_01`, and meter-based dimensions. Update the matching generator when changing procedural assets or scenes. No formatter/linter is configured; check whitespace with `git diff --check`.

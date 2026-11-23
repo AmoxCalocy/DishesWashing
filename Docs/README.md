@@ -15,7 +15,9 @@
 
 ## 数据层验证
 
-第 3 步已通过用户验收。[独立状态验证脚本](../Tools/verify_runtime_state.gd)检查共享配置、运行数据隔离和新建状态初始值；[进度记录](memory-bank/progress.md)包含运行命令，[架构说明](memory-bank/architecture.md)列出配置类型、状态类型及示例文件职责。数据层尚未绑定运行场景，F5 画面不变。
+第 3、4 步已通过用户验收。[独立状态验证脚本](../Tools/verify_runtime_state.gd)检查共享配置、运行数据隔离和新建状态初始值；[清洁度验证脚本](../Tools/verify_cleanliness.gd)检查加权结果、零污渍、上下限、泡沫独立及实际 95% 门槛。
+
+[进度记录](memory-bank/progress.md)包含运行命令与验收来源，[架构说明](memory-bank/architecture.md)列出配置、状态、清洁度接口及验证文件职责。数据层尚未绑定运行场景，F5 画面不变；第 5 步未开始。
 
 ## 已组装场景
 

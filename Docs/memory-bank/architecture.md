@@ -1,6 +1,6 @@
 # 项目架构与文件职责
 
-> 更新日期：2026-11-23｜第 1～3 步已由用户验收
+> 更新日期：2026-11-23｜第 1～4 步已由用户验收
 
 ## 当前实现边界
 
@@ -8,7 +8,7 @@
 
 单独打开 kitchen-demo.tscn 按 F6，仍由 [kitchen_viewer.gd](../../Scripts/kitchen_viewer.gd)控制展示。两个入口分别实例化节点，原展示场景与浏览脚本未改；场景不在运行时打开 Blender 总场景或执行建模脚本。
 
-第 3 步已建立独立数据层：Resource 保存共享配置，RefCounted 保存每次订单的可变状态，并通过独立脚本验证。数据层未绑定场景，不改变 F5 画面。WASD、鼠标直接看向、玩家碰撞、拿取与清洗、完整订单流程、评分和存档仍待实现；第 4 步清洁度规则未开始。
+第 3 步已建立独立数据层：Resource 保存共享配置，RefCounted 保存每次订单的可变状态；第 4 步在 DishState 中加入清洁度计算、整数显示值和实际门槛，均已由用户验证通过。数据层未绑定场景，不改变 F5 画面。WASD、鼠标直接看向、玩家碰撞、拿取与清洗、完整订单流程、评分和存档仍待实现；第 5 步配置游戏输入未开始。
 
 ## 入口、运行文件与元数据
 
@@ -51,12 +51,24 @@ Scripts/State 的类型均继承 RefCounted，不依赖场景树或自动加载�
 | 文件 | 职责 |
 | --- | --- |
 | [stain_region_state.gd](../../Scripts/State/stain_region_state.gd) | 每个区域独立的初始量快照、剩余量、类型、泡沫量和权重。 |
-| [dish_state.gd](../../Scripts/State/dish_state.gd) | 单件餐具的实例 ID、类型、当前槽位、是否手持、施液资格及独立区域状态字典。 |
+| [dish_state.gd](../../Scripts/State/dish_state.gd) | 单件餐具的实例 ID、类型、当前槽位、是否手持、施液资格及独立区域状态字典；按当前区域量计算实际清洁度、整数显示值和清洁度达标结果。 |
 | [slot_state.gd](../../Scripts/State/slot_state.gd) | 槽位身份、类别和当前占用者 ID；不实现碰撞、吸附或完成资格。 |
 | [tool_state.gd](../../Scripts/State/tool_state.gd) | 工具选择、海绵干湿、龙头开关与泵瓶持有状态；新建时分别为收起、干燥、关闭和归位。 |
 | [order_state.gd](../../Scripts/State/order_state.gd) | 按实例 ID 建立餐具字典、按槽位 ID 建立占用字典，为本次尝试新建 ToolState，并根据订单条目初始化占用。构造时检查重复身份、缺失初始槽位和重复占位。 |
 
-OrderState 创建的是内存数据，未生成餐具节点、改变展示餐具或接入重开按钮。重新构造可恢复初始状态；实际订单重置与场景更新属于后续流程。清洁度和奖励算法尚未加入本层。
+OrderState 创建的是内存数据，未生成餐具节点、改变展示餐具或接入重开按钮。重新构造可恢复初始状态；实际订单重置与场景更新属于后续流程。清洁度已在 DishState 实现，奖励算法尚未加入本层。
+
+### 清洁度读取接口（第 4 步）
+
+清洁度由当前区域数据即时推导，不另存可变进度百分比。各区域的剩余量在计算时限制于 0 与自身初始量之间，再按剩余总量与初始总量计算；无初始污渍时为 100%，极小的正初始量仍按非零处理。读取不修改区域数据，泡沫量、泡沫权重和施液资格均不参与计算。
+
+| DishState 接口 | 职责 |
+| --- | --- |
+| get_cleanliness | 返回 0～1 的实际清洁度，供规则及后续进度显示使用。 |
+| get_cleanliness_percent | 返回四舍五入后的整数百分比，只供显示。 |
+| meets_cleanliness_requirement | 将实际值与 REQUIRED_CLEANLINESS（0.95）直接比较，不以整数显示或近似相等判断。只代表清洁门槛，不包含槽位兼容、占用、距离或遮挡。 |
+
+94.9%、95%、95.1% 的整数显示均为 95%，但只有后两者达标。后续放置预览、确认放置、Q 返回及完成统计应复用实际门槛；HUD 和完整放置逻辑尚未接入。
 
 ### 验证配置与脚本
 
@@ -67,8 +79,9 @@ OrderState 创建的是内存数据，未生成餐具节点、改变展示餐具
 | [layout-config-example.tres](../../Resources/Examples/layout-config-example.tres) | 验证用布局，包含 3 个托盘位及各 1 个盘、杯沥水位；不是全厨房槽位清单。 |
 | [order-config-example.tres](../../Resources/Examples/order-config-example.tres) | 验证用两盘一杯条目，两件盘子共享同一份 DishConfig；点数 100 和首次额外点数 25 只用于检查配置隔离，不代表正式订单平衡。 |
 | [Tools/verify_runtime_state.gd](../../Tools/verify_runtime_state.gd) | 构造多份运行状态，修改及删除其中一份的进度、泡沫、位置、占用、工具和集合内容，检查其他实例、新状态与源配置。成功输出 RUNTIME_STATE_OK、退出 0，失败报告原因并退出 1。 |
+| [Tools/verify_cleanliness.gd](../../Tools/verify_cleanliness.gd) | 用内存配置检查加权清洁度、零污渍、越界与只读行为、泡沫独立、整数显示及实际 95% 门槛；不依赖模型加载。成功输出 CLEANLINESS_OK、退出 0，失败报告原因并退出 1。 |
 
-上述 11 个数据类及验证脚本各有同名 .gd.uid，保存 Godot 稳定资源标识，随源码提交。验证用 .tres 不被当前主场景加载；先导入新增类型，再按 [progress.md](progress.md) 的命令重跑验证。
+上述 11 个数据类与两份验证脚本各有同名 .gd.uid，保存 Godot 稳定资源标识，随源码提交；新增的 [verify_cleanliness.gd.uid](../../Tools/verify_cleanliness.gd.uid) 对应清洁度验证脚本。验证用 .tres 不被当前主场景加载；先导入新增类型，再按 [progress.md](progress.md) 的命令重跑验证。
 
 ## 总场景组装和截图工具
 
@@ -128,7 +141,7 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 | --- | --- |
 | [game-design-document.md](game-design-document.md) | 当前目标玩法与验收规则，包括 WASD、两种持有状态、清洗、泡沫评分与 MVP 边界；不能据此推断功能已完成。 |
 | [tech-stack.md](tech-stack.md) | 固定工具链、运行状态与配置分离、交互、存档和验证方案。 |
-| [implementation-plan.md](implementation-plan.md) | 62 个实施步骤与验证条件，第 1～3 步已通过，第 4 步未开始。 |
+| [implementation-plan.md](implementation-plan.md) | 62 个实施步骤与验证条件，第 1～4 步已通过，第 5 步未开始。 |
 | [progress.md](progress.md) | 实际完成记录、测试执行者及来源、当前状态与后续衔接。 |
 | [architecture.md](architecture.md) | 当前文件职责、依赖和重建边界；新增或改变职责时更新。 |
 | [Docs/README.md](../README.md) | 文档导航，连接 memory-bank、资产说明、场景说明与参考图。 |
@@ -153,3 +166,5 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 5. **现有背景几何未证明可行走。** 灰盒与房间壳主要面向固定机位展示；WASD 纳入 MVP 后，需要在对应步骤补齐玩家碰撞、通道、边界、交互距离和超距处理，不能以已有地面网格替代这些验证。
 6. **资产动画不等于玩法状态。** 泵头动画、喷嘴定位、软管展示形态和海绵形态均可复用，但缺少运行时供水、干湿、施液、清洁及评分判定。历史资产说明中的接液或固定站位方案若与当前设计冲突，玩法以 memory-bank 的现行设计为准，几何约定仍须遵守。
 7. **性能目标与当前配置分开记录。** 开发机 1080p 默认画质、稳定 60 FPS 是后续测量目标；现有窗口配置和第 1 步展示验收不能证明该目标或最低配置已经满足。
+8. **显示值与规则值分开。** 清洁度直接从区域状态计算，四舍五入只用于显示；实际 95% 门槛独立于泡沫及持有状态。清洁度达标不等于完整入架资格，后续槽位规则还需组合距离、兼容、占用和遮挡等条件。
+9. **区域边界在汇总前处理。** 分别限制每个区域的剩余量，避免一处负值抵消另一处污渍；计算时限制范围但不改写进度。污渍初始量是清洁度权重，foam_weight 仅留给泡沫汇总，不能混用。
