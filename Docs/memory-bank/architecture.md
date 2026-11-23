@@ -1,6 +1,6 @@
 # 项目架构与文件职责
 
-> 更新日期：2026-11-23｜第 1～4 步已由用户验收
+> 更新日期：2026-11-23｜第 1～5 步已由用户验收
 
 ## 当前实现边界
 
@@ -8,24 +8,44 @@
 
 单独打开 kitchen-demo.tscn 按 F6，仍由 [kitchen_viewer.gd](../../Scripts/kitchen_viewer.gd)控制展示。两个入口分别实例化节点，原展示场景与浏览脚本未改；场景不在运行时打开 Blender 总场景或执行建模脚本。
 
-第 3 步已建立独立数据层：Resource 保存共享配置，RefCounted 保存每次订单的可变状态；第 4 步在 DishState 中加入清洁度计算、整数显示值和实际门槛，均已由用户验证通过。数据层未绑定场景，不改变 F5 画面。WASD、鼠标直接看向、玩家碰撞、拿取与清洗、完整订单流程、评分和存档仍待实现；第 5 步配置游戏输入未开始。
+第 3、4 步已建立独立数据层及 DishState 清洁度规则，第 5 步已在可玩入口接入 GameInput、准星和 Esc 基础界面，均已由用户验证通过。订单状态与清洁度尚未绑定场景；输入层引用 ToolState 的工具枚举，不创建或修改订单实例。实际 WASD 行走、相机转动、玩家碰撞、拿取与清洗、完整订单流程、评分和存档仍待实现；第 6 步未开始。
 
 ## 入口、运行文件与元数据
 
 | 文件 | 当前作用 |
 | --- | --- |
-| [project.godot](../../project.godot) | 项目配置，F5 默认启动 kitchen-game.tscn；关闭 .blend 自动导入，沿用 Compatibility、1600 × 900 视口和 1280 × 720 窗口覆盖。 |
-| [Scenes/kitchen-game.tscn](../../Scenes/kitchen-game.tscn) | 手工维护的可玩入口，继承展示布局、明确清除根浏览脚本并隐藏 ViewerOverlay。现有生成器不写入此文件，后续玩法在这里接入。 |
+| [project.godot](../../project.godot) | 项目配置，F5 默认启动 kitchen-game.tscn；保存 16 个 game_ 前缀输入映射，关闭 .blend 自动导入，沿用 Compatibility、1600 × 900 视口和 1280 × 720 窗口覆盖。 |
+| [Scenes/kitchen-game.tscn](../../Scenes/kitchen-game.tscn) | 手工维护的可玩入口，继承展示布局、清除根浏览脚本并隐藏 ViewerOverlay；新增 GameInput 节点及 GameHUD 实例，通过相对路径连接。生成器不写入此文件。 |
+| [Scenes/game-hud.tscn](../../Scenes/game-hud.tscn) | 手工维护的 CanvasLayer 界面，包含不拦截输入的中央准星、全屏菜单背景与继续按钮；独立于生成的展示器提示层。 |
+| [Scripts/Input/game_input.gd](../../Scripts/Input/game_input.gd) | 继承 Node 的输入分派器；处理未被 UI 消费的事件，按持有物和目标发出动作意图，管理按住状态、移动向量及鼠标模式。 |
+| [Scripts/UI/game_hud.gd](../../Scripts/UI/game_hud.gd) | 用 input_path 查找 GameInput，监听模式变化以显示准星或菜单，并将继续按钮接回游戏输入模式。 |
 | [Scenes/kitchen-demo.tscn](../../Scenes/kitchen-demo.tscn) | 已组装的展示场景，引用房间壳、独立道具与餐具 GLB，保存摆放、灯光、环境、相机和展示提示。由 Godot 组装脚本生成，会被重建覆盖。 |
 | [Scripts/kitchen_viewer.gd](../../Scripts/kitchen_viewer.gd) | 场景浏览控制：1～4 预设机位、R 复位、右键拖动、角度限制、Esc 和失焦释放鼠标。没有玩家行走或清洗逻辑。 |
 | [Scripts/kitchen_viewer.gd.uid](../../Scripts/kitchen_viewer.gd.uid) | 上述脚本的 Godot 稳定资源标识元数据，随脚本保留。 |
 | [Tools/build_kitchen_demo.gd.uid](../../Tools/build_kitchen_demo.gd.uid) | Godot 场景组装脚本的稳定资源标识元数据。 |
 | [Tools/capture_kitchen_demo.gd.uid](../../Tools/capture_kitchen_demo.gd.uid) | Godot 截图脚本的稳定资源标识元数据。 |
+| [game_input.gd.uid](../../Scripts/Input/game_input.gd.uid)、[game_hud.gd.uid](../../Scripts/UI/game_hud.gd.uid) | 第 5 步两个运行脚本的稳定资源标识，随源码保留。 |
 | 各资产旁的 .import 文件 | Godot 导入设置和源资源映射，随资产保留；与可重新生成的 .godot 缓存不同。 |
 | [AGENTS.md](../../AGENTS.md) | 仓库工作约定、固定版本、生成与验证方法、命名和提交要求。 |
 | [.gitignore](../../.gitignore) | 排除 .godot、Blender 备份、日志、本地配置和构建输出，保留源模型、GLB、UID 与资产侧导入元数据。 |
 
 场景的 Models 节点保存 8 个环境或道具实例；Dishes 节点保存 5 盘、2 杯的展示实例。托盘上的两盘一杯与架内三盘一杯均为展示布置，不是已经生成的任务订单。相机为 ViewCamera，提示位于 ViewerOverlay；浏览脚本直接引用这些节点，重命名时需同步处理。
+
+## 游戏输入与基础界面（第 5 步）
+
+只有可玩入口实例化 GameInput 和 GameHUD。输入通过 _unhandled_input 接入，让 GUI 优先消费事件；不使用全局按键轮询执行交互。WASD 对应四个移动动作，左右鼠标键、F、E、1～3、Q、Tab、Esc、滚轮上下对应另外十二个动作；鼠标移动独立分派为观察、旋转或工具光标信号。
+
+| GameInput 接口或状态 | 当前职责 |
+| --- | --- |
+| set_context | 接收持有模式、已筛选目标类别及工具选择。模式为 EMPTY、CARRYING、CLOSE_UP、SOAP_BOTTLE、TRANSITION；目标由后续距离和遮挡查询提供，当前运行场景默认 NONE。 |
+| command_requested | 发出动作意图及按下/停止标志。拿取、放置、泵压等为单次意图；润湿、工具使用和旋转有停止通知。意图不代表已执行或通过全部玩法校验。 |
+| get_movement_vector、movement_changed | 提供归一化二维移动输入；界面、近距离及过渡期间为零，未连接 CharacterBody3D。 |
+| look_requested、rotation_requested、tool_cursor_moved | 分别提供鼠标相对位移或光标位置；右键旋转替代观察，近距离控制工具光标，尚未改变相机、餐具或工具节点。 |
+| set_interface_open、mode_changed | 控制界面与鼠标模式并通知 HUD。菜单或失焦清除旧输入并结束持续使用，恢复需重新按下；持有模式改变也清除旧按住状态，单独切工具不丢失移动键。 |
+
+左键按上下文只选择拿餐具、润湿、放置、使用工具或泵压中的一个；E 区分龙头、订单板和空手拿瓶，Q 区分退出近距离、返回餐具和归位泵瓶。game_tool_ 动作只发出选择意图，不自行修改 ToolState。后续消费者负责实际状态更新、动画及玩法限制，并通过 set_context 同步输入上下文。
+
+GameHUD 在普通游戏输入模式显示准星，近距离和过渡时隐藏；界面模式显示菜单并释放鼠标。“继续游戏”返回输入模式，普通状态恢复捕获，近距离保持可见光标。当前界面不暂停场景树，不代替第 18 步的运行状态冻结，也不提供正式订单面板。
 
 ## 配置资源与独立运行状态
 
@@ -80,8 +100,9 @@ OrderState 创建的是内存数据，未生成餐具节点、改变展示餐具
 | [order-config-example.tres](../../Resources/Examples/order-config-example.tres) | 验证用两盘一杯条目，两件盘子共享同一份 DishConfig；点数 100 和首次额外点数 25 只用于检查配置隔离，不代表正式订单平衡。 |
 | [Tools/verify_runtime_state.gd](../../Tools/verify_runtime_state.gd) | 构造多份运行状态，修改及删除其中一份的进度、泡沫、位置、占用、工具和集合内容，检查其他实例、新状态与源配置。成功输出 RUNTIME_STATE_OK、退出 0，失败报告原因并退出 1。 |
 | [Tools/verify_cleanliness.gd](../../Tools/verify_cleanliness.gd) | 用内存配置检查加权清洁度、零污渍、越界与只读行为、泡沫独立、整数显示及实际 95% 门槛；不依赖模型加载。成功输出 CLEANLINESS_OK、退出 0，失败报告原因并退出 1。 |
+| [Tools/verify_game_input.gd](../../Tools/verify_game_input.gd) | 独立 SubViewport 注入键鼠事件，检查 16 个映射、上下文分派、重复输入、移动与鼠标信号、HUD 布局及 GUI 消费；成功输出 GAME_INPUT_OK、退出 0，失败报告原因并退出 1。真实窗口捕获与失焦另作图形检查。 |
 
-上述 11 个数据类与两份验证脚本各有同名 .gd.uid，保存 Godot 稳定资源标识，随源码提交；新增的 [verify_cleanliness.gd.uid](../../Tools/verify_cleanliness.gd.uid) 对应清洁度验证脚本。验证用 .tres 不被当前主场景加载；先导入新增类型，再按 [progress.md](progress.md) 的命令重跑验证。
+上述 11 个数据类与三份验证脚本各有同名 .gd.uid，保存 Godot 稳定资源标识，随源码提交；[verify_cleanliness.gd.uid](../../Tools/verify_cleanliness.gd.uid) 与新增的 [verify_game_input.gd.uid](../../Tools/verify_game_input.gd.uid) 分别对应清洁度及输入验证脚本。验证用 .tres 不被当前主场景加载；先导入新增类型，再按 [progress.md](progress.md) 的命令重跑验证。
 
 ## 总场景组装和截图工具
 
@@ -93,7 +114,7 @@ OrderState 创建的是内存数据，未生成餐具节点、改变展示餐具
 
 生成依赖按“独立资产源文件及导出 → Blender 总场景与房间壳 → Godot 导入 → Godot 场景组装 → 运行或截图”理解。只改独立 GLB 后可重新导入该资源；若槽位、节点名或摆放变化，还需同步组装逻辑。不要假定修改 Blender 总场景会自动改变 Godot 中的独立实例。
 
-现有三个总场景工具的输出均不包含 kitchen-game.tscn 或 project.godot。可玩入口会继承重建后的展示布局，但其根脚本覆盖与提示隐藏保存在独立文件；如果生成器改变脚本挂载位置或 ViewerOverlay 路径，需同时回归该隔离约定，不能仅凭文件未被覆盖就认定输入仍隔离。
+现有三个总场景工具的输出均不包含 kitchen-game.tscn、game-hud.tscn 或 project.godot，也不覆盖新增输入和界面脚本。可玩入口会继承重建后的展示布局，但其根脚本覆盖与提示隐藏保存在独立文件；如果生成器改变脚本挂载位置或 ViewerOverlay 路径，需同时回归该隔离约定，不能仅凭文件未被覆盖就认定输入仍隔离。
 
 ## 独立资产生成器
 
@@ -141,13 +162,13 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 | --- | --- |
 | [game-design-document.md](game-design-document.md) | 当前目标玩法与验收规则，包括 WASD、两种持有状态、清洗、泡沫评分与 MVP 边界；不能据此推断功能已完成。 |
 | [tech-stack.md](tech-stack.md) | 固定工具链、运行状态与配置分离、交互、存档和验证方案。 |
-| [implementation-plan.md](implementation-plan.md) | 62 个实施步骤与验证条件，第 1～4 步已通过，第 5 步未开始。 |
+| [implementation-plan.md](implementation-plan.md) | 62 个实施步骤与验证条件，第 1～5 步已通过，第 6 步未开始。 |
 | [progress.md](progress.md) | 实际完成记录、测试执行者及来源、当前状态与后续衔接。 |
 | [architecture.md](architecture.md) | 当前文件职责、依赖和重建边界；新增或改变职责时更新。 |
 | [Docs/README.md](../README.md) | 文档导航，连接 memory-bank、资产说明、场景说明与参考图。 |
 | [Docs/kitchen-asset-plan.md](../kitchen-asset-plan.md) | 资产制作范围与交付进度，包括原操作区灰盒说明。 |
 | [厨房场景说明](../scenes/kitchen-demo/kitchen-demo.md) | 现有展示场景的打开方式、位置、布局、重建步骤与历史验证。 |
-| [可玩入口说明](../scenes/kitchen-game/kitchen-game.md) | 新入口的 F5/F6 使用区别、继承边界、生成输出清单与第 2 步用户验收方法。 |
+| [可玩入口说明](../scenes/kitchen-game/kitchen-game.md) | F5/F6 使用区别、继承边界、生成输出清单，以及当前准星、菜单、鼠标模式和输入验证方法。 |
 | [餐盘说明](../assets/plate-standard/plate-standard.md)、[马克杯说明](../assets/mug-standard/mug-standard.md) | 对应餐具尺寸、原点、节点和资产接入说明。 |
 | [海绵说明](../assets/sponge-standard/sponge-standard.md)、[泵瓶说明](../assets/soap-dispenser/soap-dispenser.md) | 工具结构、动画或形态、定位、材质与历史预览。 |
 | [水槽说明](../assets/sink-countertop/sink-countertop.md)、[龙头说明](../assets/faucet-pullout/faucet-pullout.md) | 安装、开孔、活动部件、喷嘴及软管接入限制。 |
@@ -159,7 +180,7 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 
 ## 已确认的架构洞察
 
-1. **展示输入与玩家控制分别接入。** 浏览脚本用数字键切机位、右键拖相机，基础游戏将用这些键选工具和旋转餐具。第 2 步用继承场景清除根浏览脚本并隐藏提示，用户已确认此隔离及原展示操作正常；后续控制写在可玩入口，移动功能仍须单独实现和验收。
+1. **展示输入与玩家控制分别接入。** 浏览脚本用数字键切机位、右键拖相机；第 5 步在独立可玩入口用这些键分派工具选择和餐具旋转意图，继续清除根浏览脚本并隐藏展示提示。用户已确认原展示器回归正常；实际行走与相机转动仍须单独实现和验收。
 2. **场景生成器拥有其输出。** Godot 组装脚本会覆盖主展示场景，Blender 组装脚本会覆盖总场景、房间壳与预览。直接改生成结果而不处理生成器，重建会丢失改动；独立可玩逻辑应避开这些覆盖路径。
 3. **定位节点描述姿态，数据层记录占用。** 资产节点提供完整餐具根变换，不能再加半高；第 3 步已将类别、兼容配置和占用者拆开记录，但尚未接入实际吸附、清洁门槛或完成判定。
 4. **共享配置不承载可变进度。** 同一 DishConfig 可以服务多件盘子；每件区域状态、每次订单字典及 ToolState 均独立创建。第 3 步验证包含数值修改和删除集合元素，避免只检查顶层对象不同而遗漏嵌套数据共享。
@@ -168,3 +189,5 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 7. **性能目标与当前配置分开记录。** 开发机 1080p 默认画质、稳定 60 FPS 是后续测量目标；现有窗口配置和第 1 步展示验收不能证明该目标或最低配置已经满足。
 8. **显示值与规则值分开。** 清洁度直接从区域状态计算，四舍五入只用于显示；实际 95% 门槛独立于泡沫及持有状态。清洁度达标不等于完整入架资格，后续槽位规则还需组合距离、兼容、占用和遮挡等条件。
 9. **区域边界在汇总前处理。** 分别限制每个区域的剩余量，避免一处负值抵消另一处污渍；计算时限制范围但不改写进度。污渍初始量是清洁度权重，foam_weight 仅留给泡沫汇总，不能混用。
+10. **输入意图与执行结果分开。** GameInput 只决定操作意图，目标需经世界查询筛选，消费者仍须验证并执行。后续玩家移动读取分派后的向量，不能改用全局按键轮询绕过 UI、近距离或过渡限制。
+11. **界面消费与持续输入都要处理。** _unhandled_input 避免按钮点击落到场景，模式切换另清除按住状态并发送停止通知；只隐藏菜单或只释放鼠标不足以结束已启动的工具使用。独立输入验证通过真实 GUI 消费检查这条边界，窗口捕获仍由图形验收确认。

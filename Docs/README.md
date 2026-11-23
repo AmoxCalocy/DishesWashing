@@ -17,14 +17,18 @@
 
 第 3、4 步已通过用户验收。[独立状态验证脚本](../Tools/verify_runtime_state.gd)检查共享配置、运行数据隔离和新建状态初始值；[清洁度验证脚本](../Tools/verify_cleanliness.gd)检查加权结果、零污渍、上下限、泡沫独立及实际 95% 门槛。
 
-[进度记录](memory-bank/progress.md)包含运行命令与验收来源，[架构说明](memory-bank/architecture.md)列出配置、状态、清洁度接口及验证文件职责。数据层尚未绑定运行场景，F5 画面不变；第 5 步未开始。
+[进度记录](memory-bank/progress.md)包含运行命令与验收来源，[架构说明](memory-bank/architecture.md)列出配置、状态、清洁度接口及验证文件职责。订单状态与清洁度尚未绑定运行场景。
+
+## 输入与界面验证
+
+第 5 步已通过用户验收。[输入验证脚本](../Tools/verify_game_input.gd)检查键鼠映射、上下文分派、准星和 GUI 事件消费；[可玩入口说明](scenes/kitchen-game/kitchen-game.md)记录 F5 准星、Esc 菜单、鼠标捕获与失焦检查。输入已接入，实际 WASD 行走与镜头转动分别留在第 6、7 步，第 6 步尚未开始。
 
 ## 已组装场景
 
 | 场景 | 说明与打开方式 | 预览 |
 | --- | --- | --- |
 | 简单厨房场景 | [Godot 运行、Blender 编辑与组装说明](scenes/kitchen-demo/kitchen-demo.md) | [Godot 全貌](scenes/kitchen-demo/godot-overview.png) / [Godot 玩家视角](scenes/kitchen-demo/godot-player.png) / [Blender 全貌](scenes/kitchen-demo/kitchen-demo-overview.png) |
-| 厨房可玩入口 | [F5 入口、生成边界与第 2 步验收](scenes/kitchen-game/kitchen-game.md) | 复用厨房布局，第 2 步已由用户验收 |
+| 厨房可玩入口 | [F5 入口、准星菜单、生成边界与验收](scenes/kitchen-game/kitchen-game.md) | 复用厨房布局，输入与基础界面已由用户验收；历史预览见展示场景 |
 
 ## 模型说明与预览
 

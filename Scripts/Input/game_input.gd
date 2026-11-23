@@ -1,0 +1,194 @@
+class_name GameInput
+extends Node
+## Routes unhandled events into intentions; consumers validate and perform gameplay.
+## Context targets must come from a later distance/visibility-aware world query.
+
+signal command_requested(command: StringName, pressed: bool)
+signal movement_changed(direction: Vector2)
+signal look_requested(relative: Vector2)
+signal rotation_requested(relative: Vector2)
+signal tool_cursor_moved(position: Vector2)
+signal mode_changed
+
+enum HandMode { EMPTY, CARRYING, CLOSE_UP, SOAP_BOTTLE, TRANSITION }
+enum Target { NONE, DISH, SLOT, FAUCET, SOAP_BOTTLE, ORDER_BOARD, WATER_STREAM }
+
+const MOVE_ACTIONS: Array[StringName] = [
+	&"game_move_left", &"game_move_right", &"game_move_forward", &"game_move_back",
+]
+const BUTTON_ACTIONS: Array[StringName] = [
+	&"game_primary", &"game_rotate", &"game_toggle_close", &"game_interact",
+	&"game_tool_none", &"game_tool_sponge", &"game_tool_sprayer",
+	&"game_return", &"game_orders", &"game_zoom_in", &"game_zoom_out",
+]
+
+var hand_mode: HandMode = HandMode.EMPTY
+var target: Target = Target.NONE
+var selected_tool: ToolState.Tool = ToolState.Tool.NONE
+var interface_open: bool = false
+var _held: Dictionary[StringName, bool] = {}
+var _primary_command: StringName = &""
+var _rotating: bool = false
+
+func _ready() -> void:
+	_update_mouse_mode()
+
+func _exit_tree() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		set_interface_open(true)
+
+func set_interface_open(value: bool) -> void:
+	interface_open = value
+	_clear_held()
+	_update_mouse_mode()
+	mode_changed.emit()
+
+func set_context(mode: HandMode, new_target: Target, tool: ToolState.Tool = ToolState.Tool.NONE) -> void:
+	if hand_mode != mode:
+		_clear_held()
+	elif target != new_target or selected_tool != tool:
+		_release_primary()
+	hand_mode = mode
+	target = new_target
+	selected_tool = tool
+	_update_mouse_mode()
+	mode_changed.emit()
+
+func get_movement_vector() -> Vector2:
+	if interface_open or hand_mode in [HandMode.CLOSE_UP, HandMode.TRANSITION]:
+		return Vector2.ZERO
+	return Vector2(
+		float(_held.has(&"game_move_right")) - float(_held.has(&"game_move_left")),
+		float(_held.has(&"game_move_back")) - float(_held.has(&"game_move_forward"))
+	).limit_length()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.echo:
+		return
+	if event.is_action_pressed(&"game_menu"):
+		set_interface_open(not interface_open)
+		get_viewport().set_input_as_handled()
+		return
+	if interface_open or hand_mode == HandMode.TRANSITION:
+		return
+	if event is InputEventMouseMotion:
+		if _rotating:
+			rotation_requested.emit(event.relative)
+		elif hand_mode == HandMode.CLOSE_UP:
+			tool_cursor_moved.emit(event.position)
+		else:
+			look_requested.emit(event.relative)
+		get_viewport().set_input_as_handled()
+		return
+	for action in MOVE_ACTIONS:
+		if event.is_action(action):
+			_record_button(action, event.is_pressed())
+			movement_changed.emit(get_movement_vector())
+			get_viewport().set_input_as_handled()
+			return
+	for action in BUTTON_ACTIONS:
+		if event.is_action(action):
+			# Wheel events are pulses and may arrive without a matching release.
+			var wheel: bool = action in [&"game_zoom_in", &"game_zoom_out"]
+			if wheel or _held.has(action) != event.is_pressed():
+				if not wheel:
+					_record_button(action, event.is_pressed())
+				_dispatch(action, event.is_pressed())
+			get_viewport().set_input_as_handled()
+			return
+
+func _dispatch(action: StringName, pressed: bool) -> void:
+	if action == &"game_primary":
+		if not pressed:
+			_release_primary()
+		elif not _rotating:
+			var command: StringName = _resolve_primary()
+			if not command.is_empty():
+				if command in [&"wet_sponge", &"use_tool"]:
+					_primary_command = command
+				command_requested.emit(command, true)
+		return
+	if action == &"game_rotate":
+		if hand_mode in [HandMode.CARRYING, HandMode.CLOSE_UP]:
+			_rotating = pressed
+			if pressed:
+				_release_primary()
+			command_requested.emit(&"rotate_dish", pressed)
+		return
+	if not pressed:
+		return
+	match action:
+		&"game_orders":
+			command_requested.emit(&"show_orders", true)
+		&"game_toggle_close":
+			if hand_mode in [HandMode.CARRYING, HandMode.CLOSE_UP]:
+				command_requested.emit(&"toggle_close", true)
+		&"game_interact":
+			if hand_mode in [HandMode.EMPTY, HandMode.CARRYING]:
+				match target:
+					Target.FAUCET:
+						command_requested.emit(&"toggle_faucet", true)
+					Target.ORDER_BOARD:
+						command_requested.emit(&"show_orders", true)
+					Target.SOAP_BOTTLE:
+						if hand_mode == HandMode.EMPTY:
+							command_requested.emit(&"pickup_soap", true)
+		&"game_return":
+			match hand_mode:
+				HandMode.CARRYING:
+					command_requested.emit(&"return_dish", true)
+				HandMode.CLOSE_UP:
+					command_requested.emit(&"leave_close", true)
+				HandMode.SOAP_BOTTLE:
+					command_requested.emit(&"return_soap", true)
+		&"game_tool_none", &"game_tool_sponge", &"game_tool_sprayer":
+			if hand_mode != HandMode.SOAP_BOTTLE:
+				_release_primary()
+				command_requested.emit(action, true)
+		&"game_zoom_in", &"game_zoom_out":
+			if hand_mode == HandMode.CLOSE_UP:
+				command_requested.emit(action, true)
+
+func _resolve_primary() -> StringName:
+	match hand_mode:
+		HandMode.EMPTY:
+			if target == Target.WATER_STREAM and selected_tool == ToolState.Tool.SPONGE:
+				return &"wet_sponge"
+			if target == Target.DISH:
+				return &"pickup_dish"
+		HandMode.CARRYING:
+			if target == Target.SLOT:
+				return &"place_dish"
+		HandMode.CLOSE_UP:
+			if target == Target.DISH and selected_tool != ToolState.Tool.NONE:
+				return &"use_tool"
+		HandMode.SOAP_BOTTLE:
+			if target == Target.DISH:
+				return &"pump_soap"
+	return &""
+
+func _record_button(action: StringName, pressed: bool) -> void:
+	if pressed:
+		_held[action] = true
+	else:
+		_held.erase(action)
+
+func _release_primary() -> void:
+	if not _primary_command.is_empty():
+		var previous: StringName = _primary_command
+		_primary_command = &""
+		command_requested.emit(previous, false)
+
+func _clear_held() -> void:
+	_held.clear()
+	_release_primary()
+	if _rotating:
+		_rotating = false
+		command_requested.emit(&"rotate_dish", false)
+	movement_changed.emit(Vector2.ZERO)
+
+func _update_mouse_mode() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if interface_open or hand_mode == HandMode.CLOSE_UP else Input.MOUSE_MODE_CAPTURED

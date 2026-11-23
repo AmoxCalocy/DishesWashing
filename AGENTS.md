@@ -6,8 +6,9 @@ This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.
 
 - `project.godot`: project entry point; main scene is `Scenes/kitchen-game.tscn`.
 - `Scenes/kitchen-game.tscn`: hand-authored gameplay entry inheriting the kitchen layout, with the viewer script removed and viewer overlay hidden. Generators must not overwrite this file.
+- `Scenes/game-hud.tscn`: hand-authored crosshair and basic Esc interface, instanced only by the gameplay entry; generators must not overwrite it.
 - `Scenes/kitchen-demo.tscn`: generated viewer scene; open it separately to inspect assets and use viewer controls.
-- `Scripts/`: viewer control in `kitchen_viewer.gd`; shared Resource schemas in `Data/` and per-attempt RefCounted data in `State/`. The data layer is not yet attached to the gameplay scene.
+- `Scripts/`: viewer control in `kitchen_viewer.gd`; input intentions in `Input/game_input.gd`; crosshair/menu binding in `UI/game_hud.gd`; shared Resource schemas in `Data/` and per-attempt RefCounted data in `State/`. Order state and cleanliness are not yet attached to the gameplay scene.
 - `Resources/Examples/`: verification fixtures for dishes, layout and an order; these are not the production order list or complete kitchen slot registry.
 - `Tools/`: Blender generators, Godot assembly scripts, and PowerShell texture tooling.
 - `Assets/`: editable `.blend` sources, exported `.glb` models, and textures, grouped by purpose.
@@ -26,7 +27,7 @@ $blenderExe = 'D:\Blender\blender.exe'
 & $godotExe --headless --path . --quit-after 60
 ```
 
-These commands assemble/render the kitchen, import resources, rebuild the viewer scene, and smoke-test the default gameplay entry, respectively. Run Python generators through Blender, not standalone Python. Preserve manual edits before rebuilding: generators overwrite outputs. Open `project.godot` and press F5 for the gameplay entry; open `Scenes/kitchen-demo.tscn` and press F6 for interactive viewing. Gameplay entry currently has no player controls.
+These commands assemble/render the kitchen, import resources, rebuild the viewer scene, and smoke-test the default gameplay entry, respectively. Run Python generators through Blender, not standalone Python. Preserve manual edits before rebuilding: generators overwrite outputs. Open `project.godot` and press F5 for the gameplay entry; open `Scenes/kitchen-demo.tscn` and press F6 for interactive viewing. Gameplay has input routing, a crosshair and a basic Esc interface; actual player movement and camera rotation remain planned.
 
 After importing new scripts/resources, verify configuration and runtime-state isolation:
 
@@ -43,6 +44,14 @@ Verify weighted cleanliness and the actual 95% requirement separately:
 ```
 
 Success prints `CLEANLINESS_OK` and exits with code 0. It checks unequal initial stain amounts, zero dirt, per-region bounds, foam independence, and 94.9%/95%/95.1% boundaries. Use `DishState.meets_cleanliness_requirement()` for the cleanliness gate; the rounded display percentage must not authorize placement. Full slot-placement rules remain planned.
+
+Verify input bindings, context routing and GUI consumption:
+
+```powershell
+& $godotExe --headless --path . --script Tools/verify_game_input.gd
+```
+
+Success prints `GAME_INPUT_OK` and exits with code 0. Verify real mouse capture, Esc/resume and focus release interactively using F5. `GameInput` emits intentions through unhandled input; future movement should read its movement vector instead of polling global key state. The current interface blocks input but does not pause the scene tree or freeze gameplay state.
 
 ## Coding Style & Naming Conventions
 

@@ -1,0 +1,89 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/game_hud.gd" id="1_hud"]
+
+[sub_resource type="SystemFont" id="Font_ui"]
+font_names = PackedStringArray("Microsoft YaHei", "Noto Sans CJK SC", "sans-serif")
+
+[sub_resource type="Theme" id="Theme_ui"]
+default_font = SubResource("Font_ui")
+default_font_size = 24
+
+[node name="GameHUD" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_hud")
+
+[node name="Crosshair" type="Control" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Outline" type="ColorRect" parent="Crosshair"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -3.0
+offset_top = -3.0
+offset_right = 3.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.08, 0.12, 0.11, 0.95)
+
+[node name="Dot" type="ColorRect" parent="Crosshair/Outline"]
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 5.0
+offset_bottom = 5.0
+mouse_filter = 2
+color = Color(0.97, 0.97, 0.91, 1)
+
+[node name="Menu" type="ColorRect" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.07, 0.06, 0.65)
+
+[node name="Center" type="CenterContainer" parent="Menu"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Menu/Center"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+theme = SubResource("Theme_ui")
+
+[node name="Margin" type="MarginContainer" parent="Menu/Center/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="Rows" type="VBoxContainer" parent="Menu/Center/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Title" type="Label" parent="Menu/Center/Panel/Margin/Rows"]
+layout_mode = 2
+text = "游戏菜单"
+horizontal_alignment = 1
+
+[node name="Resume" type="Button" parent="Menu/Center/Panel/Margin/Rows"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "继续游戏"
