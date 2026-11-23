@@ -1,0 +1,38 @@
+# Repository Guidelines
+
+## Project Structure & Scope
+
+This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. The current application is a kitchen scene viewer; washing gameplay remains planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
+
+- `project.godot`: project entry point; main scene is `Scenes/kitchen-demo.tscn`.
+- `Scripts/`: runtime GDScript, currently `kitchen_viewer.gd`.
+- `Tools/`: Blender generators, Godot assembly scripts, and PowerShell texture tooling.
+- `Assets/`: editable `.blend` sources, exported `.glb` models, and textures, grouped by purpose.
+- `Docs/memory-bank/`: design and technology documents. `Docs/assets/` and `Docs/scenes/` contain delivery notes and previews; `Docs/references/` contains visual references.
+
+## Build, Test, and Development Commands
+
+Run PowerShell from the repository root. Adjust these local executable paths as needed:
+
+```powershell
+$godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
+$blenderExe = 'D:\Blender\blender.exe'
+& $blenderExe --background --factory-startup --python-exit-code 1 --python Tools/build_kitchen_scene.py
+& $godotExe --headless --editor --path . --quit
+& $godotExe --headless --path . --script Tools/build_kitchen_demo.gd
+& $godotExe --headless --path . --quit-after 60
+```
+
+These commands assemble/render the kitchen, import resources, rebuild the Godot scene, and smoke-test startup, respectively. Run Python generators through Blender, not standalone Python. Preserve manual edits before rebuilding: generators overwrite outputs. Open `project.godot` and press F5 for interactive viewing.
+
+## Coding Style & Naming Conventions
+
+Use tabs in GDScript and four spaces in Python/PowerShell. Prefer typed GDScript signatures, `snake_case` functions/scripts, and kebab-case asset filenames such as `plate-standard.glb`. Preserve exported node names, including `Rack_Slot_01`, and meter-based dimensions. Update the matching generator when changing procedural assets or scenes. No formatter/linter is configured; check whitespace with `git diff --check`.
+
+## Testing Guidelines
+
+No dedicated test framework or coverage threshold exists. Use generator assertions and the import/startup checks above. Name new standalone Godot checks `Tools/verify_<feature>.gd` and document their invocation. Visually inspect changed assets for intersections, materials, and camera clipping; verify viewer keys 1–4, R, right-drag, and focus release. `Tools/capture_kitchen_demo.gd` requires graphics mode, not `--headless`.
+
+## Commit & Pull Request Guidelines
+
+History uses `feat:` and `docs:` prefixes with concise Chinese summaries. Follow that pattern and keep commits focused. PRs should explain the change, link relevant issues, list validation commands/results, and include screenshots for visual changes. Update affected asset notes and previews. Commit `.blend`, `.glb`, `.uid`, and asset-side `.import` files; exclude `.godot/`, backups, logs, credentials, and build outputs.

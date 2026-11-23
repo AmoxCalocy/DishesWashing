@@ -1,14 +1,23 @@
 # 《洗碗时光》文档导航
 
-核心设计文档保留在本目录；各模型的交付说明与预览图放在 `assets/` 对应文件夹中；场景参考图放在 `references/`。
+核心设计、实施计划、进度与架构文档保存在 `memory-bank/`；各模型的交付说明与预览图放在 `assets/` 对应文件夹中；已组装场景的说明与预览放在 `scenes/`；场景参考图放在 `references/`。
 
 ## 核心文档
 
 | 文档 | 内容 |
 | --- | --- |
-| [游戏设计文档](game-design-document.md) | 游戏目标、洗碗流程、悬空操作与两种拿起状态 |
-| [技术栈](tech-stack.md) | 技术方案与制作流程 |
+| [游戏设计文档](memory-bank/game-design-document.md) | 游戏目标、WASD 与鼠标视角、清洗流程和验收规则 |
+| [技术栈](memory-bank/tech-stack.md) | 技术方案与制作流程 |
+| [实施计划](memory-bank/implementation-plan.md) | 分步开发指令与每步验证条件 |
+| [开发进度](memory-bank/progress.md) | 已完成工作、用户验收记录与当前进度 |
+| [项目架构](memory-bank/architecture.md) | 当前文件职责、生成依赖与架构洞察 |
 | [厨房资产计划](kitchen-asset-plan.md) | 建模优先级、交付进度与操作区灰盒说明 |
+
+## 已组装场景
+
+| 场景 | 说明与打开方式 | 预览 |
+| --- | --- | --- |
+| 简单厨房场景 | [Godot 运行、Blender 编辑与组装说明](scenes/kitchen-demo/kitchen-demo.md) | [Godot 全貌](scenes/kitchen-demo/godot-overview.png) / [Godot 玩家视角](scenes/kitchen-demo/godot-player.png) / [Blender 全貌](scenes/kitchen-demo/kitchen-demo-overview.png) |
 
 ## 模型说明与预览
 
@@ -39,8 +48,12 @@
 ```text
 Docs/
 ├── README.md
-├── game-design-document.md
-├── tech-stack.md
+├── memory-bank/
+│   ├── game-design-document.md
+│   ├── tech-stack.md
+│   ├── implementation-plan.md
+│   ├── progress.md
+│   └── architecture.md
 ├── kitchen-asset-plan.md
 ├── assets/
 │   ├── kitchen-graybox/
@@ -52,6 +65,8 @@ Docs/
 │   ├── soap-dispenser/
 │   ├── rack-and-tray/
 │   └── order-clipboard/
+├── scenes/
+│   └── kitchen-demo/
 └── references/
 ```
 

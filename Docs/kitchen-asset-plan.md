@@ -37,7 +37,7 @@
 
 ## 操作区灰盒交付
 
-2026-11-11 使用 Blender 5.3.0 后台 CLI，依据厨房参考图搭建了台面、开放水槽、左侧待洗托盘、右侧沥水区，以及工具、订单板、柜体和窗框占位。灰盒内模型用于检查比例。截至 2026-11-17，第 2～9 项已另行交付模型，见 [餐盘](assets/plate-standard/plate-standard.md)、[海绵](assets/sponge-standard/sponge-standard.md)、[马克杯](assets/mug-standard/mug-standard.md)、[水槽/排水口/开孔台面](assets/sink-countertop/sink-countertop.md)、[水龙头/抽拉喷头/把手](assets/faucet-pullout/faucet-pullout.md)、[洗洁精泵瓶](assets/soap-dispenser/soap-dispenser.md)、[沥水架/待洗托盘](assets/rack-and-tray/rack-and-tray.md) 与 [订单夹板/纸面](assets/order-clipboard/order-clipboard.md)。正式模型目前只在各自预览中替换占位，尚未组装写回主操作区场景。
+2026-11-11 使用 Blender 5.3.0 后台 CLI，依据厨房参考图搭建了台面、开放水槽、左侧待洗托盘、右侧沥水区，以及工具、订单板、柜体和窗框占位。灰盒内模型用于检查比例。截至 2026-11-17，第 2～9 项已另行交付模型，见 [餐盘](assets/plate-standard/plate-standard.md)、[海绵](assets/sponge-standard/sponge-standard.md)、[马克杯](assets/mug-standard/mug-standard.md)、[水槽/排水口/开孔台面](assets/sink-countertop/sink-countertop.md)、[水龙头/抽拉喷头/把手](assets/faucet-pullout/faucet-pullout.md)、[洗洁精泵瓶](assets/soap-dispenser/soap-dispenser.md)、[沥水架/待洗托盘](assets/rack-and-tray/rack-and-tray.md) 与 [订单夹板/纸面](assets/order-clipboard/order-clipboard.md)。2026-11-20 已将这些模型组装为独立的 [简单厨房场景](scenes/kitchen-demo/kitchen-demo.md)，交付 Blender 总场景、Godot 主场景及基础灯光和视角浏览。旧灰盒保留原样；新场景中的柜体、墙窗、地面及海绵托架仍沿用灰盒结构，第 10～12 项正式建模与洗碗玩法接入仍待完成。
 
 | 文件 | 用途 |
 | --- | --- |

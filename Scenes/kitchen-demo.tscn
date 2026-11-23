@@ -1,0 +1,150 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scripts/kitchen_viewer.gd" id="1_x5gf4"]
+[ext_resource type="PackedScene" path="res://Assets/Scenes/kitchen-room-shell.glb" id="2_5pfco"]
+[ext_resource type="PackedScene" path="res://Assets/Kitchen/sink-countertop.glb" id="3_man5s"]
+[ext_resource type="PackedScene" path="res://Assets/Kitchen/faucet-pullout.glb" id="4_fv7nu"]
+[ext_resource type="PackedScene" path="res://Assets/Tools/soap-dispenser.glb" id="5_28we7"]
+[ext_resource type="PackedScene" path="res://Assets/Tools/sponge-standard.glb" id="6_lifr6"]
+[ext_resource type="PackedScene" path="res://Assets/Kitchen/dish-rack.glb" id="7_tffwp"]
+[ext_resource type="PackedScene" path="res://Assets/Kitchen/dirty-tray.glb" id="8_umpjs"]
+[ext_resource type="PackedScene" path="res://Assets/Kitchen/order-clipboard.glb" id="9_ntijt"]
+[ext_resource type="PackedScene" path="res://Assets/Dishes/plate-standard.glb" id="10_jfjwm"]
+[ext_resource type="PackedScene" path="res://Assets/Dishes/mug-standard.glb" id="11_474ew"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_4cejl"]
+sky_top_color = Color(0.4, 0.57, 0.69, 1)
+sky_horizon_color = Color(0.83, 0.85, 0.81, 1)
+ground_bottom_color = Color(0.31, 0.27, 0.22, 1)
+ground_horizon_color = Color(0.66, 0.68, 0.61, 1)
+
+[sub_resource type="Sky" id="Sky_dmxir"]
+sky_material = SubResource("ProceduralSkyMaterial_4cejl")
+
+[sub_resource type="Environment" id="Environment_s1whq"]
+background_mode = 2
+background_energy_multiplier = 0.6
+sky = SubResource("Sky_dmxir")
+ambient_light_source = 3
+ambient_light_energy = 0.35
+tonemap_mode = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_w7poj"]
+bg_color = Color(0.08, 0.12, 0.11, 0.86)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="SystemFont" id="SystemFont_yotv4"]
+font_names = PackedStringArray("Microsoft YaHei", "Noto Sans CJK SC", "sans-serif")
+
+[node name="KitchenDemo" type="Node3D" unique_id=71691518]
+script = ExtResource("1_x5gf4")
+
+[node name="Models" type="Node3D" parent="." unique_id=677164721]
+
+[node name="RoomShell" type="Node3D" parent="Models" unique_id=1067426673 instance=ExtResource("2_5pfco")]
+
+[node name="SinkCountertop" type="Node3D" parent="Models" unique_id=80194009 instance=ExtResource("3_man5s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+
+[node name="Faucet" type="Node3D" parent="Models" unique_id=306720829 instance=ExtResource("4_fv7nu")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.16, 0.9, -0.32)
+
+[node name="SoapDispenser" type="Node3D" parent="Models" unique_id=757731798 instance=ExtResource("5_28we7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.535, 0.9, -0.26)
+
+[node name="Sponge" type="Node3D" parent="Models" unique_id=1003549277 instance=ExtResource("6_lifr6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.9285, -0.17)
+
+[node name="DishRack" type="Node3D" parent="Models" unique_id=522818202 instance=ExtResource("7_tffwp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.88, 0.9, -0.035)
+
+[node name="DirtyTray" type="Node3D" parent="Models" unique_id=1197192423 instance=ExtResource("8_umpjs")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.89, 0.9, 0.025)
+
+[node name="OrderClipboard" type="Node3D" parent="Models" unique_id=471220942 instance=ExtResource("9_ntijt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2205, 1.24, -0.398)
+
+[node name="Dishes" type="Node3D" parent="." unique_id=591368977]
+
+[node name="TrayPlate01" type="Node3D" parent="Dishes" unique_id=275672326 instance=ExtResource("10_jfjwm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.027, 0.9245, 0.085)
+
+[node name="TrayPlate02" type="Node3D" parent="Dishes" unique_id=1279534975 instance=ExtResource("10_jfjwm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.753, 0.9245, 0.085)
+
+[node name="TrayMug01" type="Node3D" parent="Dishes" unique_id=1722868964 instance=ExtResource("11_474ew")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.89, 0.965, -0.115)
+
+[node name="RackPlate01" type="Node3D" parent="Dishes" unique_id=849518192 instance=ExtResource("10_jfjwm")]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0.6975, 1.0615, -0.035)
+
+[node name="RackPlate03" type="Node3D" parent="Dishes" unique_id=1991758679 instance=ExtResource("10_jfjwm")]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0.8435, 1.0615, -0.035)
+
+[node name="RackPlate05" type="Node3D" parent="Dishes" unique_id=1203286389 instance=ExtResource("10_jfjwm")]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0.9895, 1.0615, -0.035)
+
+[node name="RackMug01" type="Node3D" parent="Dishes" unique_id=883201184 instance=ExtResource("11_474ew")]
+transform = Transform3D(1, 0, 0, 0, -1, 8.742278e-08, 0, -8.742278e-08, -1, 0.835, 0.9805, 0.27)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2018585791]
+environment = SubResource("Environment_s1whq")
+
+[node name="SoftDaylight" type="DirectionalLight3D" parent="." unique_id=973240008]
+transform = Transform3D(0.8660254, 0.40957603, -0.28678823, 0, 0.57357645, 0.81915206, 0.5, -0.7094065, 0.49673176, 0, 0, 0)
+light_color = Color(1, 0.97, 0.9, 1)
+light_energy = 0.4
+shadow_enabled = true
+directional_shadow_max_distance = 8.0
+
+[node name="FrontFill" type="OmniLight3D" parent="." unique_id=710238068]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 2.35, 1)
+light_color = Color(0.88, 0.93, 1, 1)
+light_energy = 0.18
+omni_attenuation = 1.5
+
+[node name="ViewCamera" type="Camera3D" parent="." unique_id=526307656]
+transform = Transform3D(1, 0, 0, 0, 0.8959031, 0.44424954, 0, -0.44424954, 0.8959031, 0, 1.62, 1.18)
+current = true
+fov = 53.7
+far = 50.0
+
+[node name="ViewerOverlay" type="CanvasLayer" parent="." unique_id=1328630161]
+
+[node name="Panel" type="PanelContainer" parent="ViewerOverlay" unique_id=196059181]
+offset_left = 22.0
+offset_top = 20.0
+offset_right = 22.0
+offset_bottom = 20.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_w7poj")
+
+[node name="Margin" type="MarginContainer" parent="ViewerOverlay/Panel" unique_id=1253431914]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 14
+
+[node name="Rows" type="VBoxContainer" parent="ViewerOverlay/Panel/Margin" unique_id=1902684796]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 5
+
+[node name="ViewName" type="Label" parent="ViewerOverlay/Panel/Margin/Rows" unique_id=1698338018]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.92, 0.84, 1)
+theme_override_fonts/font = SubResource("SystemFont_yotv4")
+theme_override_font_sizes/font_size = 20
+text = "操作区  ·  场景预览"
+
+[node name="Controls" type="Label" parent="ViewerOverlay/Panel/Margin/Rows" unique_id=1219643380]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.92, 0.84, 1)
+theme_override_fonts/font = SubResource("SystemFont_yotv4")
+theme_override_font_sizes/font_size = 16
+text = "右键拖动环顾  ·  1 操作区  2 全貌  3 待洗区  4 沥水区  ·  R 复位"
