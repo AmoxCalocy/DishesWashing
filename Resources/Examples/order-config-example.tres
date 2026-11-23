@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="OrderConfig" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/order_config.gd" id="1_order"]
+[ext_resource type="Script" path="res://Scripts/Data/order_item_config.gd" id="2_item"]
+[ext_resource type="Resource" path="res://Resources/Examples/plate-config-example.tres" id="3_plate"]
+[ext_resource type="Resource" path="res://Resources/Examples/mug-config-example.tres" id="4_mug"]
+
+[sub_resource type="Resource" id="Item_plate_01"]
+script = ExtResource("2_item")
+instance_id = &"plate_01"
+dish = ExtResource("3_plate")
+initial_slot_id = &"Dirty_Plate_01"
+
+[sub_resource type="Resource" id="Item_plate_02"]
+script = ExtResource("2_item")
+instance_id = &"plate_02"
+dish = ExtResource("3_plate")
+initial_slot_id = &"Dirty_Plate_02"
+
+[sub_resource type="Resource" id="Item_mug_01"]
+script = ExtResource("2_item")
+instance_id = &"mug_01"
+dish = ExtResource("4_mug")
+initial_slot_id = &"Dirty_Mug_01"
+
+[resource]
+script = ExtResource("1_order")
+order_id = &"runtime_state_example"
+display_name = "独立运行状态验证（非正式订单）"
+items = Array[ExtResource("2_item")]([SubResource("Item_plate_01"), SubResource("Item_plate_02"), SubResource("Item_mug_01")])
+base_reward = 100
+first_completion_bonus = 25

@@ -7,7 +7,8 @@ This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.
 - `project.godot`: project entry point; main scene is `Scenes/kitchen-game.tscn`.
 - `Scenes/kitchen-game.tscn`: hand-authored gameplay entry inheriting the kitchen layout, with the viewer script removed and viewer overlay hidden. Generators must not overwrite this file.
 - `Scenes/kitchen-demo.tscn`: generated viewer scene; open it separately to inspect assets and use viewer controls.
-- `Scripts/`: runtime GDScript, currently `kitchen_viewer.gd`.
+- `Scripts/`: viewer control in `kitchen_viewer.gd`; shared Resource schemas in `Data/` and per-attempt RefCounted data in `State/`. The data layer is not yet attached to the gameplay scene.
+- `Resources/Examples/`: verification fixtures for dishes, layout and an order; these are not the production order list or complete kitchen slot registry.
 - `Tools/`: Blender generators, Godot assembly scripts, and PowerShell texture tooling.
 - `Assets/`: editable `.blend` sources, exported `.glb` models, and textures, grouped by purpose.
 - `Docs/memory-bank/`: design and technology documents. `Docs/assets/` and `Docs/scenes/` contain delivery notes and previews; `Docs/references/` contains visual references.
@@ -26,6 +27,14 @@ $blenderExe = 'D:\Blender\blender.exe'
 ```
 
 These commands assemble/render the kitchen, import resources, rebuild the viewer scene, and smoke-test the default gameplay entry, respectively. Run Python generators through Blender, not standalone Python. Preserve manual edits before rebuilding: generators overwrite outputs. Open `project.godot` and press F5 for the gameplay entry; open `Scenes/kitchen-demo.tscn` and press F6 for interactive viewing. Gameplay entry currently has no player controls.
+
+After importing new scripts/resources, verify configuration and runtime-state isolation:
+
+```powershell
+& $godotExe --headless --path . --script Tools/verify_runtime_state.gd
+```
+
+Success prints `RUNTIME_STATE_OK` and exits with code 0. It checks independent dish/region/slot/tool data, fresh initial values, and unchanged shared configuration without modifying scenes or saves.
 
 ## Coding Style & Naming Conventions
 

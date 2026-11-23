@@ -1,6 +1,6 @@
 # 项目架构与文件职责
 
-> 更新日期：2026-11-23｜第 1～2 步已由用户验收
+> 更新日期：2026-11-23｜第 1～3 步已由用户验收
 
 ## 当前实现边界
 
@@ -8,7 +8,7 @@
 
 单独打开 kitchen-demo.tscn 按 F6，仍由 [kitchen_viewer.gd](../../Scripts/kitchen_viewer.gd)控制展示。两个入口分别实例化节点，原展示场景与浏览脚本未改；场景不在运行时打开 Blender 总场景或执行建模脚本。
 
-WASD、鼠标直接看向、玩家碰撞、拿取与清洗、订单、评分和存档仍是已规划功能，尚无运行实现。后续脚本与节点接入独立可玩文件，本步未创建玩家或餐具状态脚本。
+第 3 步已建立独立数据层：Resource 保存共享配置，RefCounted 保存每次订单的可变状态，并通过独立脚本验证。数据层未绑定场景，不改变 F5 画面。WASD、鼠标直接看向、玩家碰撞、拿取与清洗、完整订单流程、评分和存档仍待实现；第 4 步清洁度规则未开始。
 
 ## 入口、运行文件与元数据
 
@@ -26,6 +26,49 @@ WASD、鼠标直接看向、玩家碰撞、拿取与清洗、订单、评分和�
 | [.gitignore](../../.gitignore) | 排除 .godot、Blender 备份、日志、本地配置和构建输出，保留源模型、GLB、UID 与资产侧导入元数据。 |
 
 场景的 Models 节点保存 8 个环境或道具实例；Dishes 节点保存 5 盘、2 杯的展示实例。托盘上的两盘一杯与架内三盘一杯均为展示布置，不是已经生成的任务订单。相机为 ViewCamera，提示位于 ViewerOverlay；浏览脚本直接引用这些节点，重命名时需同步处理。
+
+## 配置资源与独立运行状态
+
+### 共享配置
+
+Scripts/Data 的类型均继承 Resource，供 .tres 文件复用。它们描述初始数据与静态规则，运行中的清洁进度、施液、泡沫、占用和工具开关不得写入这些配置。
+
+| 文件 | 职责 |
+| --- | --- |
+| [stain_region_config.gd](../../Scripts/Data/stain_region_config.gd) | 污渍区域 ID、残渣或油渍类型、初始量及泡沫汇总权重。 |
+| [dish_config.gd](../../Scripts/Data/dish_config.gd) | 餐具类型、名称、共享模型与污渍区域配置数组。 |
+| [slot_config.gd](../../Scripts/Data/slot_config.gd) | 槽位 ID、待洗/临时/沥水类别、兼容餐具类型和所属 fixture_path；槽位 ID 对应资产中已有定位节点名。 |
+| [kitchen_layout_config.gd](../../Scripts/Data/kitchen_layout_config.gd) | 厨房槽位配置集合，与具体订单内容分开。 |
+| [order_item_config.gd](../../Scripts/Data/order_item_config.gd) | 单件任务餐具的实例 ID、餐具配置引用和初始槽位 ID。 |
+| [order_config.gd](../../Scripts/Data/order_config.gd) | 订单 ID、名称、条目数组、基础点数及首次额外点数；未实现奖励发放。 |
+
+槽位配置引用现有 fixture 和定位节点，完整目标姿态仍由资产节点提供；第 3 步未解析场景变换或注册可交互槽位。后续接入时不得将这些数据记录误认为已完成的放置判定。
+
+### 每次订单的状态
+
+Scripts/State 的类型均继承 RefCounted，不依赖场景树或自动加载单例。每次尝试用同一份订单及布局配置构造新的 OrderState，各层按值初始化，不保留可变进度对源 Resource 的回写。
+
+| 文件 | 职责 |
+| --- | --- |
+| [stain_region_state.gd](../../Scripts/State/stain_region_state.gd) | 每个区域独立的初始量快照、剩余量、类型、泡沫量和权重。 |
+| [dish_state.gd](../../Scripts/State/dish_state.gd) | 单件餐具的实例 ID、类型、当前槽位、是否手持、施液资格及独立区域状态字典。 |
+| [slot_state.gd](../../Scripts/State/slot_state.gd) | 槽位身份、类别和当前占用者 ID；不实现碰撞、吸附或完成资格。 |
+| [tool_state.gd](../../Scripts/State/tool_state.gd) | 工具选择、海绵干湿、龙头开关与泵瓶持有状态；新建时分别为收起、干燥、关闭和归位。 |
+| [order_state.gd](../../Scripts/State/order_state.gd) | 按实例 ID 建立餐具字典、按槽位 ID 建立占用字典，为本次尝试新建 ToolState，并根据订单条目初始化占用。构造时检查重复身份、缺失初始槽位和重复占位。 |
+
+OrderState 创建的是内存数据，未生成餐具节点、改变展示餐具或接入重开按钮。重新构造可恢复初始状态；实际订单重置与场景更新属于后续流程。清洁度和奖励算法尚未加入本层。
+
+### 验证配置与脚本
+
+| 文件 | 职责 |
+| --- | --- |
+| [plate-config-example.tres](../../Resources/Examples/plate-config-example.tres) | 验证用餐盘配置，引用现有模型，含正面残渣、正面油渍和背面油渍数据。 |
+| [mug-config-example.tres](../../Resources/Examples/mug-config-example.tres) | 验证用马克杯配置，引用现有模型与杯内两类污渍数据。 |
+| [layout-config-example.tres](../../Resources/Examples/layout-config-example.tres) | 验证用布局，包含 3 个托盘位及各 1 个盘、杯沥水位；不是全厨房槽位清单。 |
+| [order-config-example.tres](../../Resources/Examples/order-config-example.tres) | 验证用两盘一杯条目，两件盘子共享同一份 DishConfig；点数 100 和首次额外点数 25 只用于检查配置隔离，不代表正式订单平衡。 |
+| [Tools/verify_runtime_state.gd](../../Tools/verify_runtime_state.gd) | 构造多份运行状态，修改及删除其中一份的进度、泡沫、位置、占用、工具和集合内容，检查其他实例、新状态与源配置。成功输出 RUNTIME_STATE_OK、退出 0，失败报告原因并退出 1。 |
+
+上述 11 个数据类及验证脚本各有同名 .gd.uid，保存 Godot 稳定资源标识，随源码提交。验证用 .tres 不被当前主场景加载；先导入新增类型，再按 [progress.md](progress.md) 的命令重跑验证。
 
 ## 总场景组装和截图工具
 
@@ -85,7 +128,7 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 | --- | --- |
 | [game-design-document.md](game-design-document.md) | 当前目标玩法与验收规则，包括 WASD、两种持有状态、清洗、泡沫评分与 MVP 边界；不能据此推断功能已完成。 |
 | [tech-stack.md](tech-stack.md) | 固定工具链、运行状态与配置分离、交互、存档和验证方案。 |
-| [implementation-plan.md](implementation-plan.md) | 62 个实施步骤与验证条件，第 1～2 步已通过，第 3 步未开始。 |
+| [implementation-plan.md](implementation-plan.md) | 62 个实施步骤与验证条件，第 1～3 步已通过，第 4 步未开始。 |
 | [progress.md](progress.md) | 实际完成记录、测试执行者及来源、当前状态与后续衔接。 |
 | [architecture.md](architecture.md) | 当前文件职责、依赖和重建边界；新增或改变职责时更新。 |
 | [Docs/README.md](../README.md) | 文档导航，连接 memory-bank、资产说明、场景说明与参考图。 |
@@ -105,8 +148,8 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 
 1. **展示输入与玩家控制分别接入。** 浏览脚本用数字键切机位、右键拖相机，基础游戏将用这些键选工具和旋转餐具。第 2 步用继承场景清除根浏览脚本并隐藏提示，用户已确认此隔离及原展示操作正常；后续控制写在可玩入口，移动功能仍须单独实现和验收。
 2. **场景生成器拥有其输出。** Godot 组装脚本会覆盖主展示场景，Blender 组装脚本会覆盖总场景、房间壳与预览。直接改生成结果而不处理生成器，重建会丢失改动；独立可玩逻辑应避开这些覆盖路径。
-3. **定位节点描述姿态，不描述占用。** 槽位保存的是完整餐具根变换，不能再加半高；它们没有兼容、占用、清洁门槛或订单完成逻辑。后续运行状态需另建，不能靠场景节点存在就认定功能已完成。
-4. **实例共享资产，任务状态应独立。** 现有盘杯复用模型资源。以后污渍、泡沫、施液和位置状态不能存进共享材质或配置导致多件联动；第 3 步先分离配置与运行状态。
+3. **定位节点描述姿态，数据层记录占用。** 资产节点提供完整餐具根变换，不能再加半高；第 3 步已将类别、兼容配置和占用者拆开记录，但尚未接入实际吸附、清洁门槛或完成判定。
+4. **共享配置不承载可变进度。** 同一 DishConfig 可以服务多件盘子；每件区域状态、每次订单字典及 ToolState 均独立创建。第 3 步验证包含数值修改和删除集合元素，避免只检查顶层对象不同而遗漏嵌套数据共享。
 5. **现有背景几何未证明可行走。** 灰盒与房间壳主要面向固定机位展示；WASD 纳入 MVP 后，需要在对应步骤补齐玩家碰撞、通道、边界、交互距离和超距处理，不能以已有地面网格替代这些验证。
 6. **资产动画不等于玩法状态。** 泵头动画、喷嘴定位、软管展示形态和海绵形态均可复用，但缺少运行时供水、干湿、施液、清洁及评分判定。历史资产说明中的接液或固定站位方案若与当前设计冲突，玩法以 memory-bank 的现行设计为准，几何约定仍须遵守。
 7. **性能目标与当前配置分开记录。** 开发机 1080p 默认画质、稳定 60 FPS 是后续测量目标；现有窗口配置和第 1 步展示验收不能证明该目标或最低配置已经满足。

@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="KitchenLayoutConfig" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/kitchen_layout_config.gd" id="1_layout"]
+[ext_resource type="Script" path="res://Scripts/Data/slot_config.gd" id="2_slot"]
+
+[sub_resource type="Resource" id="Slot_dirty_plate_01"]
+script = ExtResource("2_slot")
+slot_id = &"Dirty_Plate_01"
+slot_kind = 0
+accepted_dish_types = Array[StringName]([&"plate"])
+fixture_path = NodePath("Models/DirtyTray")
+
+[sub_resource type="Resource" id="Slot_dirty_plate_02"]
+script = ExtResource("2_slot")
+slot_id = &"Dirty_Plate_02"
+slot_kind = 0
+accepted_dish_types = Array[StringName]([&"plate"])
+fixture_path = NodePath("Models/DirtyTray")
+
+[sub_resource type="Resource" id="Slot_dirty_mug_01"]
+script = ExtResource("2_slot")
+slot_id = &"Dirty_Mug_01"
+slot_kind = 0
+accepted_dish_types = Array[StringName]([&"mug"])
+fixture_path = NodePath("Models/DirtyTray")
+
+[sub_resource type="Resource" id="Slot_rack_plate_01"]
+script = ExtResource("2_slot")
+slot_id = &"Rack_Slot_01"
+slot_kind = 2
+accepted_dish_types = Array[StringName]([&"plate"])
+fixture_path = NodePath("Models/DishRack")
+
+[sub_resource type="Resource" id="Slot_rack_mug_01"]
+script = ExtResource("2_slot")
+slot_id = &"Rack_Cup_Slot_01"
+slot_kind = 2
+accepted_dish_types = Array[StringName]([&"mug"])
+fixture_path = NodePath("Models/DishRack")
+
+[resource]
+script = ExtResource("1_layout")
+slots = Array[ExtResource("2_slot")]([SubResource("Slot_dirty_plate_01"), SubResource("Slot_dirty_plate_02"), SubResource("Slot_dirty_mug_01"), SubResource("Slot_rack_plate_01"), SubResource("Slot_rack_mug_01")])

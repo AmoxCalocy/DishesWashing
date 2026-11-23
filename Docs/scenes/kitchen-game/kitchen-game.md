@@ -6,7 +6,7 @@
 
 打开项目根目录的 [project.godot](../../../project.godot)，等待资源导入后按 F5，运行 [kitchen-game.tscn](../../../Scenes/kitchen-game.tscn)。
 
-此入口目前只提供后续玩法开发所需的厨房布局。WASD、鼠标直接看向、拿取、餐具状态及清洁均未实现，不属于第 2 步验收范围。
+此入口目前只提供后续玩法开发所需的厨房布局。第 3 步的数据层已独立验证，但尚未绑定此场景；WASD、鼠标直接看向、拿取与清洁仍待实现，均不属于第 2 步验收范围，F5 画面不变。
 
 原 [kitchen-demo.tscn](../../../Scenes/kitchen-demo.tscn)继续作为独立展示器：在编辑器打开它，按 F6 运行，使用 1～4、R、右键拖动和失焦释放操作。
 
@@ -47,4 +47,4 @@
 & 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe' --headless --path . res://Scenes/kitchen-demo.tscn --quit-after 60
 ```
 
-无头启动不替代上面的图形和键位检查。用户已于 2026-11-23 确认第 2 步验证通过，结果来源与静态检查范围记录在 [progress.md](../../memory-bank/progress.md)。当前预览图仍为原展示器历史交付；第 3 步尚未开始。
+无头启动不替代上面的图形和键位检查。用户已于 2026-11-23 确认第 2 步验证通过，结果来源与静态检查范围记录在 [progress.md](../../memory-bank/progress.md)。当前预览图仍为原展示器历史交付；第 3 步数据层也已独立验证，第 4 步尚未开始。

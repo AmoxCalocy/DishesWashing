@@ -13,6 +13,10 @@
 | [项目架构](memory-bank/architecture.md) | 当前文件职责、生成依赖与架构洞察 |
 | [厨房资产计划](kitchen-asset-plan.md) | 建模优先级、交付进度与操作区灰盒说明 |
 
+## 数据层验证
+
+第 3 步已通过用户验收。[独立状态验证脚本](../Tools/verify_runtime_state.gd)检查共享配置、运行数据隔离和新建状态初始值；[进度记录](memory-bank/progress.md)包含运行命令，[架构说明](memory-bank/architecture.md)列出配置类型、状态类型及示例文件职责。数据层尚未绑定运行场景，F5 画面不变。
+
 ## 已组装场景
 
 | 场景 | 说明与打开方式 | 预览 |

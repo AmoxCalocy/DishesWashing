@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="DishConfig" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/dish_config.gd" id="1_dish"]
+[ext_resource type="Script" path="res://Scripts/Data/stain_region_config.gd" id="2_stain"]
+[ext_resource type="PackedScene" path="res://Assets/Dishes/plate-standard.glb" id="3_model"]
+
+[sub_resource type="Resource" id="Region_front_food"]
+script = ExtResource("2_stain")
+region_id = &"front_food"
+stain_type = 0
+initial_amount = 6.0
+foam_weight = 2.0
+
+[sub_resource type="Resource" id="Region_front_oil"]
+script = ExtResource("2_stain")
+region_id = &"front_oil"
+stain_type = 1
+initial_amount = 3.0
+foam_weight = 2.0
+
+[sub_resource type="Resource" id="Region_back_oil"]
+script = ExtResource("2_stain")
+region_id = &"back_oil"
+stain_type = 1
+initial_amount = 1.0
+foam_weight = 1.0
+
+[resource]
+script = ExtResource("1_dish")
+dish_type = &"plate"
+display_name = "标准餐盘（配置验证示例）"
+model = ExtResource("3_model")
+stain_regions = Array[ExtResource("2_stain")]([SubResource("Region_front_food"), SubResource("Region_front_oil"), SubResource("Region_back_oil")])
