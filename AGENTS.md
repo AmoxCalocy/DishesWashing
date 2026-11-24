@@ -2,14 +2,15 @@
 
 ## Project Structure & Scope
 
-This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry with WASD walking, player collision, direct mouse look and hold-to-zoom; washing gameplay remains planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
+This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry with WASD walking, player collision, direct mouse look, hold-to-zoom and dish targeting against real surfaces. Actual pickup and washing remain planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
 
 - `project.godot`: project entry point; main scene is `Scenes/kitchen-game.tscn`.
 - `Scenes/kitchen-game.tscn`: hand-authored gameplay entry inheriting the kitchen layout, with the viewer script removed and viewer overlay hidden. Generators must not overwrite this file.
-- `Scenes/game-hud.tscn`: hand-authored crosshair and basic Esc interface, instanced only by the gameplay entry; generators must not overwrite it.
+- `Scenes/game-hud.tscn`: hand-authored crosshair, target-name label and basic Esc interface, instanced only by the gameplay entry; generators must not overwrite it.
 - `Scenes/player.tscn`: hand-authored CharacterBody3D with a capsule and player camera. `Scenes/kitchen-walk-collision.tscn` contains player-only floor, cabinet, wall and boundary blockers; generators must not overwrite either scene.
+- `Scenes/Dishes/plate.tscn` and `mug.tscn`: hand-authored StaticBody3D wrappers reusing formal GLBs. Assign a unique `instance_id` when instantiating. Gameplay hides the original three tray visuals and places these wrappers at the same poses; rack dishes remain non-interactable decorations and occluders.
 - `Scenes/kitchen-demo.tscn`: generated viewer scene; open it separately to inspect assets and use viewer controls.
-- `Scripts/`: viewer control in `kitchen_viewer.gd`; input intentions in `Input/game_input.gd`; walking, direct look and view zoom in `Player/player_controller.gd`; crosshair/menu binding in `UI/game_hud.gd`; shared Resource schemas in `Data/` and per-attempt RefCounted data in `State/`. Order state and cleanliness are not yet attached to the gameplay scene.
+- `Scripts/`: viewer control in `kitchen_viewer.gd`; input intentions in `Input/game_input.gd`; walking, look and zoom in `Player/player_controller.gd`; crosshair/menu/target-name binding in `UI/game_hud.gd`; instance identity in `Dishes/dish_body.gd`; real-surface collision and camera targeting in `Interaction/`; shared Resources in `Data/` and per-attempt RefCounted data in `State/`. Order state and cleanliness are not yet attached to the gameplay scene.
 - `Resources/Examples/`: verification fixtures for dishes, layout and an order; these are not the production order list or complete kitchen slot registry.
 - `Tools/`: Blender generators, Godot assembly scripts, and PowerShell texture tooling.
 - `Assets/`: editable `.blend` sources, exported `.glb` models, and textures, grouped by purpose.
@@ -60,7 +61,7 @@ Verify walking and kitchen collision with the real gameplay scene:
 & $godotExe --headless --path . --script Tools/verify_player_movement.gd
 ```
 
-Success prints `PLAYER_MOVEMENT_OK` and exits with code 0 after about 20 seconds. It checks safe spawn, camera ownership, WASD/diagonal speed, 30/120 Hz physics rates, camera-heading projection, mode restrictions, kitchen blockers and task-area paths. Player collision is on layer 2 with mask 16; walk blockers use layer 5 (value 16). Future interaction rays must exclude these layers and use actual surface/occlusion geometry instead of the coarse cabinet blocker.
+Success prints `PLAYER_MOVEMENT_OK` and exits with code 0 after about 20 seconds. It checks safe spawn, camera ownership, WASD/diagonal speed, 30/120 Hz physics rates, camera-heading projection, mode restrictions, kitchen blockers and task-area paths. Player collision is on layer 2 with mask 16; walk blockers use layer 5 (value 16). Interaction rays exclude both layers and use actual surface/occlusion geometry instead of the coarse cabinet blocker.
 
 Verify direct mouse look, hold-to-zoom and the original viewer controls:
 
@@ -69,6 +70,16 @@ Verify direct mouse look, hold-to-zoom and the original viewer controls:
 ```
 
 Success prints `MOUSE_LOOK_OK` and exits with code 0. It checks yaw/pitch, walking while looking, mode/focus recovery, FOV restoration and viewer right-drag/presets. Right mouse reuses `game_rotate`: `zoom_view` in EMPTY/SOAP_BOTTLE and `rotate_dish` in CARRYING/CLOSE_UP. Zoom caches the original FOV, defaults to 35 degrees and restores on release, UI, focus loss or hand-mode change. It must remain separate from the planned F dish-distance transition. Test real capture and zoom interactively with F5.
+
+Verify independent dish identities, real surfaces and crosshair targeting:
+
+```powershell
+& $godotExe --headless --path . --script Tools/verify_dish_targeting.gd
+```
+
+Success prints `DISH_TARGETING_OK` and exits with code 0. It checks two plates and one mug, full poses, short-ray surface hits/normals, transformed cups, open cup/handle/rack/tray/sink geometry, range, occlusion, target-name feedback, menu/focus clearing and viewer isolation. F5: approach the left tray and aim at each dish; names disappear when looking away or beyond 1.5 m. Actual pickup is step 10; step 9 slot registration has not begun.
+
+Dish surfaces use layer 1 (value 1), environment surfaces layer 3 (value 4), both with mask 0. `DishTargeting` uses mask 5 and accepts only the first hit; decorations block rays without becoming task dishes. `MeshSurfaceCollision` scales triangle coordinates by 100 and applies reciprocal uniform shape scaling to preserve metre dimensions while avoiding short-ray misses on tiny faces. Keep this precision check when changing collision generation. Occluders snapshot mesh poses on ready; future animated parts must synchronize their shapes. New target types must coordinate with the current DISH/NONE context routing, and actual actions must requery rather than trust the cached target.
 
 ## Coding Style & Naming Conventions
 

@@ -29,14 +29,18 @@
 
 ## 鼠标观察与右键放大验证
 
-第 7 步及追加右键放大已通过用户验收。[鼠标观察验证脚本](../Tools/verify_mouse_look.gd)检查直接看向、水平转身、俯仰、边走边转、恢复捕获和旧展示器回归，并覆盖右键按住放大、松开及中断后复原。F5 中空手或持泵瓶时右键临时放大，持餐具时仍旋转餐具；真实持物尚未实现，其上下文由脚本设置。第 8 步尚未开始。
+第 7 步及追加右键放大已通过用户验收。[鼠标观察验证脚本](../Tools/verify_mouse_look.gd)检查直接看向、水平转身、俯仰、边走边转、恢复捕获和旧展示器回归，并覆盖右键按住放大、松开及中断后复原。F5 中空手或持泵瓶时右键临时放大，持餐具时仍旋转餐具；真实持物尚未实现，其上下文由脚本设置。
+
+## 盘杯与目标识别验证
+
+第 8 步已通过用户验收。[盘杯验证脚本](../Tools/verify_dish_targeting.gd)检查独立身份、真实表面与法线、杯内和孔洞、架槽、托盘及水槽内腔、距离、遮挡和展示器隔离。F5 走近左侧托盘，准星分别显示“餐盘 1”“餐盘 2”“马克杯”；默认范围为 1.5 米，超距、遮挡、菜单和失焦后清除目标。文件职责与碰撞分层见 [架构说明](memory-bank/architecture.md)，命令与验收来源见 [进度记录](memory-bank/progress.md)。第 9 步未开始，实际拿起在第 10 步实现。
 
 ## 已组装场景
 
 | 场景 | 说明与打开方式 | 预览 |
 | --- | --- | --- |
 | 简单厨房场景 | [Godot 运行、Blender 编辑与组装说明](scenes/kitchen-demo/kitchen-demo.md) | [Godot 全貌](scenes/kitchen-demo/godot-overview.png) / [Godot 玩家视角](scenes/kitchen-demo/godot-player.png) / [Blender 全貌](scenes/kitchen-demo/kitchen-demo-overview.png) |
-| 厨房可玩入口 | [F5 行走观察、右键放大、生成边界与验收](scenes/kitchen-game/kitchen-game.md) | 行走、镜头、碰撞与基础界面已由用户验收；历史预览见展示场景 |
+| 厨房可玩入口 | [F5 行走观察、盘杯识别、右键放大与验收](scenes/kitchen-game/kitchen-game.md) | 行走、镜头、表面碰撞、盘杯识别与基础界面已由用户验收；历史预览见展示场景 |
 
 ## 模型说明与预览
 

@@ -1,10 +1,14 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="PackedScene" path="res://Scenes/kitchen-demo.tscn" id="1_kitchen"]
 [ext_resource type="Script" path="res://Scripts/Input/game_input.gd" id="2_input"]
 [ext_resource type="PackedScene" path="res://Scenes/game-hud.tscn" id="3_hud"]
 [ext_resource type="PackedScene" path="res://Scenes/player.tscn" id="4_player"]
 [ext_resource type="PackedScene" path="res://Scenes/kitchen-walk-collision.tscn" id="5_collision"]
+[ext_resource type="PackedScene" path="res://Scenes/Dishes/plate.tscn" id="6_plate"]
+[ext_resource type="PackedScene" path="res://Scenes/Dishes/mug.tscn" id="7_mug"]
+[ext_resource type="Script" path="res://Scripts/Interaction/kitchen_surface_collision.gd" id="8_surfaces"]
+[ext_resource type="Script" path="res://Scripts/Interaction/dish_targeting.gd" id="9_targeting"]
 
 [node name="KitchenGame" instance=ExtResource("1_kitchen")]
 script = null
@@ -15,14 +19,50 @@ visible = false
 [node name="ViewCamera" parent="."]
 current = false
 
+[node name="TrayPlate01" parent="Dishes"]
+visible = false
+
+[node name="TrayPlate02" parent="Dishes"]
+visible = false
+
+[node name="TrayMug01" parent="Dishes"]
+visible = false
+
 [node name="GameInput" type="Node" parent="."]
 script = ExtResource("2_input")
 
 [node name="GameHUD" parent="." instance=ExtResource("3_hud")]
 input_path = NodePath("../GameInput")
+targeting_path = NodePath("../DishTargeting")
 
 [node name="WalkCollision" parent="." instance=ExtResource("5_collision")]
 
 [node name="Player" parent="." instance=ExtResource("4_player")]
 position = Vector3(0, 0.03, 1.18)
 input_path = NodePath("../GameInput")
+
+[node name="PlayableDishes" type="Node3D" parent="."]
+
+[node name="TrayPlate01" parent="PlayableDishes" instance=ExtResource("6_plate")]
+position = Vector3(-1.027, 0.9245, 0.085)
+instance_id = &"tray_plate_01"
+display_name = "餐盘 1"
+
+[node name="TrayPlate02" parent="PlayableDishes" instance=ExtResource("6_plate")]
+position = Vector3(-0.753, 0.9245, 0.085)
+instance_id = &"tray_plate_02"
+display_name = "餐盘 2"
+
+[node name="TrayMug01" parent="PlayableDishes" instance=ExtResource("7_mug")]
+position = Vector3(-0.89, 0.965, -0.115)
+instance_id = &"tray_mug_01"
+display_name = "马克杯"
+
+[node name="SurfaceCollision" type="Node" parent="."]
+script = ExtResource("8_surfaces")
+visual_roots = Array[NodePath]([NodePath("../Models"), NodePath("../Dishes")])
+
+[node name="DishTargeting" type="Node" parent="."]
+script = ExtResource("9_targeting")
+input_path = NodePath("../GameInput")
+camera_path = NodePath("../Player/ViewCamera")

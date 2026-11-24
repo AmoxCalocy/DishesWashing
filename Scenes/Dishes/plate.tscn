@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Dishes/dish_body.gd" id="1_dish"]
+[ext_resource type="PackedScene" path="res://Assets/Dishes/plate-standard.glb" id="2_model"]
+
+[node name="Plate" type="StaticBody3D"]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("1_dish")
+dish_type = &"plate"
+display_name = "餐盘"
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
