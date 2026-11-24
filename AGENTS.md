@@ -2,14 +2,14 @@
 
 ## Project Structure & Scope
 
-This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry with WASD walking and player collision; mouse look and washing gameplay remain planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
+This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry with WASD walking, player collision, direct mouse look and hold-to-zoom; washing gameplay remains planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
 
 - `project.godot`: project entry point; main scene is `Scenes/kitchen-game.tscn`.
 - `Scenes/kitchen-game.tscn`: hand-authored gameplay entry inheriting the kitchen layout, with the viewer script removed and viewer overlay hidden. Generators must not overwrite this file.
 - `Scenes/game-hud.tscn`: hand-authored crosshair and basic Esc interface, instanced only by the gameplay entry; generators must not overwrite it.
 - `Scenes/player.tscn`: hand-authored CharacterBody3D with a capsule and player camera. `Scenes/kitchen-walk-collision.tscn` contains player-only floor, cabinet, wall and boundary blockers; generators must not overwrite either scene.
 - `Scenes/kitchen-demo.tscn`: generated viewer scene; open it separately to inspect assets and use viewer controls.
-- `Scripts/`: viewer control in `kitchen_viewer.gd`; input intentions in `Input/game_input.gd`; walking in `Player/player_controller.gd`; crosshair/menu binding in `UI/game_hud.gd`; shared Resource schemas in `Data/` and per-attempt RefCounted data in `State/`. Order state and cleanliness are not yet attached to the gameplay scene.
+- `Scripts/`: viewer control in `kitchen_viewer.gd`; input intentions in `Input/game_input.gd`; walking, direct look and view zoom in `Player/player_controller.gd`; crosshair/menu binding in `UI/game_hud.gd`; shared Resource schemas in `Data/` and per-attempt RefCounted data in `State/`. Order state and cleanliness are not yet attached to the gameplay scene.
 - `Resources/Examples/`: verification fixtures for dishes, layout and an order; these are not the production order list or complete kitchen slot registry.
 - `Tools/`: Blender generators, Godot assembly scripts, and PowerShell texture tooling.
 - `Assets/`: editable `.blend` sources, exported `.glb` models, and textures, grouped by purpose.
@@ -28,7 +28,7 @@ $blenderExe = 'D:\Blender\blender.exe'
 & $godotExe --headless --path . --quit-after 60
 ```
 
-These commands assemble/render the kitchen, import resources, rebuild the viewer scene, and smoke-test the default gameplay entry, respectively. Run Python generators through Blender, not standalone Python. Preserve manual edits before rebuilding: generators overwrite outputs. Open `project.godot` and press F5 for the gameplay entry; open `Scenes/kitchen-demo.tscn` and press F6 for interactive viewing. Gameplay has WASD walking, player collision, a crosshair and a basic Esc interface; mouse look remains planned.
+These commands assemble/render the kitchen, import resources, rebuild the viewer scene, and smoke-test the default gameplay entry, respectively. Run Python generators through Blender, not standalone Python. Preserve manual edits before rebuilding: generators overwrite outputs. Open `project.godot` and press F5 for the gameplay entry; open `Scenes/kitchen-demo.tscn` and press F6 for interactive viewing. Gameplay supports WASD, direct mouse look, player collision, a crosshair and a basic Esc interface. Hold right mouse to zoom while empty-handed or holding soap; dish modes retain right-drag rotation intentions.
 
 After importing new scripts/resources, verify configuration and runtime-state isolation:
 
@@ -61,6 +61,14 @@ Verify walking and kitchen collision with the real gameplay scene:
 ```
 
 Success prints `PLAYER_MOVEMENT_OK` and exits with code 0 after about 20 seconds. It checks safe spawn, camera ownership, WASD/diagonal speed, 30/120 Hz physics rates, camera-heading projection, mode restrictions, kitchen blockers and task-area paths. Player collision is on layer 2 with mask 16; walk blockers use layer 5 (value 16). Future interaction rays must exclude these layers and use actual surface/occlusion geometry instead of the coarse cabinet blocker.
+
+Verify direct mouse look, hold-to-zoom and the original viewer controls:
+
+```powershell
+& $godotExe --headless --path . --script Tools/verify_mouse_look.gd
+```
+
+Success prints `MOUSE_LOOK_OK` and exits with code 0. It checks yaw/pitch, walking while looking, mode/focus recovery, FOV restoration and viewer right-drag/presets. Right mouse reuses `game_rotate`: `zoom_view` in EMPTY/SOAP_BOTTLE and `rotate_dish` in CARRYING/CLOSE_UP. Zoom caches the original FOV, defaults to 35 degrees and restores on release, UI, focus loss or hand-mode change. It must remain separate from the planned F dish-distance transition. Test real capture and zoom interactively with F5.
 
 ## Coding Style & Naming Conventions
 

@@ -29,6 +29,7 @@ var interface_open: bool = false
 var _held: Dictionary[StringName, bool] = {}
 var _primary_command: StringName = &""
 var _rotating: bool = false
+var _zooming_view: bool = false
 
 func _ready() -> void:
 	_update_mouse_mode()
@@ -117,6 +118,9 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 			if pressed:
 				_release_primary()
 			command_requested.emit(&"rotate_dish", pressed)
+		elif hand_mode in [HandMode.EMPTY, HandMode.SOAP_BOTTLE]:
+			_zooming_view = pressed
+			command_requested.emit(&"zoom_view", pressed)
 		return
 	if not pressed:
 		return
@@ -188,6 +192,9 @@ func _clear_held() -> void:
 	if _rotating:
 		_rotating = false
 		command_requested.emit(&"rotate_dish", false)
+	if _zooming_view:
+		_zooming_view = false
+		command_requested.emit(&"zoom_view", false)
 	movement_changed.emit(Vector2.ZERO)
 
 func _update_mouse_mode() -> void:
