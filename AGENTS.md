@@ -2,15 +2,16 @@
 
 ## Project Structure & Scope
 
-This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry with WASD walking, player collision, direct mouse look, hold-to-zoom and dish targeting against real surfaces. Actual pickup and washing remain planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
+This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry with WASD, collision, mouse look, hold-to-zoom, real-surface dish targeting and 13 registered slots. Actual pickup, full placement and washing remain planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
 
 - `project.godot`: project entry point; main scene is `Scenes/kitchen-game.tscn`.
 - `Scenes/kitchen-game.tscn`: hand-authored gameplay entry inheriting the kitchen layout, with the viewer script removed and viewer overlay hidden. Generators must not overwrite this file.
 - `Scenes/game-hud.tscn`: hand-authored crosshair, target-name label and basic Esc interface, instanced only by the gameplay entry; generators must not overwrite it.
 - `Scenes/player.tscn`: hand-authored CharacterBody3D with a capsule and player camera. `Scenes/kitchen-walk-collision.tscn` contains player-only floor, cabinet, wall and boundary blockers; generators must not overwrite either scene.
-- `Scenes/Dishes/plate.tscn` and `mug.tscn`: hand-authored StaticBody3D wrappers reusing formal GLBs. Assign a unique `instance_id` when instantiating. Gameplay hides the original three tray visuals and places these wrappers at the same poses; rack dishes remain non-interactable decorations and occluders.
+- `Scenes/Dishes/plate.tscn` and `mug.tscn`: hand-authored StaticBody3D wrappers reusing formal GLBs. Assign a unique `instance_id` and an `initial_slot_id` for gameplay initialization. The registry places the three initial dishes at complete tray marker poses. All inherited display dishes are hidden only in gameplay, leaving the rack empty.
+- `Scenes/kitchen-slots.tscn`: hand-authored registry entry with calibrated temporary plate/mug poses and visible markers. `Resources/Kitchen/kitchen-layout.tres` lists all 13 tray/rack/temporary slots. Generators must not overwrite these files.
 - `Scenes/kitchen-demo.tscn`: generated viewer scene; open it separately to inspect assets and use viewer controls.
-- `Scripts/`: viewer control in `kitchen_viewer.gd`; input intentions in `Input/game_input.gd`; walking, look and zoom in `Player/player_controller.gd`; crosshair/menu/target-name binding in `UI/game_hud.gd`; instance identity in `Dishes/dish_body.gd`; real-surface collision and camera targeting in `Interaction/`; shared Resources in `Data/` and per-attempt RefCounted data in `State/`. Order state and cleanliness are not yet attached to the gameplay scene.
+- `Scripts/`: viewer control in `kitchen_viewer.gd`; input intentions in `Input/game_input.gd`; walking, look and zoom in `Player/player_controller.gd`; HUD bindings in `UI/game_hud.gd`; instance identity in `Dishes/dish_body.gd`; surface collision and targeting in `Interaction/`; marker/config/state registration in `Slots/`; shared Resources in `Data/` and RefCounted data in `State/`. The registry uses independent SlotState objects; OrderState and DishState cleanliness are not yet attached to the gameplay scene.
 - `Resources/Examples/`: verification fixtures for dishes, layout and an order; these are not the production order list or complete kitchen slot registry.
 - `Tools/`: Blender generators, Godot assembly scripts, and PowerShell texture tooling.
 - `Assets/`: editable `.blend` sources, exported `.glb` models, and textures, grouped by purpose.
@@ -77,9 +78,19 @@ Verify independent dish identities, real surfaces and crosshair targeting:
 & $godotExe --headless --path . --script Tools/verify_dish_targeting.gd
 ```
 
-Success prints `DISH_TARGETING_OK` and exits with code 0. It checks two plates and one mug, full poses, short-ray surface hits/normals, transformed cups, open cup/handle/rack/tray/sink geometry, range, occlusion, target-name feedback, menu/focus clearing and viewer isolation. F5: approach the left tray and aim at each dish; names disappear when looking away or beyond 1.5 m. Actual pickup is step 10; step 9 slot registration has not begun.
+Success prints `DISH_TARGETING_OK` and exits with code 0. It checks two plates and one mug, full poses, short-ray surface hits/normals, transformed cups, open cup/handle/rack/tray/sink geometry, range, occlusion, target-name feedback, menu/focus clearing and viewer isolation. F5: approach the left tray and aim at each dish; names disappear when looking away or beyond 1.5 m. Slot registration has passed step 9; actual pickup in step 10 has not begun.
 
-Dish surfaces use layer 1 (value 1), environment surfaces layer 3 (value 4), both with mask 0. `DishTargeting` uses mask 5 and accepts only the first hit; decorations block rays without becoming task dishes. `MeshSurfaceCollision` scales triangle coordinates by 100 and applies reciprocal uniform shape scaling to preserve metre dimensions while avoiding short-ray misses on tiny faces. Keep this precision check when changing collision generation. Occluders snapshot mesh poses on ready; future animated parts must synchronize their shapes. New target types must coordinate with the current DISH/NONE context routing, and actual actions must requery rather than trust the cached target.
+Dish surfaces use layer 1 (value 1), environment surfaces layer 3 (value 4), both with mask 0. `DishTargeting` uses mask 5 and accepts only the first hit. An empty temporary slot can be selected only from a real basin hit; a foreground dish takes priority. `MeshSurfaceCollision` scales triangle coordinates by 100 with reciprocal uniform shape scaling to preserve metre dimensions and short-ray precision. Occluders snapshot mesh poses on ready; future animated parts must synchronize their shapes. New target types must coordinate with DISH/SLOT/NONE routing; actual actions must requery rather than trust cached targets.
+
+Verify full slot registration, support and temporary targets:
+
+```powershell
+& $godotExe --headless --path . --script Tools/verify_kitchen_slots.gd
+```
+
+Success prints `KITCHEN_SLOTS_OK` and exits with code 0. It checks 3 tray, 8 rack and 2 temporary slots, compatible types, full poses, independent occupancy and 13 simultaneous real dish placements for surface-edge intersections and approximately 0.5 mm support gaps. It also checks temporary targeting, range/occlusion/menu handling, placed-dish soap intentions and viewer isolation. F5: inspect the two basin markers and crosshair names; the gameplay rack is empty. F6 keeps the original display. Actual pickup, placement and pump execution are not implemented by this check.
+
+`KitchenSlot.get_pose()` returns the complete marker transform; do not add another half-height. Temporary poses are calibrated to actual basin geometry, with separate `SelectionSurface` points for aiming. `accepts` and `is_empty` are partial checks, not placement authorization. The registry currently owns per-scene SlotState occupancy; future OrderState integration must share or explicitly replace it. `initial_slot_id` is initialization data, not the current slot or the most recent pickup origin. The target query currently runs in EMPTY/SOAP_BOTTLE; carrying and all-slot previews require later extensions. Preserve the per-step acceptance workflow: step 9 is accepted, step 10 has not begun.
 
 ## Coding Style & Naming Conventions
 

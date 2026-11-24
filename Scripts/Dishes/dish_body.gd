@@ -3,6 +3,7 @@ extends StaticBody3D
 ## Identity belongs to this instance; shared GLB meshes contain no mutable progress.
 
 @export var instance_id: StringName
+@export var initial_slot_id: StringName
 @export var dish_type: StringName
 @export var display_name: String
 

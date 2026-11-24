@@ -1,6 +1,6 @@
 # 项目架构与文件职责
 
-> 更新日期：2026-11-24｜第 1～8 步及追加右键放大已由用户验收
+> 更新日期：2026-11-24｜第 1～9 步及追加右键放大已由用户验收
 
 ## 当前实现边界
 
@@ -8,20 +8,20 @@
 
 单独打开 kitchen-demo.tscn 按 F6，仍由 [kitchen_viewer.gd](../../Scripts/kitchen_viewer.gd)控制展示。两个入口分别实例化节点，原展示场景与浏览脚本未改；场景不在运行时打开 Blender 总场景或执行建模脚本。
 
-第 3、4 步建立独立数据层及清洁度规则，第 5～7 步接入输入、界面、行走碰撞、鼠标直接看向及右键临时观察放大，第 8 步接入独立盘杯场景、真实表面碰撞与准星识别，均已由用户验证通过。订单状态与清洁度尚未绑定场景；输入层仅引用 ToolState 的工具枚举。槽位注册、实际拿取与清洗、完整订单流程、评分和存档仍待实现；第 9 步未开始。
+第 3、4 步建立独立数据层及清洁度规则，第 5～7 步接入输入、界面、行走碰撞、鼠标直接看向及右键临时观察放大，第 8 步接入盘杯身份与真实表面，第 9 步注册 13 个槽位及临时位识别，均已由用户验证通过。OrderState 与 DishState 尚未绑定场景，当前占用由槽位注册器的 SlotState 记录。实际拿取与清洗、完整放置与订单流程、评分和存档仍待实现；第 10 步未开始。
 
 ## 入口、运行文件与元数据
 
 | 文件 | 当前作用 |
 | --- | --- |
 | [project.godot](../../project.godot) | 项目配置，F5 默认启动 kitchen-game.tscn；保存 16 个 game_ 前缀输入映射，关闭 .blend 自动导入，沿用 Compatibility、1600 × 900 视口和 1280 × 720 窗口覆盖。 |
-| [Scenes/kitchen-game.tscn](../../Scenes/kitchen-game.tscn) | 手工维护的可玩入口，继承展示布局、清除根浏览脚本并隐藏 ViewerOverlay；组装输入、HUD、玩家、步行碰撞、PlayableDishes、SurfaceCollision 与 DishTargeting。停用旧相机，设置出生位置，隐藏托盘原展示三件并放入同姿态的独立盘杯实例。 |
+| [Scenes/kitchen-game.tscn](../../Scenes/kitchen-game.tscn) | 手工维护的可玩入口，组装输入、HUD、玩家、步行碰撞、PlayableDishes、SurfaceCollision、KitchenSlots 与 DishTargeting。隐藏全部原展示餐具，设置三件独立盘杯的初始槽位 ID，由注册器读取模型定位点摆放；保持相机与展示输入隔离。 |
 | [Scenes/player.tscn](../../Scenes/player.tscn) | 手工维护的 CharacterBody3D 玩家，包含胶囊及眼高 1.62 m 的 ViewCamera，挂载 PlayerController。 |
 | [Scenes/kitchen-walk-collision.tscn](../../Scenes/kitchen-walk-collision.tscn) | 手工维护的 StaticBody3D，六个碰撞形状限制地面、柜体与台面、后墙及边界；仅供玩家行走阻挡，不是交互表面。 |
 | [Scripts/Player/player_controller.gd](../../Scripts/Player/player_controller.gd) | 处理 GameInput 的观察和临时放大意图：玩家水平转向、相机俯仰限制、捕获恢复防突跳及 FOV 缓存/复原；原物理回调继续处理水平行走、重力和滑动碰撞。 |
 | [Scenes/game-hud.tscn](../../Scenes/game-hud.tscn) | 手工维护的 CanvasLayer 界面，包含不拦截输入的中央准星及 TargetName 标签、全屏菜单背景与继续按钮；独立于生成的展示器提示层。 |
 | [Scripts/Input/game_input.gd](../../Scripts/Input/game_input.gd) | 继承 Node 的输入分派器；处理未被 UI 消费的事件，按上下文发出动作意图，管理按住状态和鼠标模式；右键在餐具旋转与临时观察放大之间分派。 |
-| [Scripts/UI/game_hud.gd](../../Scripts/UI/game_hud.gd) | 用 input_path 查找 GameInput，监听模式变化并连接继续按钮；可选 targeting_path 连接 DishTargeting 的目标变化，显示或清除准星名称，独立输入测试不要求绑定目标查询。 |
+| [Scripts/UI/game_hud.gd](../../Scripts/UI/game_hud.gd) | 用 input_path 查找 GameInput，监听模式变化并连接继续按钮；可选 targeting_path 连接餐具及临时位变化，共用 TargetName 显示名称，清除槽位时恢复当前餐具或清空。独立输入测试不要求绑定目标查询。 |
 | [Scenes/kitchen-demo.tscn](../../Scenes/kitchen-demo.tscn) | 已组装的展示场景，引用房间壳、独立道具与餐具 GLB，保存摆放、灯光、环境、相机和展示提示。由 Godot 组装脚本生成，会被重建覆盖。 |
 | [Scripts/kitchen_viewer.gd](../../Scripts/kitchen_viewer.gd) | 场景浏览控制：1～4 预设机位、R 复位、右键拖动、角度限制、Esc 和失焦释放鼠标。没有玩家行走或清洗逻辑。 |
 | [Scripts/kitchen_viewer.gd.uid](../../Scripts/kitchen_viewer.gd.uid) | 上述脚本的 Godot 稳定资源标识元数据，随脚本保留。 |
@@ -33,7 +33,7 @@
 | [AGENTS.md](../../AGENTS.md) | 仓库工作约定、固定版本、生成与验证方法、命名和提交要求。 |
 | [.gitignore](../../.gitignore) | 排除 .godot、Blender 备份、日志、本地配置和构建输出，保留源模型、GLB、UID 与资产侧导入元数据。 |
 
-原展示场景中 Models 保存 8 个环境或道具实例，Dishes 保存 5 盘、2 杯的展示实例。可玩入口隐藏 Dishes 下托盘三件，并在 PlayableDishes 下以原姿态实例化两盘一杯；架内三盘一杯仍可见，仅作遮挡和装饰。这些固定布置尚未绑定生产订单。原展示器相机为根 ViewCamera，提示位于 ViewerOverlay；可玩入口停用根相机，实际使用 Player/ViewCamera，重命名时须区分两个入口。
+原展示场景中 Models 保存 8 个环境或道具实例，Dishes 保存 5 盘、2 杯的展示实例。可玩入口隐藏全部 Dishes，避免架内装饰占据任务位置；PlayableDishes 中两盘一杯由注册器放入托盘，沥水与临时位初始为空。当前仍是固定三件布置，未绑定生产订单。原展示器相机为根 ViewCamera，提示位于 ViewerOverlay；可玩入口停用根相机，实际使用 Player/ViewCamera，重命名时须区分两个入口。
 
 ## 游戏输入与基础界面（第 5 步）
 
@@ -41,7 +41,7 @@
 
 | GameInput 接口或状态 | 当前职责 |
 | --- | --- |
-| set_context | 接收持有模式、已筛选目标类别及工具选择。模式为 EMPTY、CARRYING、CLOSE_UP、SOAP_BOTTLE、TRANSITION；第 8 步 DishTargeting 已按距离和遮挡提供 DISH 或 NONE，其余世界目标类型尚未接入。 |
+| set_context | 接收持有模式、已筛选目标类别及工具选择。模式为 EMPTY、CARRYING、CLOSE_UP、SOAP_BOTTLE、TRANSITION；DishTargeting 按距离和遮挡提供 DISH、空临时位的 SLOT 或 NONE，其余世界目标与完整放置尚未接入。 |
 | command_requested | 发出动作意图及按下/停止标志。拿取、放置、泵压等为单次意图；润湿、工具使用和旋转有停止通知。意图不代表已执行或通过全部玩法校验。 |
 | get_movement_vector、movement_changed | 提供归一化二维移动输入；界面、近距离及过渡期间为零。PlayerController 已在物理回调中读取该向量。 |
 | look_requested、rotation_requested、tool_cursor_moved | look_requested 已连接 PlayerController，实现直接观察；餐具旋转与工具光标仍只有分派意图。独立盘杯节点已存在，实际持物、旋转与工具跟随尚未接入。 |
@@ -75,7 +75,7 @@ _look_enabled 依据界面和持有模式控制观察。菜单、近距离或过
 
 zoom_view 按下时缓存当前相机 FOV 并收窄视野，默认从 53.7° 变为 35°；重复按下不覆盖缓存。松开或收到取消意图时恢复缓存原值。放大期间继续允许观察和行走，不修改玩家或相机位置。它与 F 拉近餐具、近距离滚轮调整餐具距离分开，后两者尚未实现。
 
-实际运行默认空手，准星可识别距离内可见的托盘餐具；持餐具、持瓶和近距离等分派上下文仍由验证脚本设置。后续持物状态必须使用 set_context 同步，确保旧旋转、放大和按住输入被正确结束。
+实际运行默认空手，准星可识别距离内可见的托盘餐具和空临时位；持餐具、持瓶和近距离等分派上下文仍由验证脚本设置。后续持物状态必须使用 set_context 同步，确保旧旋转、放大和按住输入被正确结束。
 
 ## 盘杯身份、真实表面与目标查询（第 8 步）
 
@@ -83,10 +83,10 @@ zoom_view 按下时缓存当前相机 FOV 并收窄视野，默认从 53.7° 变
 | --- | --- |
 | [Scenes/Dishes/plate.tscn](../../Scenes/Dishes/plate.tscn) | 手工维护的 StaticBody3D 餐盘封装，挂载 DishBody，Model 子节点实例化正式 plate-standard.glb；默认类型 plate、名称“餐盘”。 |
 | [Scenes/Dishes/mug.tscn](../../Scenes/Dishes/mug.tscn) | 手工维护的 StaticBody3D 杯子封装，复用 mug-standard.glb；默认类型 mug、名称“马克杯”，保留杯体、杯柄和表面定位节点。 |
-| [Scripts/Dishes/dish_body.gd](../../Scripts/Dishes/dish_body.gd) | 每个实例保存 instance_id、dish_type 和 display_name；就绪时检查非空身份、设置查询层，并为 Model 生成真实表面碰撞。创建实例时必须赋予独立 ID；此类尚未关联 DishState。 |
+| [Scripts/Dishes/dish_body.gd](../../Scripts/Dishes/dish_body.gd) | 每个实例保存 instance_id、initial_slot_id、dish_type 和 display_name；就绪时检查身份、设置查询层并生成真实表面碰撞。initial_slot_id 供注册器初始化使用，不是运行中的当前槽位；此类尚未关联 DishState。 |
 | [Scripts/Interaction/mesh_surface_collision.gd](../../Scripts/Interaction/mesh_surface_collision.gd) | 从可见 MeshInstance3D 读取三角面，为目标 StaticBody3D 添加 ConcavePolygonShape3D 与 CollisionShape3D；保留网格相对身体的完整变换，提供查询层常量及小面精度处理。 |
-| [Scripts/Interaction/kitchen_surface_collision.gd](../../Scripts/Interaction/kitchen_surface_collision.gd) | 按 visual_roots 查找 Models、Dishes 下可见实例，分别添加环境层 SurfaceCollision 身体，复用网格碰撞工具；隐藏的托盘原件不生成碰撞，架内装饰生成遮挡。 |
-| [Scripts/Interaction/dish_targeting.gd](../../Scripts/Interaction/dish_targeting.gd) | 从指定玩家相机中央发出默认 1.5 米射线，只接受第一处表面为 DishBody 的命中；保存 current_dish、发出 target_changed，并同步 GameInput 目标类别。query_dish 提供即时查询，不执行拿取或清洁。 |
+| [Scripts/Interaction/kitchen_surface_collision.gd](../../Scripts/Interaction/kitchen_surface_collision.gd) | 按 visual_roots 为 Models、Dishes 下可见实例添加真实环境遮挡；第 9 步全部原展示餐具被隐藏，故不再生成它们的碰撞。临时位标记不在扫描根节点内，不生成遮挡。 |
+| [Scripts/Interaction/dish_targeting.gd](../../Scripts/Interaction/dish_targeting.gd) | 从玩家相机中央发出默认 1.5 米射线，先识别第一处 DishBody，否则查询命中盆底附近的空临时位；保存 current_dish/current_slot，分别发出 target_changed/slot_changed，并同步 GameInput。query_dish 仍仅即时返回餐具，不执行拿取或清洁。 |
 | [dish_body.gd.uid](../../Scripts/Dishes/dish_body.gd.uid)、[mesh_surface_collision.gd.uid](../../Scripts/Interaction/mesh_surface_collision.gd.uid)、[kitchen_surface_collision.gd.uid](../../Scripts/Interaction/kitchen_surface_collision.gd.uid)、[dish_targeting.gd.uid](../../Scripts/Interaction/dish_targeting.gd.uid) | 四个新增运行脚本的 Godot 稳定资源标识，随源码保存。 |
 
 PlayableDishes 当前包含固定实例 tray_plate_01、tray_plate_02、tray_mug_01，显示“餐盘 1”“餐盘 2”“马克杯”。它们复用原托盘完整姿态，没有额外叠加半高；实例身份与 GLB 的共享网格、材质分开。共享模型不包含清洁进度，本次也未加载 Resources/Examples 订单作为生产数据。
@@ -101,9 +101,33 @@ PlayableDishes 当前包含固定实例 tray_plate_01、tray_plate_02、tray_mug
 
 所有表面使用实际三角面，不把杯口、杯柄、架槽或托盘封成凸包。小三角面曾在近距离短射线下漏检，因此将碰撞局部顶点坐标乘 100，再对形状施加 0.01 等比缩放；最终世界位置与尺寸不变，原 GLB、网格资源和材质均不修改。专项验证同时检查短射线、表面法线、平移旋转后的杯内和外部开口，不以只命中包围盒作为通过条件。
 
-DishTargeting 每个物理帧更新目标；当前仅在 EMPTY、SOAP_BOTTLE 查询餐具，界面和其他模式清除目标。有效类别通过 set_context 更新，但同类餐具之间变化仍通过 target_changed 通知 HUD；放大不会延长距离。槽位、龙头、水流和泵瓶等类型尚未接入，扩展时需协调这条 DISH/NONE 路由，不能让多个组件相互覆盖上下文。实际动作执行前应使用即时查询再次校验，不能只相信缓存 current_dish。
+DishTargeting 每个物理帧更新目标，当前仅在 EMPTY、SOAP_BOTTLE 查询餐具或空临时位，界面和其他模式清除目标。有效类别通过 set_context 更新，同类餐具或临时位之间的变化分别通过信号通知 HUD；放大不会延长距离。完整槽位瞄准与搬运预览、龙头、水流和泵瓶等目标尚未接入，扩展时协调现有 DISH/SLOT/NONE 路由，不能让多个组件互相覆盖上下文。实际动作执行前应再次查询，不能只相信缓存。
 
 环境形状在就绪时按网格姿态生成，跟随其所属身体；后续若动画改变把手、喷头或泵头等子网格的相对姿态，需同步对应碰撞，不能假定已有形状会自动重建。可复用盘杯场景和本节脚本均由手工维护，现有生成器不覆盖它们。
+
+## 完整槽位布局与注册（第 9 步）
+
+| 文件 | 当前职责 |
+| --- | --- |
+| [Resources/Kitchen/kitchen-layout.tres](../../Resources/Kitchen/kitchen-layout.tres) | 可玩场景的完整布局配置，列出托盘 3 位、沥水架 8 位及临时 2 位的身份、显示名称、类别、兼容类型和 fixture_path。它与数据验证用的 Examples 布局分开，不包含运行占用。 |
+| [Scenes/kitchen-slots.tscn](../../Scenes/kitchen-slots.tscn) | 手工维护的 KitchenSlotRegistry 场景，绑定完整布局和场景路径；包含两个已校准完整姿态的临时 Marker3D、各自的 SelectionSurface、圆环和 Label3D。视觉标记不参与碰撞，不是落位预览。 |
+| [Scripts/Slots/kitchen_slot.gd](../../Scripts/Slots/kitchen_slot.gd) | RefCounted 包装，关联一个 SlotConfig、独立新建的 SlotState 及实际定位节点。get_pose 读取节点完整 global_transform，accepts/is_empty 只读取兼容与占用，不做完整放置判定。 |
+| [Scripts/Slots/kitchen_slot_registry.gd](../../Scripts/Slots/kitchen_slot_registry.gd) | 按配置查找定位节点，校验身份与兼容信息，为每场景新建 13 个 KitchenSlot；根据 DishBody.initial_slot_id 记录三件初始占用并摆放。find_temporary_slot 只从真实盆底命中筛选空临时位。 |
+| [kitchen_slot.gd.uid](../../Scripts/Slots/kitchen_slot.gd.uid)、[kitchen_slot_registry.gd.uid](../../Scripts/Slots/kitchen_slot_registry.gd.uid) | 两个新运行脚本的 Godot 稳定资源标识，随源码保存。 |
+
+| 槽位 ID | 数量与兼容 | 姿态及初始占用 |
+| --- | --- | --- |
+| Dirty_Plate_01、02 / Dirty_Mug_01 | 2 盘、1 杯 | 读取 Models/DirtyTray 的完整节点姿态；分别占用 tray_plate_01、tray_plate_02、tray_mug_01。 |
+| Rack_Slot_01～06 / Rack_Cup_Slot_01、02 | 6 盘、2 杯 | 读取 Models/DishRack 的完整姿态，保留竖盘、倒扣杯的方向；初始全部为空。 |
+| Sink_Plate_01 / Sink_Mug_01 | 1 盘、1 杯 | KitchenSlots 下手工维护的根姿态；初始均为空。 |
+
+托盘和架位直接读取正式 GLB 的餐具根定位节点，不重新推算半高。临时位则根据水槽 Plate_Return_Surface、Mug_Return_Surface 的表面参考，使用盘杯网格与盆底测量后校准；根姿态与表面参考不能混用。当前布局中临时盘根位置为（-0.23，0.667577，-0.045）米，杯根位置为（0.23，0.708443，-0.1）米，均为直立单位旋转；最小承托余量约 0.5 mm。盆底或模型变化后需重新测量，不能机械叠加半高或沿用旧余量。
+
+SelectionSurface 是盆底瞄准参考，圆环略高于表面，Label3D 提供位置名称。find_temporary_slot 要求首个碰撞属于指定水槽实例，且命中点距对应表面参考的水平距离不超过 0.06 米、高度差小于 0.006 米，同时槽位为空；整体射线仍受 1.5 米限制。餐具先命中时保持 DISH，不再选择其下方临时位。这些条件只使临时位可识别，未开放实际放置、所有架位瞄准或幽灵餐具预览。
+
+注册器创建的 SlotState 是当前场景占用记录，三件初始盘杯保留固定身份，未接入 OrderState/DishState 或正式订单列表。共享 KitchenLayoutConfig 只描述布局，不承载占用。以后接入订单时应明确共用或替换同一套 SlotState，不能让注册器和 OrderState 各维护一套占用。initial_slot_id 也只描述初始化；拿起时需读当前槽位、解除占用并另存本次取出位置供 Q 使用。
+
+当前可玩入口的 Dishes 全部隐藏，避免旧架内展示餐具堵住任务位或误计占用；原展示器单独加载时仍保留所有布置。新场景、资源与脚本均不由现有生成器覆盖；当前布局加载的是 13 个正式槽位配置，Resources/Examples 仍仅供数据规则验证。
 
 ## 配置资源与独立运行状态
 
@@ -115,12 +139,12 @@ Scripts/Data 的类型均继承 Resource，供 .tres 文件复用。它们描述
 | --- | --- |
 | [stain_region_config.gd](../../Scripts/Data/stain_region_config.gd) | 污渍区域 ID、残渣或油渍类型、初始量及泡沫汇总权重。 |
 | [dish_config.gd](../../Scripts/Data/dish_config.gd) | 餐具类型、名称、共享模型与污渍区域配置数组。 |
-| [slot_config.gd](../../Scripts/Data/slot_config.gd) | 槽位 ID、待洗/临时/沥水类别、兼容餐具类型和所属 fixture_path；槽位 ID 对应资产中已有定位节点名。 |
+| [slot_config.gd](../../Scripts/Data/slot_config.gd) | 槽位 ID、显示名称、待洗/临时/沥水类别、兼容餐具类型和所属 fixture_path；槽位 ID 对应 fixture 下的定位节点名。 |
 | [kitchen_layout_config.gd](../../Scripts/Data/kitchen_layout_config.gd) | 厨房槽位配置集合，与具体订单内容分开。 |
 | [order_item_config.gd](../../Scripts/Data/order_item_config.gd) | 单件任务餐具的实例 ID、餐具配置引用和初始槽位 ID。 |
 | [order_config.gd](../../Scripts/Data/order_config.gd) | 订单 ID、名称、条目数组、基础点数及首次额外点数；未实现奖励发放。 |
 
-槽位配置引用现有 fixture 和定位节点，完整目标姿态仍由资产节点提供；第 3 步未解析场景变换或注册可交互槽位。后续接入时不得将这些数据记录误认为已完成的放置判定。
+第 3 步只建立配置与状态结构，第 9 步已由 KitchenSlotRegistry 将完整布局解析为实际定位节点与占用。注册与临时位识别不代表已完成完整放置判定；距离、空间、占用、清洁门槛及确认落位仍须在对应步骤组合。
 
 ### 每次订单的状态
 
@@ -134,7 +158,7 @@ Scripts/State 的类型均继承 RefCounted，不依赖场景树或自动加载�
 | [tool_state.gd](../../Scripts/State/tool_state.gd) | 工具选择、海绵干湿、龙头开关与泵瓶持有状态；新建时分别为收起、干燥、关闭和归位。 |
 | [order_state.gd](../../Scripts/State/order_state.gd) | 按实例 ID 建立餐具字典、按槽位 ID 建立占用字典，为本次尝试新建 ToolState，并根据订单条目初始化占用。构造时检查重复身份、缺失初始槽位和重复占位。 |
 
-OrderState 创建的是内存数据，未生成餐具节点、改变展示餐具或接入重开按钮。重新构造可恢复初始状态；实际订单重置与场景更新属于后续流程。清洁度已在 DishState 实现，奖励算法尚未加入本层。
+OrderState 创建的是内存数据，尚未绑定餐具节点或重开按钮。第 9 步实际场景通过 KitchenSlotRegistry 新建独立 SlotState 并隐藏展示餐具，与 OrderState 的样例初始化仍分开。实际订单重置与统一状态接入属于后续流程；清洁度已在 DishState 实现，奖励算法尚未加入本层。
 
 ### 清洁度读取接口（第 4 步）
 
@@ -162,8 +186,9 @@ OrderState 创建的是内存数据，未生成餐具节点、改变展示餐具
 | [Tools/verify_player_movement.gd](../../Tools/verify_player_movement.gd) | 加载真实可玩场景，注入移动意图并运行物理帧，检查出生、相机、方向、斜向速度、30/120 Hz 物理频率、模式限制、碰撞和任务区通路；约 20 秒，成功输出 PLAYER_MOVEMENT_OK 并退出 0，失败退出 1。 |
 | [Tools/verify_mouse_look.gd](../../Tools/verify_mouse_look.gd) | 加载真实可玩场景，注入鼠标及移动事件，检查水平转身、俯仰、模式锁定、恢复、边走边转、右键放大及中断复原；再单独载入旧展示器回归右键拖动和机位。成功输出 MOUSE_LOOK_OK 并退出 0，失败退出 1。 |
 | [Tools/verify_dish_targeting.gd](../../Tools/verify_dish_targeting.gd) | 加载真实可玩场景，检查三件身份与姿态、盘杯表面法线及变换、孔洞和内腔、距离、放大不延长距离、真实遮挡、查询层、HUD 中断恢复及展示器隔离；只改内存，成功输出 DISH_TARGETING_OK 并退出 0，失败退出 1。 |
+| [Tools/verify_kitchen_slots.gd](../../Tools/verify_kitchen_slots.gd) | 检查 13 位配置、完整姿态及独立占用；同时放入正式盘杯检查网格边线与环境及其他餐具相交、最低处承托，再测临时位识别、中断恢复、盘杯施液瞄准意图与展示器隔离。只改内存，成功输出 KITCHEN_SLOTS_OK 并退出 0，失败退出 1。 |
 
-上述 11 个数据类与六份验证脚本各有同名 .gd.uid，保存 Godot 稳定资源标识，随源码提交；[verify_mouse_look.gd.uid](../../Tools/verify_mouse_look.gd.uid)、[verify_dish_targeting.gd.uid](../../Tools/verify_dish_targeting.gd.uid) 分别对应观察和盘杯验证。验证用 .tres 不被当前主场景加载；先导入新增类型，再按 [progress.md](progress.md) 的命令重跑验证。
+上述 11 个数据类与七份验证脚本各有同名 .gd.uid，保存 Godot 稳定资源标识，随源码提交；[verify_mouse_look.gd.uid](../../Tools/verify_mouse_look.gd.uid)、[verify_dish_targeting.gd.uid](../../Tools/verify_dish_targeting.gd.uid)、[verify_kitchen_slots.gd.uid](../../Tools/verify_kitchen_slots.gd.uid) 分别对应观察、盘杯和槽位验证。Examples 验证用 .tres 不被主场景加载，正式 kitchen-layout.tres 已由 KitchenSlots 加载；先导入新增类型，再按 [progress.md](progress.md) 重跑验证。
 
 ## 总场景组装和截图工具
 
@@ -175,7 +200,7 @@ OrderState 创建的是内存数据，未生成餐具节点、改变展示餐具
 
 生成依赖按“独立资产源文件及导出 → Blender 总场景与房间壳 → Godot 导入 → Godot 场景组装 → 运行或截图”理解。只改独立 GLB 后可重新导入该资源；若槽位、节点名或摆放变化，还需同步组装逻辑。不要假定修改 Blender 总场景会自动改变 Godot 中的独立实例。
 
-现有三个总场景工具不覆盖 kitchen-game.tscn、game-hud.tscn、player.tscn、kitchen-walk-collision.tscn、项目配置或新增运行脚本。可玩入口会继承重建后的布局，手工文件保留输入和相机隔离；如果生成器改变房间尺寸、脚本挂载位置或节点路径，须同时核对步行代理、出生点与两个入口的行为。
+现有三个总场景工具不覆盖 kitchen-game.tscn、game-hud.tscn、player.tscn、kitchen-walk-collision.tscn、kitchen-slots.tscn、盘杯封装、正式布局配置、项目配置或新增运行脚本。可玩入口会继承重建后的布局；若生成器改变尺寸、定位节点或路径，须同时核对步行代理、出生点、注册路径、临时位承托及两个入口。
 
 ## 独立资产生成器
 
@@ -223,13 +248,13 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 | --- | --- |
 | [game-design-document.md](game-design-document.md) | 当前目标玩法与验收规则，包括 WASD、两种持有状态、清洗、泡沫评分与 MVP 边界；不能据此推断功能已完成。 |
 | [tech-stack.md](tech-stack.md) | 固定工具链、运行状态与配置分离、交互、存档和验证方案。 |
-| [implementation-plan.md](implementation-plan.md) | 62 个实施步骤与验证条件，第 1～8 步及追加右键放大已通过，第 9 步未开始。 |
+| [implementation-plan.md](implementation-plan.md) | 62 个实施步骤与验证条件，第 1～9 步及追加右键放大已通过，第 10 步未开始。 |
 | [progress.md](progress.md) | 实际完成记录、测试执行者及来源、当前状态与后续衔接。 |
 | [architecture.md](architecture.md) | 当前文件职责、依赖和重建边界；新增或改变职责时更新。 |
 | [Docs/README.md](../README.md) | 文档导航，连接 memory-bank、资产说明、场景说明与参考图。 |
 | [Docs/kitchen-asset-plan.md](../kitchen-asset-plan.md) | 资产制作范围与交付进度，包括原操作区灰盒说明。 |
 | [厨房场景说明](../scenes/kitchen-demo/kitchen-demo.md) | 现有展示场景的打开方式、位置、布局、重建步骤与历史验证。 |
-| [可玩入口说明](../scenes/kitchen-game/kitchen-game.md) | F5/F6 使用区别、生成边界，以及当前准星名称、盘杯识别、菜单、WASD、鼠标直接看向、右键放大和碰撞验证方法。 |
+| [可玩入口说明](../scenes/kitchen-game/kitchen-game.md) | F5/F6 使用区别、生成边界，以及准星名称、盘杯与临时位识别、槽位注册、菜单、WASD、鼠标、右键放大和碰撞验证方法。 |
 | [餐盘说明](../assets/plate-standard/plate-standard.md)、[马克杯说明](../assets/mug-standard/mug-standard.md) | 对应餐具尺寸、原点、节点和资产接入说明。 |
 | [海绵说明](../assets/sponge-standard/sponge-standard.md)、[泵瓶说明](../assets/soap-dispenser/soap-dispenser.md) | 工具结构、动画或形态、定位、材质与历史预览。 |
 | [水槽说明](../assets/sink-countertop/sink-countertop.md)、[龙头说明](../assets/faucet-pullout/faucet-pullout.md) | 安装、开孔、活动部件、喷嘴及软管接入限制。 |
@@ -243,7 +268,7 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 
 1. **展示输入与玩家控制分别接入。** 浏览脚本用数字键切机位、右键拖相机；可玩入口用独立 GameInput 分派动作，并已接入行走、鼠标直接看向和临时放大，继续清除根浏览脚本并隐藏展示提示。两个入口的鼠标行为分别回归，不把展示器操作改成游戏操作。
 2. **场景生成器拥有其输出。** Godot 组装脚本会覆盖主展示场景，Blender 组装脚本会覆盖总场景、房间壳与预览。直接改生成结果而不处理生成器，重建会丢失改动；独立可玩逻辑应避开这些覆盖路径。
-3. **定位节点描述姿态，数据层记录占用。** 资产节点提供完整餐具根变换，不能再加半高；第 3 步已将类别、兼容配置和占用者拆开记录，但尚未接入实际吸附、清洁门槛或完成判定。
+3. **定位节点描述姿态，状态记录占用。** 托盘和架位提供完整餐具根变换，不能再加半高；第 9 步通过注册器关联配置、节点和独立 SlotState。盆底表面参考另行校准为临时根姿态，识别表面点与放置根点不混用；实际吸附和完整判定仍在后续。
 4. **共享配置不承载可变进度。** 同一 DishConfig 可以服务多件盘子；每件区域状态、每次订单字典及 ToolState 均独立创建。第 3 步验证包含数值修改和删除集合元素，避免只检查顶层对象不同而遗漏嵌套数据共享。
 5. **可见几何与步行碰撞分别维护。** 第 6 步使用玩家专用代理验证通路，第 8 步另按实际网格生成交互表面并加入距离判断。碰撞尺寸、出生点和固定盘杯姿态对应当前布局，资产或生成布局变化后需分别核对。
 6. **资产动画不等于玩法状态。** 泵头动画、喷嘴定位、软管展示形态和海绵形态均可复用，但缺少运行时供水、干湿、施液、清洁及评分判定。历史资产说明中的接液或固定站位方案若与当前设计冲突，玩法以 memory-bank 的现行设计为准，几何约定仍须遵守。
@@ -255,4 +280,6 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 12. **身体阻挡与表面命中分层。** 玩家使用层 2、步行代理使用层 5；第 8 步查询掩码 5 只检查餐具层 1 与环境层 3，防止整柜代理封住水槽。真实环境和前景餐具仍阻挡目标，不能为方便拾取而只检测餐具层。
 13. **临时镜头效果需要中断复原。** 右键放大缓存按下前的 FOV，由输入层统一在松开或模式中断时发送停止意图。镜头控制器恢复原值，不能用固定默认值覆盖当前视野，也不能让重复按下污染缓存；餐具拉近仍是另一套位置操作。
 14. **小模型需要验证短射线。** 在米制尺寸下，杯底、杯壁和杯柄的细面曾发生短射线漏检。碰撞内部放大坐标并施加倒数等比缩放后，原位置和几何不变且专项通过；改表面生成方式时应保留内外表面、短射线和变换测试，不能用加长测试射线掩盖近距问题。
-15. **识别对象与执行动作分开。** DishBody 的独立 ID 和 DishTargeting 的可见目标已经接入，但不代表已实现拿取、槽位或订单。目标缓存只供当前反馈，执行动作前重新校验；以后扩展槽位和工具时应统一上下文更新，避免相互清除目标。
+15. **识别对象与执行动作分开。** 盘杯身份、13 位注册和临时位识别已经接入，实际拿取、完整放置及订单仍未实现。目标缓存只供反馈，执行动作前重新校验；搬运预览和工具扩展需统一上下文更新，避免相互清除目标。
+16. **占用只能有一份权威记录。** 当前注册器每场景新建 SlotState，配置只共享布局。接入 OrderState 时必须共用或明确替换这套状态；初始槽位 ID 与当前所在位置、最近一次拿起的返回位置是不同概念。
+17. **验证所有槽位的实际承托。** 数量和标记姿态正确还不足以证明可放置。槽位专项用正式盘杯同时覆盖 13 位，检查最低处承托及网格边线相交；模型或盆底改变时重测，静态通过不替代后续移动轨迹与确认时的空间检查。

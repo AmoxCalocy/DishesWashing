@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://Scenes/kitchen-demo.tscn" id="1_kitchen"]
 [ext_resource type="Script" path="res://Scripts/Input/game_input.gd" id="2_input"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/Dishes/mug.tscn" id="7_mug"]
 [ext_resource type="Script" path="res://Scripts/Interaction/kitchen_surface_collision.gd" id="8_surfaces"]
 [ext_resource type="Script" path="res://Scripts/Interaction/dish_targeting.gd" id="9_targeting"]
+[ext_resource type="PackedScene" path="res://Scenes/kitchen-slots.tscn" id="10_slots"]
 
 [node name="KitchenGame" instance=ExtResource("1_kitchen")]
 script = null
@@ -28,6 +29,18 @@ visible = false
 [node name="TrayMug01" parent="Dishes"]
 visible = false
 
+[node name="RackPlate01" parent="Dishes"]
+visible = false
+
+[node name="RackPlate03" parent="Dishes"]
+visible = false
+
+[node name="RackPlate05" parent="Dishes"]
+visible = false
+
+[node name="RackMug01" parent="Dishes"]
+visible = false
+
 [node name="GameInput" type="Node" parent="."]
 script = ExtResource("2_input")
 
@@ -44,25 +57,28 @@ input_path = NodePath("../GameInput")
 [node name="PlayableDishes" type="Node3D" parent="."]
 
 [node name="TrayPlate01" parent="PlayableDishes" instance=ExtResource("6_plate")]
-position = Vector3(-1.027, 0.9245, 0.085)
 instance_id = &"tray_plate_01"
+initial_slot_id = &"Dirty_Plate_01"
 display_name = "餐盘 1"
 
 [node name="TrayPlate02" parent="PlayableDishes" instance=ExtResource("6_plate")]
-position = Vector3(-0.753, 0.9245, 0.085)
 instance_id = &"tray_plate_02"
+initial_slot_id = &"Dirty_Plate_02"
 display_name = "餐盘 2"
 
 [node name="TrayMug01" parent="PlayableDishes" instance=ExtResource("7_mug")]
-position = Vector3(-0.89, 0.965, -0.115)
 instance_id = &"tray_mug_01"
+initial_slot_id = &"Dirty_Mug_01"
 display_name = "马克杯"
 
 [node name="SurfaceCollision" type="Node" parent="."]
 script = ExtResource("8_surfaces")
 visual_roots = Array[NodePath]([NodePath("../Models"), NodePath("../Dishes")])
 
+[node name="KitchenSlots" parent="." instance=ExtResource("10_slots")]
+
 [node name="DishTargeting" type="Node" parent="."]
 script = ExtResource("9_targeting")
 input_path = NodePath("../GameInput")
 camera_path = NodePath("../Player/ViewCamera")
+slots_path = NodePath("../KitchenSlots")

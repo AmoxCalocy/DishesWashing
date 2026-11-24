@@ -33,14 +33,18 @@
 
 ## 盘杯与目标识别验证
 
-第 8 步已通过用户验收。[盘杯验证脚本](../Tools/verify_dish_targeting.gd)检查独立身份、真实表面与法线、杯内和孔洞、架槽、托盘及水槽内腔、距离、遮挡和展示器隔离。F5 走近左侧托盘，准星分别显示“餐盘 1”“餐盘 2”“马克杯”；默认范围为 1.5 米，超距、遮挡、菜单和失焦后清除目标。文件职责与碰撞分层见 [架构说明](memory-bank/architecture.md)，命令与验收来源见 [进度记录](memory-bank/progress.md)。第 9 步未开始，实际拿起在第 10 步实现。
+第 8 步已通过用户验收。[盘杯验证脚本](../Tools/verify_dish_targeting.gd)检查独立身份、真实表面与法线、杯内和孔洞、架槽、托盘及水槽内腔、距离、遮挡和展示器隔离。F5 走近左侧托盘，准星分别显示“餐盘 1”“餐盘 2”“马克杯”；默认范围为 1.5 米，超距、遮挡、菜单和失焦后清除目标。文件职责与碰撞分层见 [架构说明](memory-bank/architecture.md)，命令与验收来源见 [进度记录](memory-bank/progress.md)。
+
+## 槽位注册与临时位验证
+
+第 9 步已通过用户验收。[完整布局](../Resources/Kitchen/kitchen-layout.tres)配置托盘 3 位、沥水架 8 位和水槽临时 2 位；[槽位验证脚本](../Tools/verify_kitchen_slots.gd)检查完整姿态、独立占用、实际盘杯的承托与表面穿插，以及临时位和施液目标识别。F5 水槽显示“临时盘位”“临时杯位”，可玩场景的架内展示餐具已清空；F6 原展示布置保持不变。第 10 步未开始，实际拿起、完整放置和泵压执行仍在后续。
 
 ## 已组装场景
 
 | 场景 | 说明与打开方式 | 预览 |
 | --- | --- | --- |
 | 简单厨房场景 | [Godot 运行、Blender 编辑与组装说明](scenes/kitchen-demo/kitchen-demo.md) | [Godot 全貌](scenes/kitchen-demo/godot-overview.png) / [Godot 玩家视角](scenes/kitchen-demo/godot-player.png) / [Blender 全貌](scenes/kitchen-demo/kitchen-demo-overview.png) |
-| 厨房可玩入口 | [F5 行走观察、盘杯识别、右键放大与验收](scenes/kitchen-game/kitchen-game.md) | 行走、镜头、表面碰撞、盘杯识别与基础界面已由用户验收；历史预览见展示场景 |
+| 厨房可玩入口 | [F5 行走、盘杯与临时位识别、槽位验证](scenes/kitchen-game/kitchen-game.md) | 第 1～9 步及追加右键放大已由用户验收；历史预览见展示场景 |
 
 ## 模型说明与预览
 
