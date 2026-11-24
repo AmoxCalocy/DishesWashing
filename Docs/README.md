@@ -21,14 +21,18 @@
 
 ## 输入与界面验证
 
-第 5 步已通过用户验收。[输入验证脚本](../Tools/verify_game_input.gd)检查键鼠映射、上下文分派、准星和 GUI 事件消费；[可玩入口说明](scenes/kitchen-game/kitchen-game.md)记录 F5 准星、Esc 菜单、鼠标捕获与失焦检查。输入已接入，实际 WASD 行走与镜头转动分别留在第 6、7 步，第 6 步尚未开始。
+第 5 步已通过用户验收。[输入验证脚本](../Tools/verify_game_input.gd)检查键鼠映射、上下文分派、准星和 GUI 事件消费；[可玩入口说明](scenes/kitchen-game/kitchen-game.md)记录 F5 准星、Esc 菜单、鼠标捕获与失焦检查。
+
+## 行走与碰撞验证
+
+第 6 步已通过用户验收。[行走验证脚本](../Tools/verify_player_movement.gd)加载真实可玩场景，检查安全出生、WASD、斜向速度、相机水平朝向、物理频率、模式限制和厨房碰撞。F5 已可行走，相机随玩家平移；鼠标转向留在第 7 步，尚未开始。运行命令和结果来源见 [progress.md](memory-bank/progress.md)。
 
 ## 已组装场景
 
 | 场景 | 说明与打开方式 | 预览 |
 | --- | --- | --- |
 | 简单厨房场景 | [Godot 运行、Blender 编辑与组装说明](scenes/kitchen-demo/kitchen-demo.md) | [Godot 全貌](scenes/kitchen-demo/godot-overview.png) / [Godot 玩家视角](scenes/kitchen-demo/godot-player.png) / [Blender 全貌](scenes/kitchen-demo/kitchen-demo-overview.png) |
-| 厨房可玩入口 | [F5 入口、准星菜单、生成边界与验收](scenes/kitchen-game/kitchen-game.md) | 复用厨房布局，输入与基础界面已由用户验收；历史预览见展示场景 |
+| 厨房可玩入口 | [F5 行走、准星菜单、生成边界与验收](scenes/kitchen-game/kitchen-game.md) | 行走、碰撞、输入与基础界面已由用户验收；历史预览见展示场景 |
 
 ## 模型说明与预览
 

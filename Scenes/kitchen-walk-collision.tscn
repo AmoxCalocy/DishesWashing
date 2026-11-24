@@ -1,0 +1,44 @@
+[gd_scene load_steps=6 format=3]
+
+[sub_resource type="BoxShape3D" id="Floor_shape"]
+size = Vector3(5, 0.07, 5)
+
+[sub_resource type="BoxShape3D" id="Counter_shape"]
+size = Vector3(2.6, 0.9, 0.8)
+
+[sub_resource type="BoxShape3D" id="BackWall_shape"]
+size = Vector3(5.4, 3, 0.07)
+
+[sub_resource type="BoxShape3D" id="SideBoundary_shape"]
+size = Vector3(0.2, 3, 3.65)
+
+[sub_resource type="BoxShape3D" id="FrontBoundary_shape"]
+size = Vector3(5.4, 3, 0.2)
+
+[node name="WalkCollision" type="StaticBody3D"]
+collision_layer = 16
+collision_mask = 0
+
+[node name="Floor" type="CollisionShape3D" parent="."]
+position = Vector3(0, -0.035, 0.55)
+shape = SubResource("Floor_shape")
+
+[node name="Counter" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.45, 0)
+shape = SubResource("Counter_shape")
+
+[node name="BackWall" type="CollisionShape3D" parent="."]
+position = Vector3(0, 1.5, -0.435)
+shape = SubResource("BackWall_shape")
+
+[node name="LeftBoundary" type="CollisionShape3D" parent="."]
+position = Vector3(-2.6, 1.5, 1.325)
+shape = SubResource("SideBoundary_shape")
+
+[node name="RightBoundary" type="CollisionShape3D" parent="."]
+position = Vector3(2.6, 1.5, 1.325)
+shape = SubResource("SideBoundary_shape")
+
+[node name="FrontBoundary" type="CollisionShape3D" parent="."]
+position = Vector3(0, 1.5, 3.15)
+shape = SubResource("FrontBoundary_shape")

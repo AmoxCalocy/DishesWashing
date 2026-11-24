@@ -2,13 +2,14 @@
 
 ## Project Structure & Scope
 
-This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry scene; player movement and washing gameplay remain planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
+This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry with WASD walking and player collision; mouse look and washing gameplay remain planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
 
 - `project.godot`: project entry point; main scene is `Scenes/kitchen-game.tscn`.
 - `Scenes/kitchen-game.tscn`: hand-authored gameplay entry inheriting the kitchen layout, with the viewer script removed and viewer overlay hidden. Generators must not overwrite this file.
 - `Scenes/game-hud.tscn`: hand-authored crosshair and basic Esc interface, instanced only by the gameplay entry; generators must not overwrite it.
+- `Scenes/player.tscn`: hand-authored CharacterBody3D with a capsule and player camera. `Scenes/kitchen-walk-collision.tscn` contains player-only floor, cabinet, wall and boundary blockers; generators must not overwrite either scene.
 - `Scenes/kitchen-demo.tscn`: generated viewer scene; open it separately to inspect assets and use viewer controls.
-- `Scripts/`: viewer control in `kitchen_viewer.gd`; input intentions in `Input/game_input.gd`; crosshair/menu binding in `UI/game_hud.gd`; shared Resource schemas in `Data/` and per-attempt RefCounted data in `State/`. Order state and cleanliness are not yet attached to the gameplay scene.
+- `Scripts/`: viewer control in `kitchen_viewer.gd`; input intentions in `Input/game_input.gd`; walking in `Player/player_controller.gd`; crosshair/menu binding in `UI/game_hud.gd`; shared Resource schemas in `Data/` and per-attempt RefCounted data in `State/`. Order state and cleanliness are not yet attached to the gameplay scene.
 - `Resources/Examples/`: verification fixtures for dishes, layout and an order; these are not the production order list or complete kitchen slot registry.
 - `Tools/`: Blender generators, Godot assembly scripts, and PowerShell texture tooling.
 - `Assets/`: editable `.blend` sources, exported `.glb` models, and textures, grouped by purpose.
@@ -27,7 +28,7 @@ $blenderExe = 'D:\Blender\blender.exe'
 & $godotExe --headless --path . --quit-after 60
 ```
 
-These commands assemble/render the kitchen, import resources, rebuild the viewer scene, and smoke-test the default gameplay entry, respectively. Run Python generators through Blender, not standalone Python. Preserve manual edits before rebuilding: generators overwrite outputs. Open `project.godot` and press F5 for the gameplay entry; open `Scenes/kitchen-demo.tscn` and press F6 for interactive viewing. Gameplay has input routing, a crosshair and a basic Esc interface; actual player movement and camera rotation remain planned.
+These commands assemble/render the kitchen, import resources, rebuild the viewer scene, and smoke-test the default gameplay entry, respectively. Run Python generators through Blender, not standalone Python. Preserve manual edits before rebuilding: generators overwrite outputs. Open `project.godot` and press F5 for the gameplay entry; open `Scenes/kitchen-demo.tscn` and press F6 for interactive viewing. Gameplay has WASD walking, player collision, a crosshair and a basic Esc interface; mouse look remains planned.
 
 After importing new scripts/resources, verify configuration and runtime-state isolation:
 
@@ -51,7 +52,15 @@ Verify input bindings, context routing and GUI consumption:
 & $godotExe --headless --path . --script Tools/verify_game_input.gd
 ```
 
-Success prints `GAME_INPUT_OK` and exits with code 0. Verify real mouse capture, Esc/resume and focus release interactively using F5. `GameInput` emits intentions through unhandled input; future movement should read its movement vector instead of polling global key state. The current interface blocks input but does not pause the scene tree or freeze gameplay state.
+Success prints `GAME_INPUT_OK` and exits with code 0. Verify real mouse capture, Esc/resume and focus release interactively using F5. `GameInput` emits intentions through unhandled input; `PlayerController` reads its movement vector instead of polling global key state. The current interface blocks input but does not pause the scene tree or freeze gameplay state.
+
+Verify walking and kitchen collision with the real gameplay scene:
+
+```powershell
+& $godotExe --headless --path . --script Tools/verify_player_movement.gd
+```
+
+Success prints `PLAYER_MOVEMENT_OK` and exits with code 0 after about 20 seconds. It checks safe spawn, camera ownership, WASD/diagonal speed, 30/120 Hz physics rates, camera-heading projection, mode restrictions, kitchen blockers and task-area paths. Player collision is on layer 2 with mask 16; walk blockers use layer 5 (value 16). Future interaction rays must exclude these layers and use actual surface/occlusion geometry instead of the coarse cabinet blocker.
 
 ## Coding Style & Naming Conventions
 
