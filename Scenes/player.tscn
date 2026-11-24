@@ -22,3 +22,12 @@ current = true
 fov = 53.7
 near = 0.05
 far = 50.0
+
+[node name="CarryAnchor" type="Marker3D" parent="ViewCamera"]
+position = Vector3(-0.28, -0.22, -0.78)
+
+[node name="RightCarryAnchor" type="Marker3D" parent="ViewCamera"]
+position = Vector3(0.28, -0.22, -0.78)
+
+[node name="CleanAnchor" type="Marker3D" parent="ViewCamera"]
+position = Vector3(0, -0.015, -0.45)

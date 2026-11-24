@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="PackedScene" path="res://Scenes/kitchen-demo.tscn" id="1_kitchen"]
 [ext_resource type="Script" path="res://Scripts/Input/game_input.gd" id="2_input"]
@@ -10,6 +10,8 @@
 [ext_resource type="Script" path="res://Scripts/Interaction/kitchen_surface_collision.gd" id="8_surfaces"]
 [ext_resource type="Script" path="res://Scripts/Interaction/dish_targeting.gd" id="9_targeting"]
 [ext_resource type="PackedScene" path="res://Scenes/kitchen-slots.tscn" id="10_slots"]
+[ext_resource type="Script" path="res://Scripts/Dishes/dish_carry.gd" id="11_carry"]
+[ext_resource type="Script" path="res://Scripts/Tools/world_cleaning_tools.gd" id="12_tools"]
 
 [node name="KitchenGame" instance=ExtResource("1_kitchen")]
 script = null
@@ -47,6 +49,7 @@ script = ExtResource("2_input")
 [node name="GameHUD" parent="." instance=ExtResource("3_hud")]
 input_path = NodePath("../GameInput")
 targeting_path = NodePath("../DishTargeting")
+carry_path = NodePath("../DishCarry")
 
 [node name="WalkCollision" parent="." instance=ExtResource("5_collision")]
 
@@ -75,6 +78,10 @@ display_name = "马克杯"
 script = ExtResource("8_surfaces")
 visual_roots = Array[NodePath]([NodePath("../Models"), NodePath("../Dishes")])
 
+[node name="WorldCleaningTools" type="Node3D" parent="."]
+script = ExtResource("12_tools")
+kitchen_path = NodePath("..")
+
 [node name="KitchenSlots" parent="." instance=ExtResource("10_slots")]
 
 [node name="DishTargeting" type="Node" parent="."]
@@ -82,3 +89,13 @@ script = ExtResource("9_targeting")
 input_path = NodePath("../GameInput")
 camera_path = NodePath("../Player/ViewCamera")
 slots_path = NodePath("../KitchenSlots")
+
+[node name="DishCarry" type="Node" parent="."]
+script = ExtResource("11_carry")
+input_path = NodePath("../GameInput")
+targeting_path = NodePath("../DishTargeting")
+slots_path = NodePath("../KitchenSlots")
+camera_path = NodePath("../Player/ViewCamera")
+anchor_path = NodePath("../Player/ViewCamera/CarryAnchor")
+right_anchor_path = NodePath("../Player/ViewCamera/RightCarryAnchor")
+close_anchor_path = NodePath("../Player/ViewCamera/CleanAnchor")

@@ -2,7 +2,7 @@
 
 ## Project Structure & Scope
 
-This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry with WASD, collision, mouse look, hold-to-zoom, real-surface dish targeting and 13 registered slots. Actual pickup, full placement and washing remain planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
+This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry with WASD, collision, mouse look, hold-to-zoom, real-surface targeting, 13 registered slots and two stable hand slots. Step 10 and its requested additions have accepted dual-hand pickup, F immersion, close-up rotation and free tool movement. Full placement and actual washing remain planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
 
 - `project.godot`: project entry point; main scene is `Scenes/kitchen-game.tscn`.
 - `Scenes/kitchen-game.tscn`: hand-authored gameplay entry inheriting the kitchen layout, with the viewer script removed and viewer overlay hidden. Generators must not overwrite this file.
@@ -11,6 +11,7 @@ This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.
 - `Scenes/Dishes/plate.tscn` and `mug.tscn`: hand-authored StaticBody3D wrappers reusing formal GLBs. Assign a unique `instance_id` and an `initial_slot_id` for gameplay initialization. The registry places the three initial dishes at complete tray marker poses. All inherited display dishes are hidden only in gameplay, leaving the rack empty.
 - `Scenes/kitchen-slots.tscn`: hand-authored registry entry with calibrated temporary plate/mug poses and visible markers. `Resources/Kitchen/kitchen-layout.tres` lists all 13 tray/rack/temporary slots. Generators must not overwrite these files.
 - `Scenes/kitchen-demo.tscn`: generated viewer scene; open it separately to inspect assets and use viewer controls.
+- `Scripts/Dishes/dish_carry.gd` owns two stable hand slots and the original carried nodes; `hand_item.gd` caches each hand's origin, bounds and safe pose. `Scripts/Tools/cleaning_tool.gd` stores identity/home and validates return; `world_cleaning_tools.gd` wraps the existing sponge/head after surface assembly and provides a visual hose. Do not leave old environment collision at a picked-up tool's home.
 - `Scripts/`: viewer control in `kitchen_viewer.gd`; input intentions in `Input/game_input.gd`; walking, look and zoom in `Player/player_controller.gd`; HUD bindings in `UI/game_hud.gd`; instance identity in `Dishes/dish_body.gd`; surface collision and targeting in `Interaction/`; marker/config/state registration in `Slots/`; shared Resources in `Data/` and RefCounted data in `State/`. The registry uses independent SlotState objects; OrderState and DishState cleanliness are not yet attached to the gameplay scene.
 - `Resources/Examples/`: verification fixtures for dishes, layout and an order; these are not the production order list or complete kitchen slot registry.
 - `Tools/`: Blender generators, Godot assembly scripts, and PowerShell texture tooling.
@@ -70,7 +71,7 @@ Verify direct mouse look, hold-to-zoom and the original viewer controls:
 & $godotExe --headless --path . --script Tools/verify_mouse_look.gd
 ```
 
-Success prints `MOUSE_LOOK_OK` and exits with code 0. It checks yaw/pitch, walking while looking, mode/focus recovery, FOV restoration and viewer right-drag/presets. Right mouse reuses `game_rotate`: `zoom_view` in EMPTY/SOAP_BOTTLE and `rotate_dish` in CARRYING/CLOSE_UP. Zoom caches the original FOV, defaults to 35 degrees and restores on release, UI, focus loss or hand-mode change. It must remain separate from the planned F dish-distance transition. Test real capture and zoom interactively with F5.
+Success prints `MOUSE_LOOK_OK` and exits with code 0. It checks yaw/pitch, walking while looking, mode/focus recovery, FOV restoration and viewer right-drag/presets. Right mouse reuses `game_rotate`: `zoom_view` when empty, carrying only a tool or holding soap; `rotate_dish` with a dish or in close-up. Zoom caches the original FOV, defaults to 35 degrees and restores on release, UI, focus loss or hand-mode change. Keep it separate from the implemented F dish-distance transition. Test real capture and zoom interactively with F5.
 
 Verify independent dish identities, real surfaces and crosshair targeting:
 
@@ -78,9 +79,9 @@ Verify independent dish identities, real surfaces and crosshair targeting:
 & $godotExe --headless --path . --script Tools/verify_dish_targeting.gd
 ```
 
-Success prints `DISH_TARGETING_OK` and exits with code 0. It checks two plates and one mug, full poses, short-ray surface hits/normals, transformed cups, open cup/handle/rack/tray/sink geometry, range, occlusion, target-name feedback, menu/focus clearing and viewer isolation. F5: approach the left tray and aim at each dish; names disappear when looking away or beyond 1.5 m. Slot registration has passed step 9; actual pickup in step 10 has not begun.
+Success prints `DISH_TARGETING_OK` and exits with code 0. It checks two plates and one mug, full poses, short-ray surface hits/normals, transformed cups, open cup/handle/rack/tray/sink geometry, range, occlusion, target-name feedback, menu/focus clearing and viewer isolation. F5: approach the left tray and aim at each dish; names disappear when looking away or beyond 1.5 m. Step 10 pickup is accepted; full placement and actual washing are still pending.
 
-Dish surfaces use layer 1 (value 1), environment surfaces layer 3 (value 4), both with mask 0. `DishTargeting` uses mask 5 and accepts only the first hit. An empty temporary slot can be selected only from a real basin hit; a foreground dish takes priority. `MeshSurfaceCollision` scales triangle coordinates by 100 with reciprocal uniform shape scaling to preserve metre dimensions and short-ray precision. Occluders snapshot mesh poses on ready; future animated parts must synchronize their shapes. New target types must coordinate with DISH/SLOT/NONE routing; actual actions must requery rather than trust cached targets.
+Dish surfaces use layer 1 (value 1), environment surfaces layer 3 (value 4) and physical cleaning tools layer 4 (value 8), all with mask 0. `DishTargeting` uses mask 13 and accepts only the first hit. An empty temporary slot can be selected only from a real basin hit; a foreground dish takes priority. `MeshSurfaceCollision` scales triangle coordinates by 100 with reciprocal uniform shape scaling to preserve metre dimensions and short-ray precision. Occluders snapshot mesh poses on ready; future animated parts must synchronize their shapes. New target types must coordinate with DISH/SLOT/CLEANING_TOOL/NONE routing; actual actions must requery rather than trust cached targets.
 
 Verify full slot registration, support and temporary targets:
 
@@ -90,8 +91,20 @@ Verify full slot registration, support and temporary targets:
 
 Success prints `KITCHEN_SLOTS_OK` and exits with code 0. It checks 3 tray, 8 rack and 2 temporary slots, compatible types, full poses, independent occupancy and 13 simultaneous real dish placements for surface-edge intersections and approximately 0.5 mm support gaps. It also checks temporary targeting, range/occlusion/menu handling, placed-dish soap intentions and viewer isolation. F5: inspect the two basin markers and crosshair names; the gameplay rack is empty. F6 keeps the original display. Actual pickup, placement and pump execution are not implemented by this check.
 
-`KitchenSlot.get_pose()` returns the complete marker transform; do not add another half-height. Temporary poses are calibrated to actual basin geometry, with separate `SelectionSurface` points for aiming. `accepts` and `is_empty` are partial checks, not placement authorization. The registry currently owns per-scene SlotState occupancy; future OrderState integration must share or explicitly replace it. `initial_slot_id` is initialization data, not the current slot or the most recent pickup origin. The target query currently runs in EMPTY/SOAP_BOTTLE; carrying and all-slot previews require later extensions. Preserve the per-step acceptance workflow: step 9 is accepted, step 10 has not begun.
+`KitchenSlot.get_pose()` returns the complete marker transform; do not add another half-height. Temporary poses are calibrated to actual basin geometry, with separate `SelectionSurface` points for aiming. `accepts` and `is_empty` are partial checks, not placement authorization. The registry currently owns per-scene SlotState occupancy; future OrderState integration must share or explicitly replace it. `initial_slot_id` is initialization data, not the current slot or the most recent pickup origin. World queries run in EMPTY/CARRYING/SOAP_BOTTLE and exclude all held RIDs. In CLOSE_UP/TRANSITION, DishTargeting must not overwrite the surface target owned by DishCarry. Full slot previews remain planned. Preserve the per-step acceptance workflow: steps 1–10 and the requested additions are accepted; step 11 has not begun.
 
+## Dual-hand and immersive verification
+
+```powershell
+& $godotExe --headless --path . --script Tools/verify_dish_carry.gd
+& $godotExe --headless --path . --script Tools/verify_dual_wield.gd
+```
+
+Success prints `DISH_CARRY_OK` / `DUAL_WIELD_OK` and exits 0. The first item goes left, the second right; retain the other item’s hand on return. Allow two dishes or one dish plus a cleaning tool; soap remains exclusive and unimplemented. Pickup releases the current occupied SlotState and stores the source per hand; `initial_slot_id` is initialization only. `held_dish` is a first-dish compatibility getter, not a confirmed two-dish placement selection rule. Define that rule before step 11.
+
+Use world left-click/E to pick up a tool. In ordinary carrying E returns the held tool within 1.5 m and line of sight, without switching the other item’s hand. Only F enters/exits immersion for a dish+tool pair; Q/E hold left/right rotation there, and right-drag also rotates. Keys 1/2/3 do not select, generate or return physical tools. Both tools freely follow the cursor while idle/off-surface/rotating, and only active left use attaches/aims at the current dish; F restores carry anchors. Tool movement must stay visible at viewport edges and clear the near plane.
+
+Background blur is still step 17; ordinary carry rotation/scroll limits are incomplete step 16 work. Pause currently blocks input without freezing the scene. Hose links must scale their local Y length after orientation, not world Y; continuity/radius checks are not collision/length simulation. Water, wetness eligibility, dirt removal, placement, soap and orders are not yet scene gameplay. Details and current screenshots are in `Docs/scenes/kitchen-game/kitchen-game.md`.
 ## Coding Style & Naming Conventions
 
 Use tabs in GDScript and four spaces in Python/PowerShell. Prefer typed GDScript signatures, `snake_case` functions/scripts, and kebab-case asset filenames such as `plate-standard.glb`. Preserve exported node names, including `Rack_Slot_01`, and meter-based dimensions. Update the matching generator when changing procedural assets or scenes. No formatter/linter is configured; check whitespace with `git diff --check`.

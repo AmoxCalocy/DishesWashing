@@ -115,3 +115,9 @@ Faucet_Assembly
 ```powershell
 & 'D:\Blender\blender.exe' --background --factory-startup --python-exit-code 1 --python 'Tools/build_faucet.py'
 ```
+
+## 可玩入口接入补充（2026-11-24）
+
+上文仍描述原资产和固定展示姿态。第 10 步可玩入口现已使用 world_cleaning_tools.gd 包装实际 Spray_Head，移除旧头部环境形状并随原模型拿取；手位姿态单独设置，不复用餐盘方向。运行时以 16 段圆柱和实际 Hose_Exit／Hose_Attach 更新曲线，各段仅缩放局部 Y；已修正世界轴缩放导致的异常长条。归回恢复原模型软管。
+
+沉浸中喷头与海绵一样自由跟随光标，左键主动命中时从持有侧瞄准，F 才恢复搬运手位。现有检查证明管段连接与横截面正常，尚无长度限制、餐具／环境避障或真实供水，不把历史固定预览的无相交结果当作动态软管已验证。原 .blend、GLB 和生成器未修改。现行操作和预览见 [可玩入口说明](../../scenes/kitchen-game/kitchen-game.md)。

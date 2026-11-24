@@ -62,3 +62,9 @@ Sponge_Standard
 ```powershell
 & 'D:\Blender\blender.exe' --background --factory-startup --python-exit-code 1 --python 'Tools/build_standard_sponge.py'
 ```
+
+## 可玩入口接入补充（2026-11-24）
+
+第 10 步已将原海绵封装为可拿取工具，可进入任一空手，普通搬运 E 检查原位距离与可见性后归回。沉浸时海绵自由跟随光标，未主动使用、移出餐具或旋转后不会自动吸附或回手位；左键命中实际餐具时贴合表面，移动擦洗驱动 Contact_Compress，F 返回才恢复原手位。
+
+当前是模型操作和接触原型，尚未接入干湿判定、洗洁精资格、污渍、泡沫或声音；原资产与生成器未修改。现行操作及自由移动预览见 [可玩入口说明](../../scenes/kitchen-game/kitchen-game.md)。

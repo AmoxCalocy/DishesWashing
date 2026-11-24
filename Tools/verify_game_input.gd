@@ -9,6 +9,7 @@ var commands: Array[StringName] = []
 var releases: Array[StringName] = []
 var looks: Array[Vector2] = []
 var rotations: Array[Vector2] = []
+var rotation_axes: Array[float] = []
 var cursors: Array[Vector2] = []
 var ui_clicks: int = 0
 
@@ -105,6 +106,7 @@ func verify() -> void:
 	)
 	router.look_requested.connect(func(value: Vector2) -> void: looks.append(value))
 	router.rotation_requested.connect(func(value: Vector2) -> void: rotations.append(value))
+	router.rotation_axis_changed.connect(func(value: float) -> void: rotation_axes.append(value))
 	router.tool_cursor_moved.connect(func(value: Vector2) -> void: cursors.append(value))
 	await process_frame
 
@@ -138,7 +140,9 @@ func verify() -> void:
 	expect_primary(GameInput.HandMode.SOAP_BOTTLE, GameInput.Target.DISH, ToolState.Tool.NONE, &"pump_soap")
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.NONE, ToolState.Tool.NONE, &"")
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.WATER_STREAM, ToolState.Tool.NONE, &"")
-	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.DISH, ToolState.Tool.NONE, &"")
+	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.DISH, ToolState.Tool.NONE, &"pickup_dish")
+	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.CLEANING_TOOL, ToolState.Tool.NONE, &"pickup_tool")
+	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.CLEANING_TOOL, ToolState.Tool.NONE, &"pickup_tool")
 	expect_primary(GameInput.HandMode.CLOSE_UP, GameInput.Target.DISH, ToolState.Tool.NONE, &"")
 	expect_primary(GameInput.HandMode.SOAP_BOTTLE, GameInput.Target.NONE, ToolState.Tool.NONE, &"")
 
@@ -148,6 +152,17 @@ func verify() -> void:
 	send_key(KEY_E, true, true)
 	send_key(KEY_E, false)
 	check(commands == [&"toggle_faucet"], "Holding E must not repeatedly toggle the faucet.")
+	for mode in [GameInput.HandMode.CARRYING, GameInput.HandMode.CLOSE_UP]:
+		router.set_context(mode, GameInput.Target.CLEANING_TOOL, ToolState.Tool.SPONGE)
+		commands.clear()
+		rotation_axes.clear()
+		send_key(KEY_E, true)
+		send_key(KEY_E, true, true)
+		send_key(KEY_E, false)
+		if mode == GameInput.HandMode.CARRYING:
+			check(commands == [&"return_tool"], "E with a held tool must request its return once in ordinary carrying.")
+		else:
+			check(commands.is_empty() and rotation_axes == [1.0, 0.0], "E in close-up must rotate right until released without returning the tool.")
 	router.set_context(GameInput.HandMode.CARRYING, GameInput.Target.SOAP_BOTTLE)
 	commands.clear()
 	tap_key(KEY_E)
@@ -162,9 +177,13 @@ func verify() -> void:
 	for mode in [GameInput.HandMode.CARRYING, GameInput.HandMode.CLOSE_UP, GameInput.HandMode.SOAP_BOTTLE]:
 		router.set_context(mode, GameInput.Target.NONE)
 		commands.clear()
+		rotation_axes.clear()
 		tap_key(KEY_Q)
-		var expected: StringName = {GameInput.HandMode.CARRYING: &"return_dish", GameInput.HandMode.CLOSE_UP: &"leave_close", GameInput.HandMode.SOAP_BOTTLE: &"return_soap"}[mode]
-		check(commands == [expected], "Q must resolve by the held item and distance mode.")
+		if mode == GameInput.HandMode.CLOSE_UP:
+			check(commands.is_empty() and rotation_axes == [-1.0, 0.0], "Q in close-up must rotate left without leaving close-up.")
+		else:
+			var expected: StringName = &"return_dish" if mode == GameInput.HandMode.CARRYING else &"return_soap"
+			check(commands == [expected], "Q outside close-up must preserve its held-item intention.")
 	commands.clear()
 	tap_key(KEY_F)
 	tap_key(KEY_1)
@@ -184,6 +203,12 @@ func verify() -> void:
 	send_button(MOUSE_BUTTON_RIGHT, false)
 	check(rotations == [Vector2(3, -2)] and looks.size() == 1, "Dish rotation must replace look input.")
 	router.set_context(GameInput.HandMode.CLOSE_UP, GameInput.Target.DISH, ToolState.Tool.SPONGE)
+	send_key(KEY_Q, true)
+	send_key(KEY_E, true)
+	check(router.get_dish_rotation_axis() == 0.0, "Opposing rotation keys must cancel.")
+	send_key(KEY_Q, false)
+	check(router.get_dish_rotation_axis() == 1.0, "Releasing Q must preserve a held E rotation.")
+	send_key(KEY_E, false)
 	send_motion()
 	check(cursors == [Vector2(80, 90)] and looks.size() == 1, "Close-up motion must address the tool cursor, not look.")
 	commands.clear()
@@ -193,9 +218,12 @@ func verify() -> void:
 	check(commands == [&"game_zoom_in", &"game_zoom_in", &"game_zoom_out"], "Every close-up wheel pulse must be routed.")
 	send_button(MOUSE_BUTTON_LEFT, true)
 	releases.clear()
+	send_key(KEY_Q, true)
+	check(releases == [&"use_tool"], "Starting keyboard rotation must stop tool use immediately.")
 	router.set_interface_open(true)
 	check(releases == [&"use_tool"], "Opening UI must stop continuous tool use.")
 	router.set_interface_open(false)
+	check(router.get_dish_rotation_axis() == 0.0, "Resuming must not restore a held rotation key.")
 	send_button(MOUSE_BUTTON_LEFT, false)
 	check(releases == [&"use_tool"], "A stale release must not create a second action.")
 	router.set_context(GameInput.HandMode.TRANSITION, GameInput.Target.DISH)

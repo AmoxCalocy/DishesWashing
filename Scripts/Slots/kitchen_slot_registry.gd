@@ -29,6 +29,18 @@ func _ready() -> void:
 		slot.state.occupant_id = dish.instance_id
 		dish.global_transform = slot.get_pose()
 
+func find_occupied_slot(dish_id: StringName) -> KitchenSlot:
+	if dish_id.is_empty():
+		return null
+	var found: KitchenSlot
+	for slot: KitchenSlot in slots.values():
+		if slot.state.occupant_id != dish_id:
+			continue
+		if found != null:
+			return null
+		found = slot
+	return found
+
 func find_temporary_slot(point: Vector3, collider: Node3D) -> KitchenSlot:
 	# Require the real basin surface, not a proxy floating over an obstruction.
 	if not get_node(temporary_surface_path).is_ancestor_of(collider):

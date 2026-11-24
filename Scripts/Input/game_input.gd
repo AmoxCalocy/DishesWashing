@@ -7,11 +7,12 @@ signal command_requested(command: StringName, pressed: bool)
 signal movement_changed(direction: Vector2)
 signal look_requested(relative: Vector2)
 signal rotation_requested(relative: Vector2)
+signal rotation_axis_changed(axis: float)
 signal tool_cursor_moved(position: Vector2)
 signal mode_changed
 
 enum HandMode { EMPTY, CARRYING, CLOSE_UP, SOAP_BOTTLE, TRANSITION }
-enum Target { NONE, DISH, SLOT, FAUCET, SOAP_BOTTLE, ORDER_BOARD, WATER_STREAM }
+enum Target { NONE, DISH, SLOT, FAUCET, SOAP_BOTTLE, ORDER_BOARD, WATER_STREAM, CLEANING_TOOL }
 
 const MOVE_ACTIONS: Array[StringName] = [
 	&"game_move_left", &"game_move_right", &"game_move_forward", &"game_move_back",
@@ -26,6 +27,7 @@ var hand_mode: HandMode = HandMode.EMPTY
 var target: Target = Target.NONE
 var selected_tool: ToolState.Tool = ToolState.Tool.NONE
 var interface_open: bool = false
+var carrying_dish: bool = true
 var _held: Dictionary[StringName, bool] = {}
 var _primary_command: StringName = &""
 var _rotating: bool = false
@@ -66,6 +68,11 @@ func get_movement_vector() -> Vector2:
 		float(_held.has(&"game_move_back")) - float(_held.has(&"game_move_forward"))
 	).limit_length()
 
+func get_dish_rotation_axis() -> float:
+	if interface_open or hand_mode != HandMode.CLOSE_UP:
+		return 0.0
+	return float(_held.has(&"game_interact")) - float(_held.has(&"game_return"))
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.echo:
 		return
@@ -78,6 +85,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		if _rotating:
 			rotation_requested.emit(event.relative)
+			if hand_mode == HandMode.CLOSE_UP:
+				tool_cursor_moved.emit(event.position)
 		elif hand_mode == HandMode.CLOSE_UP:
 			tool_cursor_moved.emit(event.position)
 		else:
@@ -105,7 +114,7 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 	if action == &"game_primary":
 		if not pressed:
 			_release_primary()
-		elif not _rotating:
+		elif not _rotating and get_dish_rotation_axis() == 0.0:
 			var command: StringName = _resolve_primary()
 			if not command.is_empty():
 				if command in [&"wet_sponge", &"use_tool"]:
@@ -113,14 +122,19 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 				command_requested.emit(command, true)
 		return
 	if action == &"game_rotate":
-		if hand_mode in [HandMode.CARRYING, HandMode.CLOSE_UP]:
+		if hand_mode == HandMode.CLOSE_UP or (hand_mode == HandMode.CARRYING and carrying_dish):
 			_rotating = pressed
 			if pressed:
 				_release_primary()
 			command_requested.emit(&"rotate_dish", pressed)
-		elif hand_mode in [HandMode.EMPTY, HandMode.SOAP_BOTTLE]:
+		elif hand_mode in [HandMode.EMPTY, HandMode.SOAP_BOTTLE, HandMode.CARRYING]:
 			_zooming_view = pressed
 			command_requested.emit(&"zoom_view", pressed)
+		return
+	if hand_mode == HandMode.CLOSE_UP and action in [&"game_return", &"game_interact"]:
+		if pressed:
+			_release_primary()
+		rotation_axis_changed.emit(get_dish_rotation_axis())
 		return
 	if not pressed:
 		return
@@ -131,8 +145,13 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 			if hand_mode in [HandMode.CARRYING, HandMode.CLOSE_UP]:
 				command_requested.emit(&"toggle_close", true)
 		&"game_interact":
-			if hand_mode in [HandMode.EMPTY, HandMode.CARRYING]:
+			if hand_mode == HandMode.CARRYING and selected_tool != ToolState.Tool.NONE:
+				_release_primary()
+				command_requested.emit(&"return_tool", true)
+			elif hand_mode in [HandMode.EMPTY, HandMode.CARRYING]:
 				match target:
+					Target.CLEANING_TOOL:
+						command_requested.emit(&"pickup_tool", true)
 					Target.FAUCET:
 						command_requested.emit(&"toggle_faucet", true)
 					Target.ORDER_BOARD:
@@ -144,8 +163,6 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 			match hand_mode:
 				HandMode.CARRYING:
 					command_requested.emit(&"return_dish", true)
-				HandMode.CLOSE_UP:
-					command_requested.emit(&"leave_close", true)
 				HandMode.SOAP_BOTTLE:
 					command_requested.emit(&"return_soap", true)
 		&"game_tool_none", &"game_tool_sponge", &"game_tool_sprayer":
@@ -159,11 +176,17 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 func _resolve_primary() -> StringName:
 	match hand_mode:
 		HandMode.EMPTY:
+			if target == Target.CLEANING_TOOL:
+				return &"pickup_tool"
 			if target == Target.WATER_STREAM and selected_tool == ToolState.Tool.SPONGE:
 				return &"wet_sponge"
 			if target == Target.DISH:
 				return &"pickup_dish"
 		HandMode.CARRYING:
+			if target == Target.DISH:
+				return &"pickup_dish"
+			if target == Target.CLEANING_TOOL:
+				return &"pickup_tool"
 			if target == Target.SLOT:
 				return &"place_dish"
 		HandMode.CLOSE_UP:
@@ -188,6 +211,7 @@ func _release_primary() -> void:
 
 func _clear_held() -> void:
 	_held.clear()
+	rotation_axis_changed.emit(0.0)
 	_release_primary()
 	if _rotating:
 		_rotating = false

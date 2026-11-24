@@ -4,7 +4,8 @@ extends RefCounted
 
 const DISH_LAYER: int = 1
 const ENVIRONMENT_LAYER: int = 4
-const QUERY_MASK: int = DISH_LAYER | ENVIRONMENT_LAYER
+const TOOL_LAYER: int = 8
+const QUERY_MASK: int = DISH_LAYER | ENVIRONMENT_LAYER | TOOL_LAYER
 # Millimetre-sized bevel triangles need larger local coordinates for ray precision.
 # The reciprocal shape scale keeps all visible/world dimensions in metres.
 const SHAPE_COORDINATE_SCALE: float = 100.0

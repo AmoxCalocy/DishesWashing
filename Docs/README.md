@@ -29,7 +29,7 @@
 
 ## 鼠标观察与右键放大验证
 
-第 7 步及追加右键放大已通过用户验收。[鼠标观察验证脚本](../Tools/verify_mouse_look.gd)检查直接看向、水平转身、俯仰、边走边转、恢复捕获和旧展示器回归，并覆盖右键按住放大、松开及中断后复原。F5 中空手或持泵瓶时右键临时放大，持餐具时仍旋转餐具；真实持物尚未实现，其上下文由脚本设置。
+第 7 步及追加右键放大已通过用户验收。[鼠标观察验证脚本](../Tools/verify_mouse_look.gd)检查直接看向、水平转身、俯仰、边走边转、恢复捕获和旧展示器回归，并覆盖右键按住放大、松开及中断后复原。F5 中空手或持泵瓶时右键临时放大，持餐具时不触发 FOV 放大；沉浸中的旋转已接入，普通搬运旋转留待第 16 步。持瓶仍由脚本构造上下文。
 
 ## 盘杯与目标识别验证
 
@@ -37,14 +37,18 @@
 
 ## 槽位注册与临时位验证
 
-第 9 步已通过用户验收。[完整布局](../Resources/Kitchen/kitchen-layout.tres)配置托盘 3 位、沥水架 8 位和水槽临时 2 位；[槽位验证脚本](../Tools/verify_kitchen_slots.gd)检查完整姿态、独立占用、实际盘杯的承托与表面穿插，以及临时位和施液目标识别。F5 水槽显示“临时盘位”“临时杯位”，可玩场景的架内展示餐具已清空；F6 原展示布置保持不变。第 10 步未开始，实际拿起、完整放置和泵压执行仍在后续。
+第 9 步已通过用户验收。[完整布局](../Resources/Kitchen/kitchen-layout.tres)配置托盘 3 位、沥水架 8 位和水槽临时 2 位；[槽位验证脚本](../Tools/verify_kitchen_slots.gd)检查完整姿态、独立占用、实际盘杯的承托与表面穿插，以及临时位和施液目标识别。F5 水槽显示“临时盘位”“临时杯位”，可玩场景的架内展示餐具已清空；F6 原展示布置保持不变。实际双手拿起已在第 10 步验收，完整放置和泵压执行仍在后续。
+
+## 双持与沉浸操作验证
+
+第 10 步及追加需求已通过用户验收。[搬运专项](../Tools/verify_dish_carry.gd)检查当前来源占用、原实例、安全位置、近裁剪和障碍；[双持专项](../Tools/verify_dual_wield.gd)检查左右手顺序、餐具加工具、F、右键与 Q/E、两工具自由移动及 E 归回。放大后工具不自动吸附，按 F 才回固定手位；背景模糊仍待第 17 步，完整放置、供水、去污和软管避障未实现。现行操作、图形预览和命令见 [可玩入口说明](scenes/kitchen-game/kitchen-game.md)。
 
 ## 已组装场景
 
 | 场景 | 说明与打开方式 | 预览 |
 | --- | --- | --- |
 | 简单厨房场景 | [Godot 运行、Blender 编辑与组装说明](scenes/kitchen-demo/kitchen-demo.md) | [Godot 全貌](scenes/kitchen-demo/godot-overview.png) / [Godot 玩家视角](scenes/kitchen-demo/godot-player.png) / [Blender 全貌](scenes/kitchen-demo/kitchen-demo-overview.png) |
-| 厨房可玩入口 | [F5 行走、盘杯与临时位识别、槽位验证](scenes/kitchen-game/kitchen-game.md) | 第 1～9 步及追加右键放大已由用户验收；历史预览见展示场景 |
+| 厨房可玩入口 | [F5 双持、沉浸、工具自由移动及验收说明](scenes/kitchen-game/kitchen-game.md) | [双手搬运](scenes/kitchen-game/dual-carry.png) / [海绵](scenes/kitchen-game/immersive-sponge.png) / [喷头](scenes/kitchen-game/immersive-sprayer.png) |
 
 ## 模型说明与预览
 
