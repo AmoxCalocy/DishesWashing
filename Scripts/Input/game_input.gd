@@ -18,7 +18,7 @@ const MOVE_ACTIONS: Array[StringName] = [
 	&"game_move_left", &"game_move_right", &"game_move_forward", &"game_move_back",
 ]
 const BUTTON_ACTIONS: Array[StringName] = [
-	&"game_primary", &"game_rotate", &"game_toggle_close", &"game_interact",
+	&"game_primary", &"game_rotate", &"game_rotate_close", &"game_toggle_close", &"game_interact",
 	&"game_tool_none", &"game_tool_sponge", &"game_tool_sprayer",
 	&"game_return", &"game_orders", &"game_zoom_in", &"game_zoom_out",
 ]
@@ -52,7 +52,7 @@ func set_interface_open(value: bool) -> void:
 func set_context(mode: HandMode, new_target: Target, tool: ToolState.Tool = ToolState.Tool.NONE) -> void:
 	if hand_mode != mode:
 		_clear_held()
-	elif target != new_target or selected_tool != tool:
+	elif selected_tool != tool or (target != new_target and not (hand_mode == HandMode.CARRYING and _primary_command == &"use_tool")):
 		_release_primary()
 	hand_mode = mode
 	target = new_target
@@ -121,13 +121,13 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 					_primary_command = command
 				command_requested.emit(command, true)
 		return
-	if action == &"game_rotate":
-		if hand_mode == HandMode.CLOSE_UP or (hand_mode == HandMode.CARRYING and carrying_dish):
+	if action in [&"game_rotate", &"game_rotate_close"]:
+		if (action == &"game_rotate_close" and hand_mode == HandMode.CLOSE_UP) or (action == &"game_rotate" and hand_mode == HandMode.CARRYING and carrying_dish):
 			_rotating = pressed
 			if pressed:
 				_release_primary()
 			command_requested.emit(&"rotate_dish", pressed)
-		elif hand_mode in [HandMode.EMPTY, HandMode.SOAP_BOTTLE, HandMode.CARRYING]:
+		elif action == &"game_rotate" and hand_mode in [HandMode.EMPTY, HandMode.SOAP_BOTTLE, HandMode.CARRYING]:
 			_zooming_view = pressed
 			command_requested.emit(&"zoom_view", pressed)
 		return
@@ -145,11 +145,16 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 			if hand_mode in [HandMode.CARRYING, HandMode.CLOSE_UP]:
 				command_requested.emit(&"toggle_close", true)
 		&"game_interact":
-			if hand_mode == HandMode.CARRYING and selected_tool != ToolState.Tool.NONE:
+			if hand_mode == HandMode.CARRYING and selected_tool != ToolState.Tool.NONE and target == Target.DISH and not carrying_dish:
+				_release_primary()
+				command_requested.emit(&"pickup_dish", true)
+			elif hand_mode == HandMode.CARRYING and selected_tool != ToolState.Tool.NONE:
 				_release_primary()
 				command_requested.emit(&"return_tool", true)
 			elif hand_mode in [HandMode.EMPTY, HandMode.CARRYING]:
 				match target:
+					Target.DISH:
+						command_requested.emit(&"pickup_dish", true)
 					Target.CLEANING_TOOL:
 						command_requested.emit(&"pickup_tool", true)
 					Target.FAUCET:
@@ -183,6 +188,8 @@ func _resolve_primary() -> StringName:
 			if target == Target.DISH:
 				return &"pickup_dish"
 		HandMode.CARRYING:
+			if selected_tool != ToolState.Tool.NONE:
+				return &"use_tool"
 			if target == Target.DISH:
 				return &"pickup_dish"
 			if target == Target.CLEANING_TOOL:

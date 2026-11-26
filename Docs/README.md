@@ -41,14 +41,18 @@
 
 ## 双持与沉浸操作验证
 
-第 10 步及追加需求已通过用户验收。[搬运专项](../Tools/verify_dish_carry.gd)检查当前来源占用、原实例、安全位置、近裁剪和障碍；[双持专项](../Tools/verify_dual_wield.gd)检查左右手顺序、餐具加工具、F、右键与 Q/E、两工具自由移动及 E 归回。放大后工具不自动吸附，按 F 才回固定手位；背景模糊仍待第 17 步，完整放置、供水、去污和软管避障未实现。现行操作、图形预览和命令见 [可玩入口说明](scenes/kitchen-game/kitchen-game.md)。
+第 10 步及追加需求已通过用户验收。[搬运专项](../Tools/verify_dish_carry.gd)检查当前来源占用、原实例、安全位置、近裁剪和障碍；[双持专项](../Tools/verify_dual_wield.gd)检查左右手顺序、餐具加工具、F、中键与 Q/E、两工具自由移动及 E 归回。沉浸工具不自动吸附，按 F 才回固定手位；背景模糊仍待第 17 步，完整放置、供水、去污和软管避障未实现。现行操作、图形预览和命令见 [可玩入口说明](scenes/kitchen-game/kitchen-game.md)。
+
+## 普通模式工具操作验证
+
+2026-11-26 追加需求已通过用户验收。[普通工具专项](../Tools/verify_world_tool_use.gd)检查两工具和左右手、已放置盘杯接触、占用不变、持续瞄准、行走／观察、遮挡、距离、菜单／失焦和 F 共存。持工具后按住左键操作，松开回原手位；E 对准餐具且有空手时拿取，其他持工具情形尝试归回。沉浸拖动旋转已改为中键，右键不再旋转；新增映射及按钮隔离由输入与双持专项覆盖。当前仍是动作与接触反馈，真实清洗条件留待后续。
 
 ## 已组装场景
 
 | 场景 | 说明与打开方式 | 预览 |
 | --- | --- | --- |
 | 简单厨房场景 | [Godot 运行、Blender 编辑与组装说明](scenes/kitchen-demo/kitchen-demo.md) | [Godot 全貌](scenes/kitchen-demo/godot-overview.png) / [Godot 玩家视角](scenes/kitchen-demo/godot-player.png) / [Blender 全貌](scenes/kitchen-demo/kitchen-demo-overview.png) |
-| 厨房可玩入口 | [F5 双持、沉浸、工具自由移动及验收说明](scenes/kitchen-game/kitchen-game.md) | [双手搬运](scenes/kitchen-game/dual-carry.png) / [海绵](scenes/kitchen-game/immersive-sponge.png) / [喷头](scenes/kitchen-game/immersive-sprayer.png) |
+| 厨房可玩入口 | [F5 普通工具、双持及沉浸验收说明](scenes/kitchen-game/kitchen-game.md) | [普通海绵](scenes/kitchen-game/world-tool-sponge.png) / [普通喷头](scenes/kitchen-game/world-tool-sprayer.png) / [双手搬运](scenes/kitchen-game/dual-carry.png) |
 
 ## 模型说明与预览
 

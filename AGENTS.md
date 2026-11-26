@@ -2,7 +2,7 @@
 
 ## Project Structure & Scope
 
-This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry with WASD, collision, mouse look, hold-to-zoom, real-surface targeting, 13 registered slots and two stable hand slots. Step 10 and its requested additions have accepted dual-hand pickup, F immersion, close-up rotation and free tool movement. Full placement and actual washing remain planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
+This project uses Godot 4.7.2, GDScript, Compatibility rendering, and Blender 5.3.0. It has a kitchen scene viewer and a separate gameplay entry with WASD, collision, mouse look, hold-to-zoom, real-surface targeting, 13 registered slots and two stable hand slots. Step 10 and its additions are accepted, including ordinary held-tool use on placed dishes and immersive middle-drag rotation as of 2026-11-26. F immersion, Q/E rotation and free immersive tool movement remain available. Full placement and actual washing remain planned. MVP covers plates and mugs; additional tableware and classification are post-MVP.
 
 - `project.godot`: project entry point; main scene is `Scenes/kitchen-game.tscn`.
 - `Scenes/kitchen-game.tscn`: hand-authored gameplay entry inheriting the kitchen layout, with the viewer script removed and viewer overlay hidden. Generators must not overwrite this file.
@@ -71,7 +71,7 @@ Verify direct mouse look, hold-to-zoom and the original viewer controls:
 & $godotExe --headless --path . --script Tools/verify_mouse_look.gd
 ```
 
-Success prints `MOUSE_LOOK_OK` and exits with code 0. It checks yaw/pitch, walking while looking, mode/focus recovery, FOV restoration and viewer right-drag/presets. Right mouse reuses `game_rotate`: `zoom_view` when empty, carrying only a tool or holding soap; `rotate_dish` with a dish or in close-up. Zoom caches the original FOV, defaults to 35 degrees and restores on release, UI, focus loss or hand-mode change. Keep it separate from the implemented F dish-distance transition. Test real capture and zoom interactively with F5.
+Success prints `MOUSE_LOOK_OK` and exits with code 0. It checks yaw/pitch, walking while looking, mode/focus recovery, FOV restoration and viewer right-drag/presets. Right mouse uses `game_rotate`: `zoom_view` when empty, carrying only a tool or holding soap; rotation intention when ordinarily carrying a dish. Middle mouse uses the separate `game_rotate_close` action only in immersion. Immersive right mouse does not rotate, zoom or cancel tool use. Zoom caches the original FOV, defaults to 35 degrees and restores on release, UI, focus loss or hand-mode change. Keep it separate from the implemented F dish-distance transition. Test real capture and zoom interactively with F5.
 
 Verify independent dish identities, real surfaces and crosshair targeting:
 
@@ -93,16 +93,21 @@ Success prints `KITCHEN_SLOTS_OK` and exits with code 0. It checks 3 tray, 8 rac
 
 `KitchenSlot.get_pose()` returns the complete marker transform; do not add another half-height. Temporary poses are calibrated to actual basin geometry, with separate `SelectionSurface` points for aiming. `accepts` and `is_empty` are partial checks, not placement authorization. The registry currently owns per-scene SlotState occupancy; future OrderState integration must share or explicitly replace it. `initial_slot_id` is initialization data, not the current slot or the most recent pickup origin. World queries run in EMPTY/CARRYING/SOAP_BOTTLE and exclude all held RIDs. In CLOSE_UP/TRANSITION, DishTargeting must not overwrite the surface target owned by DishCarry. Full slot previews remain planned. Preserve the per-step acceptance workflow: steps 1–10 and the requested additions are accepted; step 11 has not begun.
 
-## Dual-hand and immersive verification
+## Dual-hand, ordinary tool and immersive verification
 
 ```powershell
 & $godotExe --headless --path . --script Tools/verify_dish_carry.gd
 & $godotExe --headless --path . --script Tools/verify_dual_wield.gd
+& $godotExe --headless --path . --script Tools/verify_world_tool_use.gd
 ```
 
 Success prints `DISH_CARRY_OK` / `DUAL_WIELD_OK` and exits 0. The first item goes left, the second right; retain the other item’s hand on return. Allow two dishes or one dish plus a cleaning tool; soap remains exclusive and unimplemented. Pickup releases the current occupied SlotState and stores the source per hand; `initial_slot_id` is initialization only. `held_dish` is a first-dish compatibility getter, not a confirmed two-dish placement selection rule. Define that rule before step 11.
 
-Use world left-click/E to pick up a tool. In ordinary carrying E returns the held tool within 1.5 m and line of sight, without switching the other item’s hand. Only F enters/exits immersion for a dish+tool pair; Q/E hold left/right rotation there, and right-drag also rotates. Keys 1/2/3 do not select, generate or return physical tools. Both tools freely follow the cursor while idle/off-surface/rotating, and only active left use attaches/aims at the current dish; F restores carry anchors. Tool movement must stay visible at viewport edges and clear the near plane.
+Use world left-click/E to pick up a tool. When holding a tool, ordinary left hold uses it on the first placed dish hit by the crosshair, while walking and looking remain available. All held RIDs are excluded. The sponge supplies a continuous scrub animation; the sprayer aims its real nozzle. Ordinary release restores that tool's safe hand pose. Invalid hits stop contact but preserve the held intention for re-entry; UI, focus loss or mode/tool changes require a fresh press. `contact_dish` identifies the current surface recipient; this is not actual washing or water.
+
+With a tool and a free hand, ordinary E aimed at a dish picks it up; other held-tool contexts attempt return within 1.5 m and line of sight, preserving the other hand. Only F enters/exits immersion for a dish+tool pair; Q/E hold left/right rotation there, and middle-drag also rotates. Keys 1/2/3 do not select, generate or return physical tools. In immersion both tools freely follow the cursor while idle/off-surface/rotating, and only active left use attaches/aims at the current held dish; F restores carry anchors. Immersive free tool movement must stay visible at viewport edges and clear the near plane.
+
+The ordinary tool check prints `WORLD_TOOL_USE_OK` and exits 0. It covers both tools and hand sides, plate/cup surfaces, unchanged target occupancy, continuous aiming, walking/look, first-hit occlusion, range, UI/focus interruption, E pickup during use and F coexistence. Ordinary tool poses also check near-plane clearance, space and approach paths; tray rims may require an approach above the surface. Sprayers retain a 1.5 m home-distance limit. Full hose collision and length simulation remain planned.
 
 Background blur is still step 17; ordinary carry rotation/scroll limits are incomplete step 16 work. Pause currently blocks input without freezing the scene. Hose links must scale their local Y length after orientation, not world Y; continuity/radius checks are not collision/length simulation. Water, wetness eligibility, dirt removal, placement, soap and orders are not yet scene gameplay. Details and current screenshots are in `Docs/scenes/kitchen-game/kitchen-game.md`.
 ## Coding Style & Naming Conventions

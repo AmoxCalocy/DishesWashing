@@ -43,6 +43,8 @@ func send_button(button: MouseButton, pressed: bool, position: Vector2 = Vector2
 		event.button_mask = MOUSE_BUTTON_MASK_LEFT
 	elif pressed and button == MOUSE_BUTTON_RIGHT:
 		event.button_mask = MOUSE_BUTTON_MASK_RIGHT
+	elif pressed and button == MOUSE_BUTTON_MIDDLE:
+		event.button_mask = MOUSE_BUTTON_MASK_MIDDLE
 	viewport.push_input(event, true)
 
 func send_motion() -> void:
@@ -83,6 +85,7 @@ func verify() -> void:
 			check((events[0] as InputEventKey).physical_keycode == keys[action], "Wrong physical key: %s." % action)
 	var buttons: Dictionary[StringName, int] = {
 		&"game_primary": MOUSE_BUTTON_LEFT, &"game_rotate": MOUSE_BUTTON_RIGHT,
+		&"game_rotate_close": MOUSE_BUTTON_MIDDLE,
 		&"game_zoom_in": MOUSE_BUTTON_WHEEL_UP, &"game_zoom_out": MOUSE_BUTTON_WHEEL_DOWN,
 	}
 	for action in buttons:
@@ -141,6 +144,9 @@ func verify() -> void:
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.NONE, ToolState.Tool.NONE, &"")
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.WATER_STREAM, ToolState.Tool.NONE, &"")
 	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.DISH, ToolState.Tool.NONE, &"pickup_dish")
+	for tool in [ToolState.Tool.SPONGE, ToolState.Tool.SPRAYER]:
+		for target in [GameInput.Target.DISH, GameInput.Target.NONE, GameInput.Target.SLOT, GameInput.Target.CLEANING_TOOL]:
+			expect_primary(GameInput.HandMode.CARRYING, target, tool, &"use_tool")
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.CLEANING_TOOL, ToolState.Tool.NONE, &"pickup_tool")
 	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.CLEANING_TOOL, ToolState.Tool.NONE, &"pickup_tool")
 	expect_primary(GameInput.HandMode.CLOSE_UP, GameInput.Target.DISH, ToolState.Tool.NONE, &"")
@@ -211,6 +217,27 @@ func verify() -> void:
 	send_key(KEY_E, false)
 	send_motion()
 	check(cursors == [Vector2(80, 90)] and looks.size() == 1, "Close-up motion must address the tool cursor, not look.")
+	commands.clear()
+	releases.clear()
+	send_button(MOUSE_BUTTON_LEFT, true)
+	send_button(MOUSE_BUTTON_RIGHT, true)
+	send_motion()
+	send_button(MOUSE_BUTTON_RIGHT, false)
+	check(commands == [&"use_tool"] and releases.is_empty() and rotations.size() == 1, "Right mouse must not rotate, zoom or cancel tool use in close-up.")
+	send_button(MOUSE_BUTTON_MIDDLE, true)
+	send_motion()
+	check(commands == [&"use_tool", &"rotate_dish"] and releases == [&"use_tool"] and rotations.size() == 2, "Middle drag must rotate the dish and interrupt tool use.")
+	check(cursors.back() == Vector2(80, 90) and looks.size() == 1, "Middle dragging must keep the tool cursor moving without turning the camera.")
+	send_button(MOUSE_BUTTON_RIGHT, true)
+	send_button(MOUSE_BUTTON_RIGHT, false)
+	send_motion()
+	check(rotations.size() == 3, "An unrelated right-button release must not end a held middle drag.")
+	router.set_interface_open(true)
+	router.set_interface_open(false)
+	send_button(MOUSE_BUTTON_MIDDLE, false)
+	send_button(MOUSE_BUTTON_LEFT, false)
+	send_motion()
+	check(rotations.size() == 3 and releases == [&"use_tool", &"rotate_dish"], "Opening UI must clear middle rotation; resuming and stale releases must not restart it.")
 	commands.clear()
 	send_button(MOUSE_BUTTON_WHEEL_UP, true)
 	send_button(MOUSE_BUTTON_WHEEL_UP, true)

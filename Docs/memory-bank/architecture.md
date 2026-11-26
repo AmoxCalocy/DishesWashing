@@ -1,6 +1,6 @@
 # 项目架构与文件职责
 
-> 更新日期：2026-11-24｜第 1～10 步及追加双持、沉浸和工具显示调整已由用户验收
+> 更新日期：2026-11-26｜第 1～10 步及普通工具操作、沉浸中键旋转追加需求已由用户验收
 
 ## 当前实现边界
 
@@ -8,19 +8,19 @@
 
 单独打开 kitchen-demo.tscn 按 F6，仍由 [kitchen_viewer.gd](../../Scripts/kitchen_viewer.gd)控制展示。两个入口分别实例化节点，原展示场景与浏览脚本未改；场景不在运行时打开 Blender 总场景或执行建模脚本。
 
-第 3、4 步建立独立数据层及清洁度规则，第 5～7 步接入输入、界面、行走碰撞、鼠标直接看向及右键临时观察放大，第 8 步接入盘杯身份与真实表面，第 9 步注册 13 个槽位及临时位识别，均已由用户验证通过。OrderState 与 DishState 尚未绑定场景，当前占用由槽位注册器的 SlotState 记录。第 10 步已接入实际双手拿取、F 沉浸、近距离旋转、两工具自由移动、主动表面接触及搬运 E 归回工具；背景模糊、完整放置、真实供水与去污、订单和存档仍待实现。第 11 步未开始，提前接入的第 15、16、19 步能力不代表这些步骤整体验收。
+第 3、4 步建立独立数据层及清洁度规则，第 5～7 步接入输入、界面、行走碰撞、鼠标直接看向及右键临时观察放大，第 8 步接入盘杯身份与真实表面，第 9 步注册 13 个槽位及临时位识别，均已由用户验证通过。OrderState 与 DishState 尚未绑定场景，当前占用由槽位注册器的 SlotState 记录。第 10 步已接入实际双手拿取、F 沉浸、近距离旋转、两工具自由移动及主动表面接触；2026-11-26 追加验收普通模式持工具持续操作已放置餐具、E 拿取／归回上下文及沉浸中键旋转。背景模糊、完整放置、真实供水与去污、订单和存档仍待实现。第 11 步未开始，提前接入的第 15、16、19 步能力不代表这些步骤整体验收。
 
 ## 入口、运行文件与元数据
 
 | 文件 | 当前作用 |
 | --- | --- |
-| [project.godot](../../project.godot) | 项目配置，F5 默认启动 kitchen-game.tscn；保存 16 个 game_ 前缀输入映射，关闭 .blend 自动导入，沿用 Compatibility、1600 × 900 视口和 1280 × 720 窗口覆盖。 |
+| [project.godot](../../project.godot) | 项目配置，F5 默认启动 kitchen-game.tscn；保存 17 个 game_ 前缀输入映射，其中 game_rotate_close 为沉浸中键旋转；关闭 .blend 自动导入，沿用 Compatibility、1600 × 900 视口和 1280 × 720 窗口覆盖。 |
 | [Scenes/kitchen-game.tscn](../../Scenes/kitchen-game.tscn) | 手工维护的可玩入口，组装输入、HUD、玩家、步行碰撞、PlayableDishes、SurfaceCollision、WorldCleaningTools、KitchenSlots、DishTargeting 与 DishCarry。隐藏全部原展示餐具，设置三件独立盘杯的初始槽位 ID，由注册器读取模型定位点摆放；保持相机与展示输入隔离。 |
 | [Scenes/player.tscn](../../Scenes/player.tscn) | 手工维护的 CharacterBody3D 玩家，包含胶囊、眼高 1.62 m 的 ViewCamera，以及其下 CarryAnchor、RightCarryAnchor、CleanAnchor 三个锚点，挂载 PlayerController。 |
 | [Scenes/kitchen-walk-collision.tscn](../../Scenes/kitchen-walk-collision.tscn) | 手工维护的 StaticBody3D，六个碰撞形状限制地面、柜体与台面、后墙及边界；仅供玩家行走阻挡，不是交互表面。 |
 | [Scripts/Player/player_controller.gd](../../Scripts/Player/player_controller.gd) | 处理 GameInput 的观察和临时放大意图：玩家水平转向、相机俯仰限制、捕获恢复防突跳及 FOV 缓存/复原；原物理回调继续处理水平行走、重力和滑动碰撞。 |
 | [Scenes/game-hud.tscn](../../Scenes/game-hud.tscn) | 手工维护的 CanvasLayer 界面，包含不拦截输入的中央准星及 TargetName 标签、左右手状态 HandStatus、操作提示 HandHint、全屏菜单背景与继续按钮；独立于生成的展示器提示层。 |
-| [Scripts/Input/game_input.gd](../../Scripts/Input/game_input.gd) | 继承 Node 的输入分派器；处理未被 UI 消费的事件，按上下文发出动作意图，管理按住状态和鼠标模式；右键在餐具旋转与临时观察放大之间分派。 |
+| [Scripts/Input/game_input.gd](../../Scripts/Input/game_input.gd) | 继承 Node 的输入分派器；处理未被 UI 消费的事件，按上下文发出动作意图，管理按住状态和鼠标模式；普通持工具左键持续使用、E 按目标与持有分派，沉浸中键独立旋转。 |
 | [Scripts/UI/game_hud.gd](../../Scripts/UI/game_hud.gd) | 用 input_path 查找 GameInput，监听模式变化并连接继续按钮；可选 targeting_path 连接餐具、临时位及工具目标，可选 carry_path 监听持物变化和消息，显示左右手与上下文提示。独立输入测试可不绑定目标查询和持物控制器。 |
 | [Scenes/kitchen-demo.tscn](../../Scenes/kitchen-demo.tscn) | 已组装的展示场景，引用房间壳、独立道具与餐具 GLB，保存摆放、灯光、环境、相机和展示提示。由 Godot 组装脚本生成，会被重建覆盖。 |
 | [Scripts/kitchen_viewer.gd](../../Scripts/kitchen_viewer.gd) | 场景浏览控制：1～4 预设机位、R 复位、右键拖动、角度限制、Esc 和失焦释放鼠标。没有玩家行走或清洗逻辑。 |
@@ -37,22 +37,22 @@
 
 ## 游戏输入与基础界面（第 5 步起）
 
-只有可玩入口实例化 GameInput 和 GameHUD。输入通过 _unhandled_input 接入，GUI 优先消费事件；不使用全局按键轮询。既有 16 个动作映射保留，Q/E 在沉浸模式复用为旋转轴，不新增与旧键位冲突的映射。
+只有可玩入口实例化 GameInput 和 GameHUD。输入通过 _unhandled_input 接入，GUI 优先消费事件；不使用全局按键轮询。保留原有 16 个动作并新增中键 game_rotate_close，共 17 个；Q/E 在沉浸模式复用为旋转轴。
 
 | GameInput 接口或状态 | 当前职责 |
 | --- | --- |
-| set_context、mode_changed | 同步 EMPTY、CARRYING、CLOSE_UP、SOAP_BOTTLE、TRANSITION，以及目标与工具。持有模式改变清除旧输入，目标改变只结束旧主操作。 |
-| command_requested | 输入意图，不等于动作成功；DishCarry 接入拿取、F 和 return_tool。放置、泵压、龙头等未实现的意图不执行玩法。 |
+| set_context、mode_changed | 同步 EMPTY、CARRYING、CLOSE_UP、SOAP_BOTTLE、TRANSITION，以及目标与工具。持有模式或工具改变清除旧使用；目标改变通常结束主操作，但普通模式已按住的 use_tool 可跨目标保留，实际接触每帧重查。 |
+| command_requested | 输入意图，不等于动作成功；DishCarry 接入拿取、普通／沉浸 use_tool、F 和 return_tool。放置、泵压、龙头等未实现的意图不执行玩法。 |
 | get_movement_vector、movement_changed | 归一化移动；界面、沉浸及过渡返回零，PlayerController 按物理时间读取。 |
 | look_requested | 普通状态驱动 PlayerController 的直接观察；沉浸和过渡不转镜头。 |
-| rotation_requested | 右键拖动的像素位移；DishCarry 当前只在沉浸时旋转餐具。普通搬运仍只拦截观察并发意图，完整旋转留在第 16 步。 |
+| rotation_requested | 沉浸中键拖动的像素位移；DishCarry 当前只在沉浸时旋转餐具。普通持餐具右键仍只拦截观察并发意图，完整旋转留在第 16 步。 |
 | get_dish_rotation_axis、rotation_axis_changed | 沉浸时 Q 为左、E 为右，同时按住抵消；释放、界面和模式切换清零。DishCarry 默认按每秒 90°、物理 delta 旋转。 |
-| tool_cursor_moved | 沉浸中持续提供画面坐标；右键拖动时也更新光标，让自由工具跟随而不吸附餐具。 |
+| tool_cursor_moved | 沉浸中持续提供画面坐标；中键拖动时也更新光标，让自由工具跟随而不吸附餐具。 |
 | carrying_dish、selected_tool | DishCarry 按真实持物同步；区分只持工具的观察放大与持餐具的旋转意图。selected_tool 在当前场景反映实际已拿工具，不代表远程生成模型。 |
 
-普通状态左键拿餐具或工具，E 在未持工具时拿取有效目标工具；已经持工具时 E 优先尝试归回，距离或遮挡不合格则保持持有。沉浸 Q/E 只旋转，只有 F 返回。1/2/3 仅保留输入意图，不切换或收起实体工具。泵瓶独占、龙头、订单等未来世界目标接入时应保持上下文动作单一，不恢复旧的近距离 Q 返回规则。
+普通未持工具时左键拿餐具或工具，E 也可按目标拿取；持工具时左键持续 use_tool，不分派拾取或放置。持工具、未持餐具且瞄准餐具时 E 先结束使用并拿到空手，其他持工具情形尝试归回原工具，距离或遮挡不合格则保持持有。沉浸中键及 Q/E 只旋转，只有 F 返回。1/2/3 仅保留输入意图，不切换或收起实体工具。泵瓶独占、龙头、订单等未来世界目标接入时应保持上下文动作单一，不恢复旧的近距离 Q 返回规则。
 
-右键复用 game_rotate：普通空手、只持工具或持瓶时发 zoom_view，持餐具和沉浸时发 rotate_dish。界面、失焦或持有模式切换会结束放大和持续操作；只更新目标不取消放大。
+右键 game_rotate：普通空手、只持工具或持瓶时发 zoom_view，普通持餐具时发 rotate_dish 意图；中键 game_rotate_close 仅在沉浸时发 rotate_dish。沉浸右键不旋转、不放大，也不终止工具使用；其释放不能结束仍按住的中键旋转。界面、失焦或持有模式切换会结束放大和持续操作；只更新目标不取消放大。
 
 GameHUD 普通状态显示中央准星及目标名称，沉浸与过渡隐藏准星、保留手位和操作提示。Esc 显示菜单并释放鼠标，继续后普通状态捕获、沉浸保持光标可见。当前只阻止输入，不冻结场景树、过渡或重力；完整暂停留在第 18 步。
 
@@ -89,7 +89,7 @@ zoom_view 按下时缓存当前相机 FOV 并收窄视野，默认从 53.7° 变
 | [Scripts/Dishes/dish_body.gd](../../Scripts/Dishes/dish_body.gd) | 每个实例保存 instance_id、initial_slot_id、dish_type 和 display_name；就绪时检查身份、设置查询层并生成真实表面碰撞。initial_slot_id 供注册器初始化使用，不是运行中的当前槽位；此类尚未关联 DishState。 |
 | [Scripts/Interaction/mesh_surface_collision.gd](../../Scripts/Interaction/mesh_surface_collision.gd) | 从可见 MeshInstance3D 读取三角面，为目标 StaticBody3D 添加 ConcavePolygonShape3D 与 CollisionShape3D；保留网格相对身体的完整变换，提供查询层常量及小面精度处理。 |
 | [Scripts/Interaction/kitchen_surface_collision.gd](../../Scripts/Interaction/kitchen_surface_collision.gd) | 按 visual_roots 为 Models、Dishes 下可见实例添加真实环境遮挡；第 9 步全部原展示餐具被隐藏，故不再生成它们的碰撞。临时位标记不在扫描根节点内，不生成遮挡。 |
-| [Scripts/Interaction/dish_targeting.gd](../../Scripts/Interaction/dish_targeting.gd) | 从玩家相机中央发出默认 1.5 米射线，先识别第一处 DishBody，否则查询命中盆底附近的空临时位；保存 current_dish/current_slot/current_tool 并分别通知 HUD；query_dish/query_tool 在执行拿取时即时重查，排除所有已持物体。沉浸时只清除自己的世界目标，不覆盖 DishCarry 管理的表面目标。 |
+| [Scripts/Interaction/dish_targeting.gd](../../Scripts/Interaction/dish_targeting.gd) | 从玩家相机中央发出默认 1.5 米射线，先识别第一处 DishBody，否则查询命中盆底附近的空临时位；保存 current_dish/current_slot/current_tool 并分别通知 HUD；query_dish/query_tool 在拿取时即时重查，query_surface 返回普通工具使用所需的完整真实命中，均排除所有已持物体。沉浸时只清除自己的世界目标，不覆盖 DishCarry 管理的表面目标。 |
 | [dish_body.gd.uid](../../Scripts/Dishes/dish_body.gd.uid)、[mesh_surface_collision.gd.uid](../../Scripts/Interaction/mesh_surface_collision.gd.uid)、[kitchen_surface_collision.gd.uid](../../Scripts/Interaction/kitchen_surface_collision.gd.uid)、[dish_targeting.gd.uid](../../Scripts/Interaction/dish_targeting.gd.uid) | 四个新增运行脚本的 Godot 稳定资源标识，随源码保存。 |
 
 PlayableDishes 当前包含固定实例 tray_plate_01、tray_plate_02、tray_mug_01，显示“餐盘 1”“餐盘 2”“马克杯”。它们复用原托盘完整姿态，没有额外叠加半高；实例身份与 GLB 的共享网格、材质分开。共享模型不包含清洁进度，本次也未加载 Resources/Examples 订单作为生产数据。
@@ -138,14 +138,15 @@ SelectionSurface 是盆底瞄准参考，圆环略高于表面，Label3D 提供�
 
 | 文件 | 当前职责 |
 | --- | --- |
-| [Scripts/Dishes/dish_carry.gd](../../Scripts/Dishes/dish_carry.gd) | 保存两个稳定 HandItem 手位，重查世界拿取与当前槽位来源，解除占用并移动原实例；每物理帧计算安全搬运姿态；处理 F 过渡、近距离右键和 Q/E 旋转、工具自由移动／主动接触、E 距离和遮挡合格后归回。contact_active 仅是接触原型，不代表供水、湿润或去污资格。 |
+| [Scripts/Dishes/dish_carry.gd](../../Scripts/Dishes/dish_carry.gd) | 保存两个稳定 HandItem 手位，重查世界拿取与当前槽位来源，解除占用并移动原实例；每物理帧计算安全搬运姿态；普通模式即时查询已放置餐具并定位工具，contact_dish 保存当前接触对象；处理 F、近距离中键和 Q/E 旋转、自由工具及 E 归回。contact_active 仅是接触原型，不代表供水、湿润或去污资格。 |
 | [Scripts/Dishes/hand_item.gd](../../Scripts/Dishes/hand_item.gd) | 每个手位独立保存节点、来源槽位、旋转、真实网格包围盒、查询箱形及最近安全姿态；海绵与喷头分别配置拿起朝向，不修改共享网格。 |
 | [Scripts/Tools/cleaning_tool.gd](../../Scripts/Tools/cleaning_tool.gd) | 可查询的 StaticBody3D 工具身份与类别，保存世界原父节点及完整归位姿态；can_return 检查 1.5 米与原位可见性，归回移动同一实例。 |
 | [Scripts/Tools/world_cleaning_tools.gd](../../Scripts/Tools/world_cleaning_tools.gd) | 在环境表面生成后封装原海绵和实际 Spray_Head，移除旧工具遮挡并生成独立真实表面。拿喷头时隐藏原固定软管，以 16 段圆柱连接实际端点；归位恢复原软管及形状。端点采用切向曲线，圆柱只缩放局部 Y 长度。 |
 | [Tools/verify_dish_carry.gd](../../Tools/verify_dish_carry.gd) | 单件盘杯来源、占用、HUD、真实输入、行走与镜头、近裁剪、自由空间左下构图、36 个障碍姿态和中断恢复；成功输出 DISH_CARRY_OK。 |
-| [Tools/verify_dual_wield.gd](../../Tools/verify_dual_wield.gd) | 两餐具及餐具加两种工具、两种拿取顺序、满手／双工具拒绝、F、右键与 Q/E、两工具自由移动和四角可见、主动表面／喷嘴指向、失焦、E 归回及实际软管管段连续与截面；成功输出 DUAL_WIELD_OK。 |
+| [Tools/verify_dual_wield.gd](../../Tools/verify_dual_wield.gd) | 两餐具及餐具加两种工具、两种拿取顺序、满手／双工具拒绝、F、中键与 Q/E、沉浸右键无旋转、两工具自由移动和四角可见、主动表面／喷嘴指向、失焦、E 归回及实际软管管段连续与截面；成功输出 DUAL_WIELD_OK。 |
+| [Tools/verify_world_tool_use.gd](../../Tools/verify_world_tool_use.gd) | 复用双持验证的真实场景辅助方法，覆盖两工具在左右手的普通操作、盘杯与占用、持续瞄准、移动／观察、遮挡、距离、菜单／失焦、使用中 E 拿取与 F 共存；成功输出 WORLD_TOOL_USE_OK。 |
 
-上述六个新增文件均保留同名 .gd.uid，当前共 36 个 GDScript 稳定标识；标识和源码一同提交，.godot 缓存和临时截图脚本不提交。
+上述文件均保留同名 .gd.uid；2026-11-26 新增普通工具专项后共 37 个 GDScript 稳定标识。标识和源码一同提交，.godot 缓存和临时截图脚本不提交。
 
 左右搬运锚点在玩家相机局部分别为（-0.28，-0.22，-0.78）和（0.28，-0.22，-0.78）米；清洗锚点为（0，-0.015，-0.45）。F 约 0.2 秒只移动同一件餐具，保留玩家与相机，不改 FOV。进入前保守检查清洗空间，喷头还检查距水槽原位 1.5 米；这不是完整软管长度约束。
 
@@ -156,6 +157,8 @@ SelectionSurface 是盆底瞄准参考，圆环略高于表面，Label3D 提供�
 搬运使用实际可见网格包围盒和形状运动检查，保留 4 mm 表面余量、近裁剪余量及最近安全世界姿态。每件排除自身 RID，但保留另一手和环境遮挡；没有可用起点时不丢物。源槽释放不等于已经接入 DishState.held 或 OrderState，占用仍由 KitchenSlotRegistry 的 SlotState 管理。
 
 两种工具闲置时共用相机前约 0.32 米的自由平面，喷头保留独立的直立略前倾朝向。按真实网格范围约束画面边缘和近裁剪；不依赖餐具角度或命中，因此移出餐具、旋转超过侧面、松键及失焦恢复不会自动吸附或回手位。左键主动使用且命中当前餐具才接触：海绵法线贴合并在移动时压缩，喷头偏向其手位一侧且实际喷嘴瞄准接触点；松开恢复自由移动。F 返回才恢复手位，之后 E 归回世界原位。
+
+上段自由平面和松开行为属于沉浸。普通模式工具闲置或松开左键回自己的安全手位；按住时重新查询中央准星第一处表面，仅已放置餐具可操作，海绵自动擦动并压缩，喷头瞄准真实命中。工具目标姿态检查近裁剪、真实环境／其他物件空间与从手位接近的路径，必要时先检查越过托盘边缘的路线；喷头另受距原位 1.5 米限制。实际无效命中停止接触但保留按住意图，重新命中可继续，菜单或失焦仍要求重新按下；普通操作不修改目标餐具姿态或占用。
 
 动态软管只提供视觉跟随。管段长度与圆截面、连续端点已检查；当前仍可能穿过餐具，没有完整环境／餐具避障、长度约束或供水。背景模糊仍待第 17 步，普通搬运旋转及滚轮待第 16 步，完整放置从第 11 步继续；不得把本轮提前接入的操作原型记作这些步骤全部完成。
 ## 配置资源与独立运行状态
@@ -211,13 +214,13 @@ OrderState 创建的是内存数据，尚未绑定餐具节点或重开按钮。
 | [order-config-example.tres](../../Resources/Examples/order-config-example.tres) | 验证用两盘一杯条目，两件盘子共享同一份 DishConfig；点数 100 和首次额外点数 25 只用于检查配置隔离，不代表正式订单平衡。 |
 | [Tools/verify_runtime_state.gd](../../Tools/verify_runtime_state.gd) | 构造多份运行状态，修改及删除其中一份的进度、泡沫、位置、占用、工具和集合内容，检查其他实例、新状态与源配置。成功输出 RUNTIME_STATE_OK、退出 0，失败报告原因并退出 1。 |
 | [Tools/verify_cleanliness.gd](../../Tools/verify_cleanliness.gd) | 用内存配置检查加权清洁度、零污渍、越界与只读行为、泡沫独立、整数显示及实际 95% 门槛；不依赖模型加载。成功输出 CLEANLINESS_OK、退出 0，失败报告原因并退出 1。 |
-| [Tools/verify_game_input.gd](../../Tools/verify_game_input.gd) | 独立 SubViewport 注入键鼠事件，检查 16 个映射、上下文分派、重复输入、移动与鼠标信号、HUD 布局及 GUI 消费；成功输出 GAME_INPUT_OK、退出 0，失败报告原因并退出 1。真实窗口捕获与失焦另作图形检查。 |
+| [Tools/verify_game_input.gd](../../Tools/verify_game_input.gd) | 独立 SubViewport 注入键鼠事件，检查 17 个映射、普通工具上下文、沉浸中键与右键隔离、重复输入、移动与鼠标信号、HUD 布局及 GUI 消费；成功输出 GAME_INPUT_OK、退出 0，失败报告原因并退出 1。真实窗口捕获与失焦另作图形检查。 |
 | [Tools/verify_player_movement.gd](../../Tools/verify_player_movement.gd) | 加载真实可玩场景，注入移动意图并运行物理帧，检查出生、相机、方向、斜向速度、30/120 Hz 物理频率、模式限制、碰撞和任务区通路；约 20 秒，成功输出 PLAYER_MOVEMENT_OK 并退出 0，失败退出 1。 |
 | [Tools/verify_mouse_look.gd](../../Tools/verify_mouse_look.gd) | 加载真实可玩场景，注入鼠标及移动事件，检查水平转身、俯仰、模式锁定、恢复、边走边转、右键放大及中断复原；再单独载入旧展示器回归右键拖动和机位。成功输出 MOUSE_LOOK_OK 并退出 0，失败退出 1。 |
 | [Tools/verify_dish_targeting.gd](../../Tools/verify_dish_targeting.gd) | 加载真实可玩场景，检查三件身份与姿态、盘杯表面法线及变换、孔洞和内腔、距离、放大不延长距离、真实遮挡、查询层、HUD 中断恢复及展示器隔离；只改内存，成功输出 DISH_TARGETING_OK 并退出 0，失败退出 1。 |
 | [Tools/verify_kitchen_slots.gd](../../Tools/verify_kitchen_slots.gd) | 检查 13 位配置、完整姿态及独立占用；同时放入正式盘杯检查网格边线与环境及其他餐具相交、最低处承托，再测临时位识别、中断恢复、盘杯施液瞄准意图与展示器隔离。只改内存，成功输出 KITCHEN_SLOTS_OK 并退出 0，失败退出 1。 |
 
-上述 11 个数据类与九份验证脚本各有同名 .gd.uid，保存 Godot 稳定资源标识，随源码提交；[verify_mouse_look.gd.uid](../../Tools/verify_mouse_look.gd.uid)、[verify_dish_targeting.gd.uid](../../Tools/verify_dish_targeting.gd.uid)、[verify_kitchen_slots.gd.uid](../../Tools/verify_kitchen_slots.gd.uid) 分别对应观察、盘杯和槽位验证。Examples 验证用 .tres 不被主场景加载，正式 kitchen-layout.tres 已由 KitchenSlots 加载；先导入新增类型，再按 [progress.md](progress.md) 重跑验证。
+上述 11 个数据类与十份验证脚本各有同名 .gd.uid，保存 Godot 稳定资源标识，随源码提交；普通工具专项及双持／搬运职责见前节。Examples 验证用 .tres 不被主场景加载，正式 kitchen-layout.tres 已由 KitchenSlots 加载；先导入新增类型，再按 [progress.md](progress.md) 重跑验证。
 
 ## 总场景组装和截图工具
 
@@ -319,3 +322,5 @@ Assets/Tools/Textures 中 sponge-foam、sponge-pad 各自的 basecolor、normal�
 21. **局部长度缩放不能写成世界轴缩放。** 软管圆柱先对齐管段，再只缩放局部 Y。世界 Y 缩放会将倾斜管段拉成长条；回归检查实际首尾连续及横截面，比只检查管段数量更能捕捉这个错误。
 22. **接入可动工具时移走旧遮挡。** 原模型的环境碰撞是就绪快照，拿走可见头部还保留旧形状会产生幽灵遮挡；独立工具需连同真实形状移动，保留固定龙头和归位节点。
 23. **按实际能力记录提前接入。** 用户追加需求提前实现了部分沉浸与工具操作，后续步骤仍保留尚缺的边界、模糊、暂停、供水和去污验收。用户通过当前原型不等于整个 MVP 或这些编号步骤全部完成。
+24. **按住意图与本帧接触分别维护。** 普通模式扫过空处只停止本帧接触，保留按住以便重新命中；模式、工具、界面和失焦仍结束意图。沉浸维持原有目标清除规则，不能把普通模式的续用行为扩散到所有上下文。
+25. **模式专用鼠标动作独立绑定。** game_rotate_close 只负责沉浸中键，game_rotate 保留普通右键职责；无关按钮的释放不能终止中键旋转，恢复菜单也不能恢复旧旋转或左键使用。

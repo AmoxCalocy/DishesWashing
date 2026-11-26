@@ -40,6 +40,9 @@ func query_dish() -> DishBody:
 func query_tool() -> CleaningTool:
 	return _query_surface().get("collider") as CleaningTool
 
+func query_surface() -> Dictionary:
+	return _query_surface()
+
 func _query_surface() -> Dictionary:
 	if game_input.interface_open or game_input.hand_mode not in [GameInput.HandMode.EMPTY, GameInput.HandMode.CARRYING, GameInput.HandMode.SOAP_BOTTLE]:
 		return {}

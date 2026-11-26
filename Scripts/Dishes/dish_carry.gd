@@ -28,6 +28,7 @@ var hands: Array[HandItem] = [null, null]
 var contact_active: bool = false
 var contact_point: Vector3
 var contact_normal: Vector3
+var contact_dish: DishBody
 var held_dish: DishBody:
 	get:
 		for item in hands:
@@ -46,6 +47,7 @@ var _rotation_axis: float = 0.0
 var _cursor: Vector2
 var _stroke_distance: float = 0.0
 var _transition: Tween
+var _world_use_time: float = 0.0
 
 func _ready() -> void:
 	game_input.command_requested.connect(_on_command_requested)
@@ -74,9 +76,12 @@ func _dish_item() -> HandItem:
 
 func _on_command_requested(command: StringName, pressed: bool) -> void:
 	if command == &"use_tool":
-		_using = pressed and not game_input.interface_open and game_input.hand_mode == GameInput.HandMode.CLOSE_UP
+		_using = pressed and not game_input.interface_open and game_input.hand_mode in [GameInput.HandMode.CARRYING, GameInput.HandMode.CLOSE_UP] and held_tool() != null
+		_world_use_time = 0.0
 		if not _using:
 			_stop_contact()
+			if _close_item == null:
+				_position_idle_tool()
 		return
 	if command == &"rotate_dish":
 		_rotating = pressed and game_input.hand_mode == GameInput.HandMode.CLOSE_UP
@@ -153,6 +158,67 @@ func _physics_process(delta: float) -> void:
 		if item != null:
 			_solve_pose(item, side)
 			item.node.global_transform = item.safe_pose
+	_update_world_tool(delta)
+
+func _update_world_tool(delta: float) -> void:
+	_stop_contact()
+	if not _using or game_input.interface_open or game_input.hand_mode != GameInput.HandMode.CARRYING:
+		return
+	var tool: CleaningTool = held_tool()
+	if tool == null:
+		return
+	if tool.tool_kind == ToolState.Tool.SPRAYER and camera.global_position.distance_to(tool.home_pose.origin) > 1.5:
+		return
+	# Requery the first world surface; held items never become world cleaning targets.
+	var hit: Dictionary = targeting.query_surface()
+	var dish := hit.get("collider") as DishBody
+	if dish == null:
+		return
+	var pose: Transform3D = _surface_tool_pose(tool, hit.position, hit.normal)
+	_world_use_time += delta
+	if tool.tool_kind == ToolState.Tool.SPONGE:
+		# Normal mode supplies the wiping motion while the player aims and walks.
+		pose.basis = pose.basis * Basis(Vector3.UP, sin(_world_use_time * TAU * 3.0) * 0.14)
+	var side: int = 0 if hands[0] != null and hands[0].node == tool else 1
+	var item: HandItem = hands[side]
+	if not _world_tool_pose_is_safe(item, dish, pose, hit.normal):
+		return
+	tool.global_transform = pose
+	contact_dish = dish
+	contact_point = hit.position
+	contact_normal = hit.normal
+	contact_active = true
+	_set_compression(true)
+
+func _world_tool_pose_is_safe(item: HandItem, dish: DishBody, pose: Transform3D, normal: Vector3) -> bool:
+	var camera_bounds: AABB = (camera.global_transform.affine_inverse() * pose) * item.bounds
+	if camera_bounds.end.z > -camera.near - SURFACE_GAP:
+		return false
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = item.clearance_shape
+	query.transform = pose * Transform3D(Basis.IDENTITY, item.bounds.get_center())
+	query.collision_mask = MeshSurfaceCollision.QUERY_MASK
+	query.exclude = [(item.node as CollisionObject3D).get_rid(), dish.get_rid()]
+	query.margin = SURFACE_GAP
+	var space: PhysicsDirectSpaceState3D = camera.get_world_3d().direct_space_state
+	if not space.intersect_shape(query, 1).is_empty():
+		return false
+	var start: Transform3D = Transform3D(pose.basis, item.safe_pose.origin) * Transform3D(Basis.IDENTITY, item.bounds.get_center())
+	query.transform = start
+	query.motion = pose.origin - item.safe_pose.origin
+	if space.cast_motion(query)[0] >= 1.0:
+		return true
+	# Reach over a tray rim before descending onto the visible dish surface.
+	var approach: Transform3D = pose
+	approach.origin += normal * maxf(item.bounds.size.length(), 0.12)
+	query.motion = approach.origin - item.safe_pose.origin
+	if space.cast_motion(query)[0] < 1.0:
+		return false
+	query.transform = approach * Transform3D(Basis.IDENTITY, item.bounds.get_center())
+	if not space.intersect_shape(query, 1).is_empty():
+		return false
+	query.motion = pose.origin - approach.origin
+	return space.cast_motion(query)[0] >= 1.0
 
 func _solve_pose(item: HandItem, side: int) -> bool:
 	var facing: AABB = Transform3D(item.rotation, Vector3.ZERO) * item.bounds
@@ -277,18 +343,22 @@ func _update_close() -> void:
 		return
 	contact_point = hit.position
 	contact_normal = hit.normal
+	contact_dish = _close_item.node as DishBody
 	contact_active = _using and (tool.tool_kind == ToolState.Tool.SPRAYER or _stroke_distance > 0.0)
 	_stroke_distance = 0.0
-	var offset: Vector3 = contact_normal * 0.001
+	tool.global_transform = _surface_tool_pose(tool, contact_point, contact_normal)
+	_set_compression(contact_active)
+
+func _surface_tool_pose(tool: CleaningTool, point: Vector3, normal: Vector3) -> Transform3D:
+	var offset: Vector3 = normal * 0.001
 	if tool.tool_kind == ToolState.Tool.SPRAYER:
-		var side: float = -1.0 if hands[0].node == tool else 1.0
-		offset = contact_normal * 0.12 + camera.global_basis.x.slide(contact_normal) * side * 0.12 + camera.global_basis.y.slide(contact_normal) * 0.04
+		var side: float = -1.0 if hands[0] != null and hands[0].node == tool else 1.0
+		offset = normal * 0.12 + camera.global_basis.x.slide(normal) * side * 0.12 + camera.global_basis.y.slide(normal) * 0.04
 	var y: Vector3 = offset.normalized()
 	var x: Vector3 = camera.global_basis.x.slide(y).normalized()
 	if x.length_squared() < 0.01:
 		x = camera.global_basis.y.slide(y).normalized()
-	tool.global_transform = Transform3D(Basis(x, y, x.cross(y).normalized()), contact_point + offset)
-	_set_compression(contact_active)
+	return Transform3D(Basis(x, y, x.cross(y).normalized()), point + offset)
 
 func _set_compression(active: bool) -> void:
 	var tool: CleaningTool = held_tool()
@@ -298,6 +368,7 @@ func _set_compression(active: bool) -> void:
 
 func _stop_contact() -> void:
 	contact_active = false
+	contact_dish = null
 	_stroke_distance = 0.0
 	_set_compression(false)
 

@@ -143,7 +143,10 @@ func verify() -> void:
 				if item == tool:
 					tap(&"game_interact")
 				else:
-					click()
+					if carry.held_tool() != null:
+						tap(&"game_interact")
+					else:
+						click()
 				await ticks()
 			check(carry.held_count() == 2 and carry.hands[0].node == order[0] and carry.hands[1].node == order[1], "Pickup order must assign stable hand slots regardless of item roles.")
 			if carry.held_count() != 2:
@@ -206,15 +209,20 @@ func verify() -> void:
 			var before: Basis = dish.basis
 			button(MOUSE_BUTTON_RIGHT, true)
 			motion(center, Vector2(30, 20))
+			button(MOUSE_BUTTON_RIGHT, false)
+			await ticks()
+			check(dish.basis.is_equal_approx(before) and camera.global_transform.is_equal_approx(camera_pose), "Right dragging must not rotate a dish or turn the camera in immersion.")
+			button(MOUSE_BUTTON_MIDDLE, true)
+			motion(center, Vector2(30, 20))
 			await ticks()
 			var idle_pose: Transform3D = tool.global_transform
-			check(not dish.basis.is_equal_approx(before) and camera.global_transform.is_equal_approx(camera_pose), "Right dragging must rotate only the dish.")
+			check(not dish.basis.is_equal_approx(before) and camera.global_transform.is_equal_approx(camera_pose), "Middle dragging must rotate only the dish.")
 			check(not carry.contact_active, "Rotation must stop cleaning.")
-			button(MOUSE_BUTTON_RIGHT, false)
+			button(MOUSE_BUTTON_MIDDLE, false)
 			motion(center)
 			await ticks()
 			check(not carry.contact_active, "Releasing rotation must not resume an old left hold.")
-			check(tool.global_transform.is_equal_approx(idle_pose), "Releasing right drag must not attach the tool or send it back to a hand anchor.")
+			check(tool.global_transform.is_equal_approx(idle_pose), "Releasing middle drag must not attach the tool or send it back to a hand anchor.")
 			for key in [&"game_return", &"game_interact"]:
 				before = dish.basis
 				action(key, true)
