@@ -173,7 +173,10 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 		&"game_tool_none", &"game_tool_sponge", &"game_tool_sprayer":
 			if hand_mode != HandMode.SOAP_BOTTLE:
 				_release_primary()
-				command_requested.emit(action, true)
+				if hand_mode == HandMode.CARRYING and carrying_dish and action != &"game_tool_sprayer":
+					command_requested.emit(&"select_left_dish" if action == &"game_tool_none" else &"select_right_dish", true)
+				else:
+					command_requested.emit(action, true)
 		&"game_zoom_in", &"game_zoom_out":
 			if hand_mode == HandMode.CLOSE_UP:
 				command_requested.emit(action, true)

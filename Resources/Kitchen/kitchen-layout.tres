@@ -9,6 +9,7 @@ slot_id = &"Dirty_Plate_01"
 display_name = "待洗盘位 1"
 slot_kind = 0
 accepted_dish_types = Array[StringName]([&"plate"])
+maximum_dish_size = Vector3(0.251, 0.025, 0.251)
 fixture_path = NodePath("Models/DirtyTray")
 
 [sub_resource type="Resource" id="Tray_plate_02"]
@@ -17,6 +18,7 @@ slot_id = &"Dirty_Plate_02"
 display_name = "待洗盘位 2"
 slot_kind = 0
 accepted_dish_types = Array[StringName]([&"plate"])
+maximum_dish_size = Vector3(0.251, 0.025, 0.251)
 fixture_path = NodePath("Models/DirtyTray")
 
 [sub_resource type="Resource" id="Tray_mug_01"]
@@ -25,6 +27,7 @@ slot_id = &"Dirty_Mug_01"
 display_name = "待洗杯位"
 slot_kind = 0
 accepted_dish_types = Array[StringName]([&"mug"])
+maximum_dish_size = Vector3(0.132, 0.106, 0.091)
 fixture_path = NodePath("Models/DirtyTray")
 
 [sub_resource type="Resource" id="Rack_plate_01"]
@@ -33,6 +36,7 @@ slot_id = &"Rack_Slot_01"
 display_name = "沥水盘位 1"
 slot_kind = 2
 accepted_dish_types = Array[StringName]([&"plate"])
+maximum_dish_size = Vector3(0.251, 0.025, 0.251)
 fixture_path = NodePath("Models/DishRack")
 
 [sub_resource type="Resource" id="Rack_plate_02"]
@@ -41,6 +45,7 @@ slot_id = &"Rack_Slot_02"
 display_name = "沥水盘位 2"
 slot_kind = 2
 accepted_dish_types = Array[StringName]([&"plate"])
+maximum_dish_size = Vector3(0.251, 0.025, 0.251)
 fixture_path = NodePath("Models/DishRack")
 
 [sub_resource type="Resource" id="Rack_plate_03"]
@@ -49,6 +54,7 @@ slot_id = &"Rack_Slot_03"
 display_name = "沥水盘位 3"
 slot_kind = 2
 accepted_dish_types = Array[StringName]([&"plate"])
+maximum_dish_size = Vector3(0.251, 0.025, 0.251)
 fixture_path = NodePath("Models/DishRack")
 
 [sub_resource type="Resource" id="Rack_plate_04"]
@@ -57,6 +63,7 @@ slot_id = &"Rack_Slot_04"
 display_name = "沥水盘位 4"
 slot_kind = 2
 accepted_dish_types = Array[StringName]([&"plate"])
+maximum_dish_size = Vector3(0.251, 0.025, 0.251)
 fixture_path = NodePath("Models/DishRack")
 
 [sub_resource type="Resource" id="Rack_plate_05"]
@@ -65,6 +72,7 @@ slot_id = &"Rack_Slot_05"
 display_name = "沥水盘位 5"
 slot_kind = 2
 accepted_dish_types = Array[StringName]([&"plate"])
+maximum_dish_size = Vector3(0.251, 0.025, 0.251)
 fixture_path = NodePath("Models/DishRack")
 
 [sub_resource type="Resource" id="Rack_plate_06"]
@@ -73,6 +81,7 @@ slot_id = &"Rack_Slot_06"
 display_name = "沥水盘位 6"
 slot_kind = 2
 accepted_dish_types = Array[StringName]([&"plate"])
+maximum_dish_size = Vector3(0.251, 0.025, 0.251)
 fixture_path = NodePath("Models/DishRack")
 
 [sub_resource type="Resource" id="Rack_mug_01"]
@@ -81,6 +90,7 @@ slot_id = &"Rack_Cup_Slot_01"
 display_name = "沥水杯位 1"
 slot_kind = 2
 accepted_dish_types = Array[StringName]([&"mug"])
+maximum_dish_size = Vector3(0.132, 0.106, 0.091)
 fixture_path = NodePath("Models/DishRack")
 
 [sub_resource type="Resource" id="Rack_mug_02"]
@@ -89,6 +99,7 @@ slot_id = &"Rack_Cup_Slot_02"
 display_name = "沥水杯位 2"
 slot_kind = 2
 accepted_dish_types = Array[StringName]([&"mug"])
+maximum_dish_size = Vector3(0.132, 0.106, 0.091)
 fixture_path = NodePath("Models/DishRack")
 
 [sub_resource type="Resource" id="Temporary_plate"]
@@ -97,6 +108,7 @@ slot_id = &"Sink_Plate_01"
 display_name = "临时盘位"
 slot_kind = 1
 accepted_dish_types = Array[StringName]([&"plate"])
+maximum_dish_size = Vector3(0.251, 0.025, 0.251)
 fixture_path = NodePath("KitchenSlots")
 
 [sub_resource type="Resource" id="Temporary_mug"]
@@ -105,6 +117,7 @@ slot_id = &"Sink_Mug_01"
 display_name = "临时杯位"
 slot_kind = 1
 accepted_dish_types = Array[StringName]([&"mug"])
+maximum_dish_size = Vector3(0.132, 0.106, 0.091)
 fixture_path = NodePath("KitchenSlots")
 
 [resource]

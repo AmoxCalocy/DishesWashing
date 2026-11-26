@@ -60,6 +60,8 @@ func _refresh_inventory() -> void:
 	var names: Array[String] = []
 	for item in carry.hands:
 		names.append(str(item.node.get("display_name")) if item != null else "空")
+	if carry.selected_dish != null:
+		names[carry.selected_dish_hand] += "（当前）"
 	hand_status.text = "左手：%s    右手：%s" % names
 	if game_input.hand_mode == GameInput.HandMode.CLOSE_UP:
 		hand_hint.text = ("左键按住操作喷头" if game_input.selected_tool == ToolState.Tool.SPRAYER else "左键按住并移动擦洗") + " · 中键拖动或 Q / E 左右旋转 · F 返回搬运"
@@ -70,7 +72,7 @@ func _refresh_inventory() -> void:
 	elif carry.held_tool() != null:
 		hand_hint.text = "按住左键操作餐具 · WASD 移动 / 鼠标瞄准 · E 拿取目标餐具，移开后 E 归回工具"
 	elif carry.free_hand() < 0:
-		hand_hint.text = "双手已满 · 清洗需餐具和工具各一件"
+		hand_hint.text = "1 选择左手餐具 · 2 选择右手餐具 · 清洗需餐具和工具各一件"
 	else:
 		hand_hint.text = "瞄准餐具或清洗工具，左键拿取" + (" · E 归回工具" if carry.held_tool() != null else "")
 

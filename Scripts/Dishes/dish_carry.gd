@@ -25,6 +25,11 @@ const FREE_TOOL_DEPTH: float = 0.32
 @onready var close_anchor: Marker3D = get_node(close_anchor_path) as Marker3D
 
 var hands: Array[HandItem] = [null, null]
+var selected_dish_hand: int = -1
+var selected_dish: DishBody:
+	get:
+		var item: HandItem = get_selected_dish_item()
+		return item.node as DishBody if item != null else null
 var contact_active: bool = false
 var contact_point: Vector3
 var contact_normal: Vector3
@@ -74,6 +79,29 @@ func _dish_item() -> HandItem:
 			return item
 	return null
 
+func get_selected_dish_item() -> HandItem:
+	if selected_dish_hand >= 0 and selected_dish_hand < hands.size():
+		var item: HandItem = hands[selected_dish_hand]
+		if item != null and item.node is DishBody:
+			return item
+	return null
+
+func check_placement(slot: KitchenSlot, dish_state: DishState = null) -> PlacementResult:
+	if game_input.interface_open or game_input.hand_mode != GameInput.HandMode.CARRYING:
+		return PlacementResult.new(PlacementResult.Code.INPUT_BLOCKED)
+	var result: PlacementResult = PlacementRules.evaluate(get_selected_dish_item(), slot, registry, camera, dish_state, targeting.excluded_bodies, targeting.interaction_distance)
+	result.hand_index = selected_dish_hand
+	return result
+
+func _select_dish_hand(side: int) -> void:
+	if game_input.hand_mode != GameInput.HandMode.CARRYING:
+		return
+	if hands[side] == null or not hands[side].node is DishBody:
+		message_requested.emit("该手没有餐具")
+		return
+	selected_dish_hand = side
+	inventory_changed.emit()
+
 func _on_command_requested(command: StringName, pressed: bool) -> void:
 	if command == &"use_tool":
 		_using = pressed and not game_input.interface_open and game_input.hand_mode in [GameInput.HandMode.CARRYING, GameInput.HandMode.CLOSE_UP] and held_tool() != null
@@ -102,6 +130,8 @@ func _on_command_requested(command: StringName, pressed: bool) -> void:
 				_enter_close()
 		&"return_tool":
 			_return_tool()
+		&"select_left_dish", &"select_right_dish":
+			_select_dish_hand(0 if command == &"select_left_dish" else 1)
 
 func _pickup(command: StringName) -> void:
 	if game_input.hand_mode not in [GameInput.HandMode.EMPTY, GameInput.HandMode.CARRYING]:
@@ -136,6 +166,12 @@ func _anchor(side: int) -> Marker3D:
 	return anchor if side == 0 else right_anchor
 
 func _sync_inventory() -> void:
+	if get_selected_dish_item() == null:
+		selected_dish_hand = -1
+		for side in hands.size():
+			if hands[side] != null and hands[side].node is DishBody:
+				selected_dish_hand = side
+				break
 	targeting.excluded_bodies.clear()
 	for item in hands:
 		if item != null:

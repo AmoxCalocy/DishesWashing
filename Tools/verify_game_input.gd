@@ -200,7 +200,7 @@ func verify() -> void:
 	commands.clear()
 	for code in [KEY_1, KEY_2, KEY_3, KEY_F, KEY_TAB, KEY_4, KEY_R]:
 		tap_key(code)
-	check(commands == [&"game_tool_none", &"game_tool_sponge", &"game_tool_sprayer", &"toggle_close", &"show_orders"], "Game keys must emit tool/interaction intentions, never viewer commands.")
+	check(commands == [&"select_left_dish", &"select_right_dish", &"game_tool_sprayer", &"toggle_close", &"show_orders"], "Carrying 1/2 must select dish hands; other game keys emit intentions, never viewer commands.")
 
 	send_motion()
 	check(looks == [Vector2(3, -2)], "Mouse look must not require the right button.")

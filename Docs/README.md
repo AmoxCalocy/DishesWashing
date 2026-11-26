@@ -47,12 +47,16 @@
 
 2026-11-26 追加需求已通过用户验收。[普通工具专项](../Tools/verify_world_tool_use.gd)检查两工具和左右手、已放置盘杯接触、占用不变、持续瞄准、行走／观察、遮挡、距离、菜单／失焦和 F 共存。持工具后按住左键操作，松开回原手位；E 对准餐具且有空手时拿取，其他持工具情形尝试归回。沉浸拖动旋转已改为中键，右键不再旋转；新增映射及按钮隔离由输入与双持专项覆盖。当前仍是动作与接触反馈，真实清洗条件留待后续。
 
+## 统一放置判定与手位选择验证
+
+第 1～11 步及追加需求已验收，下一项是第 12 步落位预览。第 11 步的 [统一放置专项](../Tools/verify_placement_rules.gd)验证 13 位完整姿态、实际 95% 门槛、泡沫独立、注册／类型／尺寸、占用、距离／可见性、真实空间和只读结果；成功输出 PLACEMENT_RULES_OK。普通搬运按 1／2 选择左右餐具，HUD 标注“当前”，空手或工具不可选。清洁状态未绑定时不授权入架，实际放置和 Q 返回仍待第 13、14 步。
+
 ## 已组装场景
 
 | 场景 | 说明与打开方式 | 预览 |
 | --- | --- | --- |
 | 简单厨房场景 | [Godot 运行、Blender 编辑与组装说明](scenes/kitchen-demo/kitchen-demo.md) | [Godot 全貌](scenes/kitchen-demo/godot-overview.png) / [Godot 玩家视角](scenes/kitchen-demo/godot-player.png) / [Blender 全貌](scenes/kitchen-demo/kitchen-demo-overview.png) |
-| 厨房可玩入口 | [F5 普通工具、双持及沉浸验收说明](scenes/kitchen-game/kitchen-game.md) | [普通海绵](scenes/kitchen-game/world-tool-sponge.png) / [普通喷头](scenes/kitchen-game/world-tool-sprayer.png) / [双手搬运](scenes/kitchen-game/dual-carry.png) |
+| 厨房可玩入口 | [F5 手位选择、普通工具及沉浸验收说明](scenes/kitchen-game/kitchen-game.md) | [手位选择](scenes/kitchen-game/step11-hand-selection.png) / [普通海绵](scenes/kitchen-game/world-tool-sponge.png) / [普通喷头](scenes/kitchen-game/world-tool-sprayer.png) |
 
 ## 模型说明与预览
 

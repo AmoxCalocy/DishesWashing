@@ -8,6 +8,7 @@ var rotation: Basis
 var bounds: AABB
 var clearance_shape: BoxShape3D
 var safe_pose: Transform3D
+var _placement_faces: PackedVector3Array
 
 func _init(item_node: Node3D) -> void:
 	node = item_node
@@ -26,3 +27,14 @@ func _init(item_node: Node3D) -> void:
 	clearance_shape = BoxShape3D.new()
 	clearance_shape.size = bounds.size
 	clearance_shape.margin = 0.0
+
+func get_placement_faces() -> PackedVector3Array:
+	if _placement_faces.is_empty():
+		for child in node.find_children("*", "MeshInstance3D", true, false):
+			var mesh := child as MeshInstance3D
+			if not mesh.is_visible_in_tree() or mesh.mesh == null:
+				continue
+			var local_pose: Transform3D = node.global_transform.affine_inverse() * mesh.global_transform
+			for point in mesh.mesh.get_faces():
+				_placement_faces.append(local_pose * point)
+	return _placement_faces
