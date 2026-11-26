@@ -9,6 +9,8 @@ var bounds: AABB
 var clearance_shape: BoxShape3D
 var safe_pose: Transform3D
 var _placement_faces: PackedVector3Array
+var _placement_shapes: Array[ConvexPolygonShape3D] = []
+var _support_points: PackedVector3Array
 
 func _init(item_node: Node3D) -> void:
 	node = item_node
@@ -38,3 +40,34 @@ func get_placement_faces() -> PackedVector3Array:
 			for point in mesh.mesh.get_faces():
 				_placement_faces.append(local_pose * point)
 	return _placement_faces
+
+func get_placement_shapes() -> Array[ConvexPolygonShape3D]:
+	if _placement_shapes.is_empty():
+		var faces: PackedVector3Array = get_placement_faces()
+		for index in range(0, faces.size(), 3):
+			var a: Vector3 = faces[index]
+			var b: Vector3 = faces[index + 1]
+			var c: Vector3 = faces[index + 2]
+			var normal: Vector3 = (b - a).cross(c - a).normalized() * 0.00001
+			if normal == Vector3.ZERO:
+				continue
+			var triangle := ConvexPolygonShape3D.new()
+			triangle.margin = 0.0
+			triangle.points = PackedVector3Array([a + normal, b + normal, c + normal, a - normal, b - normal, c - normal])
+			_placement_shapes.append(triangle)
+	return _placement_shapes
+
+func get_support_points() -> PackedVector3Array:
+	if _support_points.is_empty():
+		# Eight extremes on the actual bottom ring, not the empty AABB corners.
+		var faces: PackedVector3Array = get_placement_faces()
+		for index in 8:
+			var direction := Vector3(cos(index * TAU / 8.0), 0, sin(index * TAU / 8.0))
+			var best: Vector3 = bounds.get_center()
+			var score: float = -INF
+			for point in faces:
+				if point.y <= bounds.position.y + 0.00001 and point.dot(direction) > score:
+					best = point
+					score = point.dot(direction)
+			_support_points.append(best)
+	return _support_points

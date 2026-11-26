@@ -136,10 +136,10 @@ func verify() -> void:
 		check(carry.held_dish == null and source.state.occupant_id == identity and dish.global_transform.is_equal_approx(source_pose), "An obstructed carry pose must leave the original slot and dish intact.")
 		blocker.free()
 		await advance_ticks()
-		# For the mug, initialize a later pickup from a temporary slot rather than its order origin.
+		# For the mug, initialize a later pickup from a rack slot rather than its order origin.
 		if dish.dish_type == &"mug":
 			source.state.occupant_id = &""
-			source = registry.slots[&"Sink_Mug_01"]
+			source = registry.slots[&"Rack_Cup_Slot_01"]
 			source.state.occupant_id = identity
 			dish.global_transform = source.get_pose()
 			await aim_at(dish)

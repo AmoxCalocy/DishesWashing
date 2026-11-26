@@ -1,67 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Slots/kitchen_slot_registry.gd" id="1_registry"]
 [ext_resource type="Resource" path="res://Resources/Kitchen/kitchen-layout.tres" id="2_layout"]
-
-[sub_resource type="StandardMaterial3D" id="Material_marker"]
-shading_mode = 0
-albedo_color = Color(0.25, 0.72, 0.62, 1)
-
-[sub_resource type="TorusMesh" id="Mesh_marker"]
-material = SubResource("Material_marker")
-inner_radius = 0.021
-outer_radius = 0.024
-rings = 32
-ring_segments = 8
-
-[sub_resource type="SystemFont" id="Font_labels"]
-font_names = PackedStringArray("Microsoft YaHei", "Noto Sans CJK SC", "sans-serif")
 
 [node name="KitchenSlots" type="Node3D"]
 script = ExtResource("1_registry")
 layout = ExtResource("2_layout")
 kitchen_path = NodePath("..")
 dishes_path = NodePath("../PlayableDishes")
-temporary_surface_path = NodePath("../Models/SinkCountertop")
-
-[node name="Sink_Plate_01" type="Marker3D" parent="."]
-position = Vector3(-0.23, 0.667577, -0.045)
-
-[node name="SelectionSurface" type="Marker3D" parent="Sink_Plate_01"]
-position = Vector3(0, -0.013396, 0)
-
-[node name="Indicator" type="MeshInstance3D" parent="Sink_Plate_01/SelectionSurface"]
-position = Vector3(0, 0.002, 0)
-cast_shadow = 0
-mesh = SubResource("Mesh_marker")
-
-[node name="Name" type="Label3D" parent="Sink_Plate_01"]
-position = Vector3(0, 0.065, 0)
-billboard = 1
-font = SubResource("Font_labels")
-font_size = 32
-pixel_size = 0.001
-text = "临时盘位"
-modulate = Color(0.5, 0.93, 0.8, 1)
-outline_modulate = Color(0.04, 0.12, 0.1, 1)
-
-[node name="Sink_Mug_01" type="Marker3D" parent="."]
-position = Vector3(0.23, 0.708443, -0.1)
-
-[node name="SelectionSurface" type="Marker3D" parent="Sink_Mug_01"]
-position = Vector3(0, -0.053816, 0)
-
-[node name="Indicator" type="MeshInstance3D" parent="Sink_Mug_01/SelectionSurface"]
-position = Vector3(0, 0.002, 0)
-cast_shadow = 0
-mesh = SubResource("Mesh_marker")
-
-[node name="Name" type="Label3D" parent="Sink_Mug_01"]
-position = Vector3(0, 0.065, 0)
-billboard = 1
-font = SubResource("Font_labels")
-font_size = 32
-pixel_size = 0.001
-text = "临时杯位"
-modulate = Color(0.5, 0.93, 0.8, 1)
-outline_modulate = Color(0.04, 0.12, 0.1, 1)
+basin_path = NodePath("../Models/SinkCountertop")

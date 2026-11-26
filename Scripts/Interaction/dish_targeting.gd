@@ -5,6 +5,7 @@ extends Node
 signal target_changed(dish: DishBody)
 signal slot_changed(slot: KitchenSlot)
 signal tool_changed(tool: CleaningTool)
+signal placement_surface_changed(active: bool)
 
 @export var input_path: NodePath
 @export var camera_path: NodePath
@@ -17,6 +18,7 @@ signal tool_changed(tool: CleaningTool)
 var current_dish: DishBody
 var current_slot: KitchenSlot
 var current_tool: CleaningTool
+var current_placement_surface: Dictionary = {}
 var excluded_bodies: Array[RID] = []
 
 func _ready() -> void:
@@ -30,9 +32,12 @@ func _physics_process(_delta: float) -> void:
 	var dish := hit.get("collider") as DishBody
 	var tool := hit.get("collider") as CleaningTool
 	var slot: KitchenSlot
-	if dish == null and not hit.is_empty():
-		slot = registry.find_temporary_slot(hit.position, hit.collider)
-	_update_target(dish, slot, tool)
+	var surface: Dictionary = {}
+	if dish == null and tool == null and not game_input.interface_open and game_input.hand_mode == GameInput.HandMode.CARRYING and game_input.carrying_dish:
+		slot = registry.find_placement_slot(camera, hit, excluded_bodies, interaction_distance)
+		if slot == null and registry.is_basin_hit(hit):
+			surface = hit
+	_update_target(dish, slot, tool, true, surface)
 
 func query_dish() -> DishBody:
 	return _query_surface().get("collider") as DishBody
@@ -42,6 +47,17 @@ func query_tool() -> CleaningTool:
 
 func query_surface() -> Dictionary:
 	return _query_surface()
+
+func query_placement_slot() -> KitchenSlot:
+	if game_input.interface_open or game_input.hand_mode != GameInput.HandMode.CARRYING or not game_input.carrying_dish:
+		return null
+	return registry.find_placement_slot(camera, _query_surface(), excluded_bodies, interaction_distance)
+
+func query_placement_surface() -> Dictionary:
+	if game_input.interface_open or game_input.hand_mode != GameInput.HandMode.CARRYING or not game_input.carrying_dish:
+		return {}
+	var hit: Dictionary = _query_surface()
+	return hit if registry.is_basin_hit(hit) else {}
 
 func _query_surface() -> Dictionary:
 	if game_input.interface_open or game_input.hand_mode not in [GameInput.HandMode.EMPTY, GameInput.HandMode.CARRYING, GameInput.HandMode.SOAP_BOTTLE]:
@@ -61,18 +77,22 @@ func _on_mode_changed() -> void:
 	if game_input.interface_open or game_input.hand_mode not in [GameInput.HandMode.EMPTY, GameInput.HandMode.CARRYING, GameInput.HandMode.SOAP_BOTTLE]:
 		_update_target(null)
 
-func _update_target(dish: DishBody, slot: KitchenSlot = null, tool: CleaningTool = null, route: bool = true) -> void:
+func _update_target(dish: DishBody, slot: KitchenSlot = null, tool: CleaningTool = null, route: bool = true, surface: Dictionary = {}) -> void:
 	var changed: bool = current_dish != dish
 	var slot_has_changed: bool = current_slot != slot
 	var tool_has_changed: bool = current_tool != tool
+	var surface_has_changed: bool = current_placement_surface.is_empty() != surface.is_empty()
 	current_dish = dish
 	current_slot = slot
 	current_tool = tool
+	current_placement_surface = surface
 	var kind: GameInput.Target = GameInput.Target.DISH if dish != null else GameInput.Target.NONE
 	if slot != null:
 		kind = GameInput.Target.SLOT
 	if tool != null:
 		kind = GameInput.Target.CLEANING_TOOL
+	if not surface.is_empty():
+		kind = GameInput.Target.PLACEMENT_SURFACE
 	if route and game_input.target != kind:
 		game_input.set_context(game_input.hand_mode, kind, game_input.selected_tool)
 	if changed:
@@ -81,3 +101,5 @@ func _update_target(dish: DishBody, slot: KitchenSlot = null, tool: CleaningTool
 		slot_changed.emit(current_slot)
 	if tool_has_changed:
 		tool_changed.emit(current_tool)
+	if surface_has_changed:
+		placement_surface_changed.emit(not surface.is_empty())

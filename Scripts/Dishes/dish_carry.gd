@@ -93,6 +93,13 @@ func check_placement(slot: KitchenSlot, dish_state: DishState = null) -> Placeme
 	result.hand_index = selected_dish_hand
 	return result
 
+func check_surface_placement(hit: Dictionary, dish_state: DishState = null) -> PlacementResult:
+	if game_input.interface_open or game_input.hand_mode != GameInput.HandMode.CARRYING:
+		return PlacementResult.new(PlacementResult.Code.INPUT_BLOCKED)
+	var result: PlacementResult = PlacementRules.evaluate_surface(get_selected_dish_item(), hit, registry, camera, dish_state, targeting.excluded_bodies, targeting.interaction_distance)
+	result.hand_index = selected_dish_hand
+	return result
+
 func _select_dish_hand(side: int) -> void:
 	if game_input.hand_mode != GameInput.HandMode.CARRYING:
 		return

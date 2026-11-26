@@ -12,7 +12,7 @@ signal tool_cursor_moved(position: Vector2)
 signal mode_changed
 
 enum HandMode { EMPTY, CARRYING, CLOSE_UP, SOAP_BOTTLE, TRANSITION }
-enum Target { NONE, DISH, SLOT, FAUCET, SOAP_BOTTLE, ORDER_BOARD, WATER_STREAM, CLEANING_TOOL }
+enum Target { NONE, DISH, SLOT, FAUCET, SOAP_BOTTLE, ORDER_BOARD, WATER_STREAM, CLEANING_TOOL, PLACEMENT_SURFACE }
 
 const MOVE_ACTIONS: Array[StringName] = [
 	&"game_move_left", &"game_move_right", &"game_move_forward", &"game_move_back",
@@ -197,7 +197,7 @@ func _resolve_primary() -> StringName:
 				return &"pickup_dish"
 			if target == Target.CLEANING_TOOL:
 				return &"pickup_tool"
-			if target == Target.SLOT:
+			if target in [Target.SLOT, Target.PLACEMENT_SURFACE]:
 				return &"place_dish"
 		HandMode.CLOSE_UP:
 			if target == Target.DISH and selected_tool != ToolState.Tool.NONE:

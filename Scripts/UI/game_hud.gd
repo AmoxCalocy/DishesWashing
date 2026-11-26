@@ -3,6 +3,7 @@ extends CanvasLayer
 @export var input_path: NodePath
 @export var targeting_path: NodePath
 @export var carry_path: NodePath
+@export var preview_path: NodePath
 @onready var game_input: GameInput = get_node(input_path) as GameInput
 @onready var crosshair: Control = $Crosshair
 @onready var menu: Control = $Menu
@@ -11,6 +12,7 @@ extends CanvasLayer
 @onready var carry: DishCarry = get_node(carry_path) as DishCarry if not carry_path.is_empty() else null
 @onready var hand_status: Label = $HandStatus
 @onready var hand_hint: Label = $HandHint
+@onready var placement_hint: Label = $Crosshair/PlacementHint
 
 func _ready() -> void:
 	game_input.mode_changed.connect(_refresh)
@@ -20,10 +22,26 @@ func _ready() -> void:
 		targeting.target_changed.connect(_show_target)
 		targeting.slot_changed.connect(_show_slot)
 		targeting.tool_changed.connect(_show_tool)
+		targeting.placement_surface_changed.connect(_show_surface)
 	if carry != null:
 		carry.inventory_changed.connect(_refresh_inventory)
 		carry.message_requested.connect(_show_message)
+	if not preview_path.is_empty():
+		(get_node(preview_path) as PlacementPreview).preview_changed.connect(_show_preview)
 	_refresh()
+
+func _show_preview(_slot: KitchenSlot, result: PlacementResult) -> void:
+	placement_hint.visible = result != null
+	if result != null:
+		placement_hint.text = result.get_reason()
+		placement_hint.modulate = Color(0.45, 1.0, 0.65) if result.is_valid else Color(1.0, 0.6, 0.5)
+
+func _show_surface(active: bool) -> void:
+	if active:
+		target_name.visible = true
+		target_name.text = "水槽 · 自由放置"
+	else:
+		_show_tool((get_node(targeting_path) as DishTargeting).current_tool)
 
 func _show_target(dish: DishBody) -> void:
 	target_name.visible = dish != null

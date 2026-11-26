@@ -35,9 +35,9 @@
 
 第 8 步已通过用户验收。[盘杯验证脚本](../Tools/verify_dish_targeting.gd)检查独立身份、真实表面与法线、杯内和孔洞、架槽、托盘及水槽内腔、距离、遮挡和展示器隔离。F5 走近左侧托盘，准星分别显示“餐盘 1”“餐盘 2”“马克杯”；默认范围为 1.5 米，超距、遮挡、菜单和失焦后清除目标。文件职责与碰撞分层见 [架构说明](memory-bank/architecture.md)，命令与验收来源见 [进度记录](memory-bank/progress.md)。
 
-## 槽位注册与临时位验证
+## 托盘初始点与架位验证
 
-第 9 步已通过用户验收。[完整布局](../Resources/Kitchen/kitchen-layout.tres)配置托盘 3 位、沥水架 8 位和水槽临时 2 位；[槽位验证脚本](../Tools/verify_kitchen_slots.gd)检查完整姿态、独立占用、实际盘杯的承托与表面穿插，以及临时位和施液目标识别。F5 水槽显示“临时盘位”“临时杯位”，可玩场景的架内展示餐具已清空；F6 原展示布置保持不变。实际双手拿起已在第 10 步验收，完整放置和泵压执行仍在后续。
+第 9 步建立注册器，第 12 步按用户修正移除两个固定水槽位及标记。[正式布局](../Resources/Kitchen/kitchen-layout.tres)现为 3 个托盘初始点和 8 个架位，固定放置目标只保留沥水架。[槽位专项](../Tools/verify_kitchen_slots.gd)检查 11 项完整姿态、独立占用、实际承托与网格穿插、无水槽固定标记、施液意图及展示器隔离。水槽预览自由跟随真实命中，F6 原展示布置保持不变；实际放置与泵压仍在后续。
 
 ## 双持与沉浸操作验证
 
@@ -49,14 +49,18 @@
 
 ## 统一放置判定与手位选择验证
 
-第 1～11 步及追加需求已验收，下一项是第 12 步落位预览。第 11 步的 [统一放置专项](../Tools/verify_placement_rules.gd)验证 13 位完整姿态、实际 95% 门槛、泡沫独立、注册／类型／尺寸、占用、距离／可见性、真实空间和只读结果；成功输出 PLACEMENT_RULES_OK。普通搬运按 1／2 选择左右餐具，HUD 标注“当前”，空手或工具不可选。清洁状态未绑定时不授权入架，实际放置和 Q 返回仍待第 13、14 步。
+第 1～12 步及追加需求已验收，下一项是第 13 步确认放置。[统一放置专项](../Tools/verify_placement_rules.gd)验证现有 11 个注册姿态、实际 95% 门槛、泡沫独立、注册／类型／尺寸、占用、距离／可见性、真实空间和只读结果，输出 PLACEMENT_RULES_OK。普通搬运按 1／2 选择左右餐具，HUD 标注“当前”，空手或工具不可选；缺少清洁状态不授权入架。
+
+## 水槽自由落点与架位预览验证
+
+第 12 步已通过用户验收。[预览专项](../Tools/verify_placement_preview.gd)输出 PLACEMENT_PREVIEW_OK，覆盖盘杯多个连续水槽落点、底部支撑、真实空间、8 个固定架位、当前手位、无碰撞／拾取／占用、遮挡、超距、菜单／失焦、工具排除及 F 恢复。F5 拿起餐具后瞄准水槽内部，预览随准星移动并显示绿／红原因；沥水架保留完整固定姿态。实际左键放置及自由位置记录在第 13 步，Q 返回在第 14 步，具体命令和画面见[可玩入口说明](scenes/kitchen-game/kitchen-game.md)。
 
 ## 已组装场景
 
 | 场景 | 说明与打开方式 | 预览 |
 | --- | --- | --- |
 | 简单厨房场景 | [Godot 运行、Blender 编辑与组装说明](scenes/kitchen-demo/kitchen-demo.md) | [Godot 全貌](scenes/kitchen-demo/godot-overview.png) / [Godot 玩家视角](scenes/kitchen-demo/godot-player.png) / [Blender 全貌](scenes/kitchen-demo/kitchen-demo-overview.png) |
-| 厨房可玩入口 | [F5 手位选择、普通工具及沉浸验收说明](scenes/kitchen-game/kitchen-game.md) | [手位选择](scenes/kitchen-game/step11-hand-selection.png) / [普通海绵](scenes/kitchen-game/world-tool-sponge.png) / [普通喷头](scenes/kitchen-game/world-tool-sprayer.png) |
+| 厨房可玩入口 | [F5 自由预览、手位、工具及沉浸验收说明](scenes/kitchen-game/kitchen-game.md) | [水槽餐盘](scenes/kitchen-game/step12-free-plate.png) / [水槽杯子](scenes/kitchen-game/step12-free-mug.png) / [空间不足](scenes/kitchen-game/step12-free-blocked.png) / [架位预览](scenes/kitchen-game/step12-free-rack.png) |
 
 ## 模型说明与预览
 

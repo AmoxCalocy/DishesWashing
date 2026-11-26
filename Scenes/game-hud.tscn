@@ -64,6 +64,25 @@ theme_override_colors/font_outline_color = Color(0.04, 0.07, 0.06, 1)
 theme_override_constants/outline_size = 6
 horizontal_alignment = 1
 
+[node name="PlacementHint" type="Label" parent="Crosshair"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -420.0
+offset_top = 60.0
+offset_right = 420.0
+offset_bottom = 96.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = SubResource("Theme_ui")
+theme_override_colors/font_outline_color = Color(0.04, 0.07, 0.06, 1)
+theme_override_constants/outline_size = 6
+horizontal_alignment = 1
+
 [node name="HandStatus" type="Label" parent="."]
 anchors_preset = 12
 anchor_left = 0.5

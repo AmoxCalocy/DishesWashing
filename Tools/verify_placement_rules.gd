@@ -15,8 +15,7 @@ func make_state(dish: DishBody, remaining: float = 50.0) -> DishState:
 	return state
 
 func slot_point(slot: KitchenSlot) -> Vector3:
-	var surface := slot.marker.get_node_or_null("SelectionSurface") as Node3D
-	return surface.global_position if surface != null else slot.get_pose().origin
+	return slot.get_pose().origin
 
 func view_slot(slot: KitchenSlot) -> void:
 	var point: Vector3 = slot_point(slot)
@@ -74,8 +73,8 @@ func verify() -> void:
 		check(result.pose.is_equal_approx(slot.get_pose()) and result.dish_id == state.instance_id and result.slot_id == slot.config.slot_id, "Use the complete marker pose and matching identities, without a half-height offset.")
 		check(slot.is_empty() and state.current_slot_id.is_empty() and state.is_held and dishes[kind].global_transform.is_equal_approx(original_pose) and dishes[kind].get_parent() == original_parent, "A placement check must not reserve occupancy, place a node or change its runtime state.")
 	var rack: KitchenSlot = registry.slots[&"Rack_Slot_01"]
-	var temp: KitchenSlot = registry.slots[&"Sink_Plate_01"]
-	var tray: KitchenSlot = registry.slots[&"Dirty_Plate_01"]
+	var target_slot: KitchenSlot = registry.slots[&"Dirty_Plate_01"]
+	var tray: KitchenSlot = registry.slots[&"Dirty_Plate_02"]
 	var plate: DishBody = dishes[&"plate"]
 	var item: HandItem = items[&"plate"]
 	var state: DishState = make_state(plate)
@@ -91,52 +90,52 @@ func verify() -> void:
 	expect_code(evaluate(item, rack), PlacementResult.Code.MISSING_STATE, "Unknown runtime cleanliness must not authorize rack placement")
 	var wrong_state: DishState = make_state(dishes[&"mug"])
 	expect_code(evaluate(item, rack, wrong_state), PlacementResult.Code.STATE_MISMATCH, "State must belong to this dish instance")
-	for slot in [temp, tray]:
+	for slot in [target_slot, tray]:
 		view_slot(slot)
 		state.stain_regions[&"known_stain"].remaining_amount = 1000.0
-		expect_code(evaluate(item, slot, state), PlacementResult.Code.OK, "Dirty dish can use temporary/tray slots")
+		expect_code(evaluate(item, slot, state), PlacementResult.Code.OK, "Dirty dish can use its tray origin")
 		expect_code(evaluate(item, slot), PlacementResult.Code.OK, "Only the rack needs known cleanliness")
-	view_slot(temp)
-	expect_code(evaluate(null, temp), PlacementResult.Code.NO_DISH, "No selected dish")
+	view_slot(target_slot)
+	expect_code(evaluate(null, target_slot), PlacementResult.Code.NO_DISH, "No selected dish")
 	expect_code(evaluate(item, null), PlacementResult.Code.INVALID_SLOT, "No slot")
-	var impostor := KitchenSlot.new(temp.config, temp.marker)
+	var impostor := KitchenSlot.new(target_slot.config, target_slot.marker)
 	expect_code(evaluate(item, impostor), PlacementResult.Code.INVALID_SLOT, "A duplicate ID does not make an unregistered slot authoritative")
-	expect_code(evaluate(items[&"mug"], temp), PlacementResult.Code.INCOMPATIBLE, "Mug cannot use a plate slot")
-	temp.state.occupant_id = &"other_dish"
-	expect_code(evaluate(item, temp), PlacementResult.Code.OCCUPIED, "Occupied target")
-	temp.state.occupant_id = plate.instance_id
-	expect_code(evaluate(item, temp), PlacementResult.Code.OCCUPIED, "Own stale occupancy cannot authorize placement")
-	temp.state.occupant_id = &""
+	expect_code(evaluate(items[&"mug"], target_slot), PlacementResult.Code.INCOMPATIBLE, "Mug cannot use a plate slot")
+	target_slot.state.occupant_id = &"other_dish"
+	expect_code(evaluate(item, target_slot), PlacementResult.Code.OCCUPIED, "Occupied target")
+	target_slot.state.occupant_id = plate.instance_id
+	expect_code(evaluate(item, target_slot), PlacementResult.Code.OCCUPIED, "Own stale occupancy cannot authorize placement")
+	target_slot.state.occupant_id = &""
 	tray.state.occupant_id = plate.instance_id
-	expect_code(evaluate(item, temp), PlacementResult.Code.SOURCE_OCCUPIED, "Source occupancy must already be released")
+	expect_code(evaluate(item, target_slot), PlacementResult.Code.SOURCE_OCCUPIED, "Source occupancy must already be released")
 	tray.state.occupant_id = &""
 	var model := plate.get_node("Model") as Node3D
 	var scale_before: Vector3 = model.scale
 	model.scale *= 1.2
-	expect_code(evaluate(HandItem.new(plate), temp), PlacementResult.Code.TOO_LARGE, "Correct type but physically enlarged geometry")
+	expect_code(evaluate(HandItem.new(plate), target_slot), PlacementResult.Code.TOO_LARGE, "Correct type but physically enlarged geometry")
 	model.scale = scale_before
-	var point: Vector3 = slot_point(temp)
+	var point: Vector3 = slot_point(target_slot)
 	camera.global_position = point + Vector3(0, 0, 1.5)
 	camera.look_at(point)
-	check(evaluate(item, temp).code != PlacementResult.Code.OUT_OF_RANGE, "Exactly 1.5 m is within range.")
+	check(evaluate(item, target_slot).code != PlacementResult.Code.OUT_OF_RANGE, "Exactly 1.5 m is within range.")
 	camera.global_position.z += 0.001
-	expect_code(evaluate(item, temp), PlacementResult.Code.OUT_OF_RANGE, "Beyond 1.5 m")
-	view_slot(temp)
+	expect_code(evaluate(item, target_slot), PlacementResult.Code.OUT_OF_RANGE, "Beyond 1.5 m")
+	view_slot(target_slot)
 	camera.look_at(camera.global_position + (camera.global_position - point))
-	expect_code(evaluate(item, temp), PlacementResult.Code.NOT_VISIBLE, "A slot behind the camera cannot be used")
-	view_slot(temp)
+	expect_code(evaluate(item, target_slot), PlacementResult.Code.NOT_VISIBLE, "A slot behind the camera cannot be used")
+	view_slot(target_slot)
 	var wall: StaticBody3D = make_blocker(camera.global_position.lerp(point, 0.5), Vector3.ONE * 0.2)
 	await ticks()
-	expect_code(evaluate(item, temp), PlacementResult.Code.NOT_VISIBLE, "A real foreground obstruction blocks the slot")
+	expect_code(evaluate(item, target_slot), PlacementResult.Code.NOT_VISIBLE, "A real foreground obstruction blocks the slot")
 	wall.free()
 	await ticks()
 	# This obstacle is off the selection ray but intersects the candidate plate.
-	var obstruction: StaticBody3D = make_blocker(temp.get_pose().origin + Vector3(0.065, 0.005, 0), Vector3.ONE * 0.02)
+	var obstruction: StaticBody3D = make_blocker(target_slot.get_pose().origin + Vector3(0.065, 0.005, 0), Vector3.ONE * 0.02)
 	await ticks()
-	expect_code(evaluate(item, temp), PlacementResult.Code.NO_SPACE, "Visible and empty slot with obstructed final geometry")
+	expect_code(evaluate(item, target_slot), PlacementResult.Code.NO_SPACE, "Visible and empty slot with obstructed final geometry")
 	obstruction.free()
 	await ticks()
-	expect_code(evaluate(item, temp), PlacementResult.Code.OK, "Removing obstruction restores placement eligibility")
+	expect_code(evaluate(item, target_slot), PlacementResult.Code.OK, "Removing obstruction restores placement eligibility")
 	# A tiny obstacle in a triangle's interior must not slip between edge rays.
 	var faces: PackedVector3Array = item.get_placement_faces()
 	var interior: Vector3
@@ -149,24 +148,24 @@ func verify() -> void:
 			interior = center
 			break
 	check(interior != Vector3.ZERO, "The real plate needs a suitable triangle-interior probe.")
-	obstruction = make_blocker(temp.get_pose() * interior, Vector3.ONE * 0.0002)
+	obstruction = make_blocker(target_slot.get_pose() * interior, Vector3.ONE * 0.0002)
 	await ticks()
-	expect_code(evaluate(item, temp), PlacementResult.Code.NO_SPACE, "A blocker wholly between triangle edges still intersects the dish surface")
+	expect_code(evaluate(item, target_slot), PlacementResult.Code.NO_SPACE, "A blocker wholly between triangle edges still intersects the dish surface")
 	obstruction.free()
-	var cup_slot: KitchenSlot = registry.slots[&"Sink_Mug_01"]
+	var cup_slot: KitchenSlot = registry.slots[&"Dirty_Mug_01"]
 	view_slot(cup_slot)
 	obstruction = make_blocker(cup_slot.get_pose() * Vector3(0.06, 0.0015, 0), Vector3.ONE * 0.006)
 	await ticks()
 	expect_code(evaluate(items[&"mug"], cup_slot), PlacementResult.Code.OK, "An obstacle entirely in the open handle hole must not be treated as intersecting ceramic")
 	obstruction.free()
 	await ticks()
-	view_slot(temp)
+	view_slot(target_slot)
 	# Changes after a successful query must be caught by the same fresh entry point.
-	var old_result: PlacementResult = evaluate(item, temp)
-	temp.state.occupant_id = &"late_occupant"
-	expect_code(evaluate(item, temp), PlacementResult.Code.OCCUPIED, "Recheck after target occupancy changed")
-	check(old_result.pose.is_equal_approx(temp.get_pose()) and temp.state.occupant_id == &"late_occupant", "Checks neither mutate previous results nor overwrite occupancy.")
-	temp.state.occupant_id = &""
+	var old_result: PlacementResult = evaluate(item, target_slot)
+	target_slot.state.occupant_id = &"late_occupant"
+	expect_code(evaluate(item, target_slot), PlacementResult.Code.OCCUPIED, "Recheck after target occupancy changed")
+	check(old_result.pose.is_equal_approx(target_slot.get_pose()) and target_slot.state.occupant_id == &"late_occupant", "Checks neither mutate previous results nor overwrite occupancy.")
+	target_slot.state.occupant_id = &""
 	# Real pickup and physical 1/2 events select stable hands without placing.
 	await load_game()
 	var first := game.get_node("PlayableDishes/TrayPlate01") as DishBody
@@ -181,7 +180,7 @@ func verify() -> void:
 	check(carry.selected_dish == first, "Adding a second dish must preserve the explicit current hand.")
 	tap(&"game_tool_sponge")
 	check(carry.selected_dish == second and carry.selected_dish_hand == 1 and carry.get_selected_dish_item().origin_slot_id == &"Dirty_Mug_01", "Key 2 selects the right dish and its own pickup source.")
-	expect_code(carry.check_placement(registry.slots[&"Sink_Plate_01"]), PlacementResult.Code.INCOMPATIBLE, "The shared entry must use the selected right mug rather than the first-dish compatibility getter")
+	expect_code(carry.check_placement(registry.slots[&"Dirty_Plate_01"]), PlacementResult.Code.INCOMPATIBLE, "The shared entry must use the selected right mug rather than the first-dish compatibility getter")
 	var hud_label := game.get_node("GameHUD/HandStatus") as Label
 	check(hud_label.text.contains(second.display_name + "（当前）"), "HUD must identify the selected dish.")
 	tap(&"game_tool_none")
@@ -191,7 +190,7 @@ func verify() -> void:
 	click()
 	check(first.global_transform.is_equal_approx(held_poses[0]) and second.global_transform.is_equal_approx(held_poses[1]) and carry.held_count() == 2, "Step 11 does not implement Q return or confirmed placement.")
 	router.set_interface_open(true)
-	expect_code(carry.check_placement(registry.slots[&"Sink_Plate_01"]), PlacementResult.Code.INPUT_BLOCKED, "UI blocks the shared placement entry")
+	expect_code(carry.check_placement(registry.slots[&"Dirty_Plate_01"]), PlacementResult.Code.INPUT_BLOCKED, "UI blocks the shared placement entry")
 	tap(&"game_tool_sponge")
 	check(carry.selected_dish == first, "UI must consume hand selection input.")
 	router.set_interface_open(false)

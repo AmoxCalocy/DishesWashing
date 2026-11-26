@@ -5,7 +5,7 @@ extends Node3D
 @export var layout: KitchenLayoutConfig
 @export var kitchen_path: NodePath
 @export var dishes_path: NodePath
-@export var temporary_surface_path: NodePath
+@export var basin_path: NodePath
 
 var slots: Dictionary[StringName, KitchenSlot] = {}
 
@@ -41,15 +41,53 @@ func find_occupied_slot(dish_id: StringName) -> KitchenSlot:
 		found = slot
 	return found
 
-func find_temporary_slot(point: Vector3, collider: Node3D) -> KitchenSlot:
-	# Require the real basin surface, not a proxy floating over an obstruction.
-	if not get_node(temporary_surface_path).is_ancestor_of(collider):
+func is_basin_hit(hit: Dictionary) -> bool:
+	var body := hit.get("collider") as CollisionObject3D
+	var basin := get_node(basin_path) as Node3D
+	if body == null or not basin.is_ancestor_of(body) or not hit.has("shape"):
+		return false
+	# The same body also contains the countertop; only real interior meshes count.
+	var owner := body.shape_owner_get_owner(body.shape_find_owner(hit.shape)) as CollisionShape3D
+	if owner == null or owner.name not in [&"Sink_BasinSurface", &"Drain_Flange_And_OutletSurface", &"Drain_StrainerSurface"]:
+		return false
+	var rim := basin.find_child("Countertop_Surface", true, false) as Node3D
+	return (hit.position as Vector3).y < rim.global_position.y - 0.02
+
+func find_placement_slot(camera: Camera3D, first_hit: Dictionary, exclusions: Array[RID], max_distance: float) -> KitchenSlot:
+	# Select near the actual crosshair ray, without adding phantom slot colliders.
+	if first_hit.get("collider") is DishBody or first_hit.get("collider") is CleaningTool:
 		return null
+	var center: Vector2 = camera.get_viewport().get_visible_rect().size * 0.5
+	var origin: Vector3 = camera.project_ray_origin(center)
+	var direction: Vector3 = camera.project_ray_normal(center)
+	var first_depth: float = INF if first_hit.is_empty() else ((first_hit.position as Vector3) - origin).dot(direction)
+	var best: KitchenSlot
+	var best_score: float = INF
+	var best_depth: float = INF
 	for slot: KitchenSlot in slots.values():
-		if slot.config.slot_kind != SlotConfig.Kind.TEMPORARY or not slot.is_empty():
+		# Tray markers only initialize the order. Only the rack has fixed targets.
+		if slot.config.slot_kind != SlotConfig.Kind.DRAINING_RACK:
 			continue
-		var surface := slot.marker.get_node("SelectionSurface") as Node3D
-		var offset: Vector3 = point - surface.global_position
-		if absf(offset.y) < 0.006 and Vector2(offset.x, offset.z).length() <= 0.06:
-			return slot
-	return null
+		var point: Vector3 = slot.get_pose().origin
+		var offset: Vector3 = point - origin
+		var depth: float = offset.dot(direction)
+		if depth <= camera.near or offset.length() > max_distance or not camera.is_position_in_frustum(point):
+			continue
+		var miss: float = (offset - direction * depth).length()
+		if miss > 0.035:
+			continue
+		if first_depth < depth - 0.002:
+			continue
+		# Also check the marker itself when its aim radius straddles an obstruction.
+		var ray := PhysicsRayQueryParameters3D.create(origin, point, MeshSurfaceCollision.QUERY_MASK, exclusions)
+		ray.hit_back_faces = true
+		ray.hit_from_inside = true
+		var hit: Dictionary = camera.get_world_3d().direct_space_state.intersect_ray(ray)
+		if not hit.is_empty():
+			continue
+		var score: float = miss / depth
+		if score < best_score or (is_equal_approx(score, best_score) and depth < best_depth):
+			best = slot
+			best_score = score
+			best_depth = depth
+	return best
