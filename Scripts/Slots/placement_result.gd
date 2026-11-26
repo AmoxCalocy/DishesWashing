@@ -9,6 +9,7 @@ var pose: Transform3D
 var dish_id: StringName
 var slot_id: StringName
 var hand_index: int = -1
+var support_dish_ids: Array[StringName] = []
 var is_valid: bool:
 	get:
 		return code == Code.OK
@@ -19,7 +20,7 @@ func _init(result_code: Code, target_pose: Transform3D = Transform3D.IDENTITY) -
 
 func get_reason() -> String:
 	match code:
-		Code.OK: return "可以放置"
+		Code.OK: return "可以叠放" if not support_dish_ids.is_empty() else "可以放置"
 		Code.NO_DISH: return "请先选择手中的餐具"
 		Code.INPUT_BLOCKED: return "当前状态不能放置"
 		Code.INVALID_SLOT: return "目标槽位无效"

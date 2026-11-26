@@ -25,6 +25,8 @@ const FREE_TOOL_DEPTH: float = 0.32
 @onready var close_anchor: Marker3D = get_node(close_anchor_path) as Marker3D
 
 var hands: Array[HandItem] = [null, null]
+## Bind matching authoritative states here when gameplay supplies them. No defaults.
+var dish_states: Dictionary[StringName, DishState] = {}
 var selected_dish_hand: int = -1
 var selected_dish: DishBody:
 	get:
@@ -53,6 +55,7 @@ var _cursor: Vector2
 var _stroke_distance: float = 0.0
 var _transition: Tween
 var _world_use_time: float = 0.0
+var _last_placement_frame: int = -1
 
 func _ready() -> void:
 	game_input.command_requested.connect(_on_command_requested)
@@ -89,6 +92,8 @@ func get_selected_dish_item() -> HandItem:
 func check_placement(slot: KitchenSlot, dish_state: DishState = null) -> PlacementResult:
 	if game_input.interface_open or game_input.hand_mode != GameInput.HandMode.CARRYING:
 		return PlacementResult.new(PlacementResult.Code.INPUT_BLOCKED)
+	if dish_state == null and selected_dish != null:
+		dish_state = dish_states.get(selected_dish.instance_id)
 	var result: PlacementResult = PlacementRules.evaluate(get_selected_dish_item(), slot, registry, camera, dish_state, targeting.excluded_bodies, targeting.interaction_distance)
 	result.hand_index = selected_dish_hand
 	return result
@@ -96,9 +101,51 @@ func check_placement(slot: KitchenSlot, dish_state: DishState = null) -> Placeme
 func check_surface_placement(hit: Dictionary, dish_state: DishState = null) -> PlacementResult:
 	if game_input.interface_open or game_input.hand_mode != GameInput.HandMode.CARRYING:
 		return PlacementResult.new(PlacementResult.Code.INPUT_BLOCKED)
+	if dish_state == null and selected_dish != null:
+		dish_state = dish_states.get(selected_dish.instance_id)
 	var result: PlacementResult = PlacementRules.evaluate_surface(get_selected_dish_item(), hit, registry, camera, dish_state, targeting.excluded_bodies, targeting.interaction_distance)
 	result.hand_index = selected_dish_hand
 	return result
+
+func _place_dish() -> void:
+	if game_input.hand_mode != GameInput.HandMode.CARRYING or _last_placement_frame == Engine.get_physics_frames():
+		return
+	var item: HandItem = get_selected_dish_item()
+	if item == null:
+		message_requested.emit("请先选择手中的餐具")
+		return
+	# Never authorize from the preview, cached input target, or an old result.
+	var slot: KitchenSlot = targeting.query_placement_slot()
+	var surface: Dictionary = targeting.query_placement_surface() if slot == null else {}
+	if slot == null and surface.is_empty():
+		message_requested.emit("请瞄准距离内可见的水槽或沥水架")
+		return
+	var decision: PlacementResult = check_placement(slot) if slot != null else check_surface_placement(surface)
+	if not decision.is_valid:
+		message_requested.emit(decision.get_reason())
+		return
+	var dish := item.node as DishBody
+	# Commit one location and one hand synchronously. Snap the real body so its
+	# visual and collision pose stay aligned; no intermediate flight or reservation.
+	dish.reparent(registry.get_node(registry.dishes_path))
+	dish.global_transform = decision.pose
+	dish.location = DishBody.Location.REGISTERED if slot != null else DishBody.Location.BASIN
+	dish.placement_bounds = item.bounds
+	dish.support_dish_ids.assign(decision.support_dish_ids)
+	if slot != null:
+		slot.state.occupant_id = dish.instance_id
+	_sync_dish_state(dish, decision.slot_id, false)
+	hands[decision.hand_index] = null
+	# Moved collision bodies reach direct-space queries on the next physics tick.
+	# A duplicate request in this tick must not place the other hand through them.
+	_last_placement_frame = Engine.get_physics_frames()
+	_sync_inventory()
+
+func _sync_dish_state(dish: DishBody, slot_id: StringName, is_held: bool) -> void:
+	var state: DishState = dish_states.get(dish.instance_id)
+	if state != null and state.instance_id == dish.instance_id and state.dish_type == dish.dish_type:
+		state.current_slot_id = slot_id
+		state.is_held = is_held
 
 func _select_dish_hand(side: int) -> void:
 	if game_input.hand_mode != GameInput.HandMode.CARRYING:
@@ -130,6 +177,8 @@ func _on_command_requested(command: StringName, pressed: bool) -> void:
 	match command:
 		&"pickup_dish", &"pickup_tool":
 			_pickup(command)
+		&"place_dish":
+			_place_dish()
 		&"toggle_close":
 			if game_input.hand_mode == GameInput.HandMode.CLOSE_UP:
 				_exit_close()
@@ -155,15 +204,31 @@ func _pickup(command: StringName) -> void:
 		return
 	var item := HandItem.new(node)
 	if node is DishBody:
-		var slot: KitchenSlot = registry.find_occupied_slot((node as DishBody).instance_id)
-		if slot == null or not slot.accepts((node as DishBody).dish_type):
+		var dish := node as DishBody
+		for other in registry.get_node(registry.dishes_path).get_children():
+			if other is DishBody and other.location == DishBody.Location.BASIN and other.support_dish_ids.has(dish.instance_id):
+				message_requested.emit("请先拿走上面的餐具")
+				return
+		if dish.location == DishBody.Location.REGISTERED:
+			var slot: KitchenSlot = registry.find_occupied_slot(dish.instance_id)
+			if slot == null or not slot.accepts(dish.dish_type):
+				return
+			item.origin_slot_id = slot.config.slot_id
+		elif dish.location == DishBody.Location.BASIN:
+			for slot: KitchenSlot in registry.slots.values():
+				if slot.state.occupant_id == dish.instance_id:
+					return
+		else:
 			return
-		item.origin_slot_id = slot.config.slot_id
 	if not _solve_pose(item, side):
 		message_requested.emit("手边空间不足，请稍微后退")
 		return
 	if node is DishBody:
-		registry.slots[item.origin_slot_id].state.occupant_id = &""
+		if not item.origin_slot_id.is_empty():
+			registry.slots[item.origin_slot_id].state.occupant_id = &""
+		(node as DishBody).location = DishBody.Location.HELD
+		(node as DishBody).support_dish_ids.clear()
+		_sync_dish_state(node as DishBody, &"", true)
 	hands[side] = item
 	node.reparent(_anchor(side))
 	node.global_transform = item.safe_pose
@@ -251,12 +316,35 @@ func _world_tool_pose_is_safe(item: HandItem, dish: DishBody, pose: Transform3D,
 	query.motion = pose.origin - item.safe_pose.origin
 	if space.cast_motion(query)[0] >= 1.0:
 		return true
-	# Reach over a tray rim before descending onto the visible dish surface.
+	# Reach over the container rim before descending onto the visible surface.
 	var approach: Transform3D = pose
 	approach.origin += normal * maxf(item.bounds.size.length(), 0.12)
+	if dish.location == DishBody.Location.BASIN:
+		var rim := registry.get_node(registry.basin_path).find_child("Countertop_Surface", true, false) as Node3D
+		approach.origin.y = maxf(approach.origin.y, rim.global_position.y + maxf(item.bounds.size.length(), 0.12))
 	query.motion = approach.origin - item.safe_pose.origin
 	if space.cast_motion(query)[0] < 1.0:
-		return false
+		if dish.location != DishBody.Location.BASIN:
+			return false
+		# A low sprayer cannot turn to its contact orientation beside the counter.
+		# Lift in its safe carry orientation, check rotation clearance, then cross.
+		var raised: Transform3D = item.safe_pose
+		raised.origin.y = maxf(raised.origin.y, approach.origin.y)
+		query.transform = item.safe_pose * Transform3D(Basis.IDENTITY, item.bounds.get_center())
+		query.motion = raised.origin - item.safe_pose.origin
+		if space.cast_motion(query)[0] < 1.0:
+			return false
+		var rotation_clearance := SphereShape3D.new()
+		rotation_clearance.radius = item.bounds.size.length() * 0.5 + item.bounds.get_center().length() + SURFACE_GAP
+		query.shape = rotation_clearance
+		query.transform = Transform3D(Basis.IDENTITY, raised.origin)
+		if not space.intersect_shape(query, 1).is_empty():
+			return false
+		query.shape = item.clearance_shape
+		query.transform = Transform3D(pose.basis, raised.origin) * Transform3D(Basis.IDENTITY, item.bounds.get_center())
+		query.motion = approach.origin - raised.origin
+		if space.cast_motion(query)[0] < 1.0:
+			return false
 	query.transform = approach * Transform3D(Basis.IDENTITY, item.bounds.get_center())
 	if not space.intersect_shape(query, 1).is_empty():
 		return false

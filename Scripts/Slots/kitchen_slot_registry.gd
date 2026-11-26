@@ -53,6 +53,10 @@ func is_basin_hit(hit: Dictionary) -> bool:
 	var rim := basin.find_child("Countertop_Surface", true, false) as Node3D
 	return (hit.position as Vector3).y < rim.global_position.y - 0.02
 
+func is_basin_support(hit: Dictionary) -> bool:
+	var dish := hit.get("collider") as DishBody
+	return is_basin_hit(hit) or (dish != null and dish.location == DishBody.Location.BASIN and dish.get_parent() == get_node(dishes_path))
+
 func find_placement_slot(camera: Camera3D, first_hit: Dictionary, exclusions: Array[RID], max_distance: float) -> KitchenSlot:
 	# Select near the actual crosshair ray, without adding phantom slot colliders.
 	if first_hit.get("collider") is DishBody or first_hit.get("collider") is CleaningTool:

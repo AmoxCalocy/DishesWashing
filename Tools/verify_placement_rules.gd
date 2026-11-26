@@ -1,6 +1,6 @@
 extends "res://Tools/verify_dual_wield.gd"
 ## Import first, then: godot --headless --path . --script Tools/verify_placement_rules.gd
-## Step 11 only: shared authorization and explicit hand selection, no actual placement.
+## Shared read-only authorization and explicit hand selection regression.
 
 func make_state(dish: DishBody, remaining: float = 50.0) -> DishState:
 	var config := DishConfig.new()
@@ -188,7 +188,7 @@ func verify() -> void:
 	var held_poses: Array[Transform3D] = [first.global_transform, second.global_transform]
 	tap(&"game_return")
 	click()
-	check(first.global_transform.is_equal_approx(held_poses[0]) and second.global_transform.is_equal_approx(held_poses[1]) and carry.held_count() == 2, "Step 11 does not implement Q return or confirmed placement.")
+	check(first.global_transform.is_equal_approx(held_poses[0]) and second.global_transform.is_equal_approx(held_poses[1]) and carry.held_count() == 2, "Q and an off-target click must preserve both held dishes.")
 	router.set_interface_open(true)
 	expect_code(carry.check_placement(registry.slots[&"Dirty_Plate_01"]), PlacementResult.Code.INPUT_BLOCKED, "UI blocks the shared placement entry")
 	tap(&"game_tool_sponge")

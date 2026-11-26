@@ -33,9 +33,10 @@ func _physics_process(_delta: float) -> void:
 	var tool := hit.get("collider") as CleaningTool
 	var slot: KitchenSlot
 	var surface: Dictionary = {}
-	if dish == null and tool == null and not game_input.interface_open and game_input.hand_mode == GameInput.HandMode.CARRYING and game_input.carrying_dish:
-		slot = registry.find_placement_slot(camera, hit, excluded_bodies, interaction_distance)
-		if slot == null and registry.is_basin_hit(hit):
+	if not game_input.interface_open and game_input.hand_mode == GameInput.HandMode.CARRYING and game_input.carrying_dish:
+		if dish == null and tool == null:
+			slot = registry.find_placement_slot(camera, hit, excluded_bodies, interaction_distance)
+		if slot == null and _is_placement_surface(hit):
 			surface = hit
 	_update_target(dish, slot, tool, true, surface)
 
@@ -57,7 +58,11 @@ func query_placement_surface() -> Dictionary:
 	if game_input.interface_open or game_input.hand_mode != GameInput.HandMode.CARRYING or not game_input.carrying_dish:
 		return {}
 	var hit: Dictionary = _query_surface()
-	return hit if registry.is_basin_hit(hit) else {}
+	return hit if _is_placement_surface(hit) else {}
+
+func _is_placement_surface(hit: Dictionary) -> bool:
+	# Tools keep their ordinary use priority on world dishes. E still picks up.
+	return registry.is_basin_hit(hit) or (game_input.selected_tool == ToolState.Tool.NONE and registry.is_basin_support(hit))
 
 func _query_surface() -> Dictionary:
 	if game_input.interface_open or game_input.hand_mode not in [GameInput.HandMode.EMPTY, GameInput.HandMode.CARRYING, GameInput.HandMode.SOAP_BOTTLE]:
@@ -81,7 +86,7 @@ func _update_target(dish: DishBody, slot: KitchenSlot = null, tool: CleaningTool
 	var changed: bool = current_dish != dish
 	var slot_has_changed: bool = current_slot != slot
 	var tool_has_changed: bool = current_tool != tool
-	var surface_has_changed: bool = current_placement_surface.is_empty() != surface.is_empty()
+	var surface_has_changed: bool = current_placement_surface.is_empty() != surface.is_empty() or (not surface.is_empty() and current_dish != dish)
 	current_dish = dish
 	current_slot = slot
 	current_tool = tool
@@ -92,7 +97,7 @@ func _update_target(dish: DishBody, slot: KitchenSlot = null, tool: CleaningTool
 	if tool != null:
 		kind = GameInput.Target.CLEANING_TOOL
 	if not surface.is_empty():
-		kind = GameInput.Target.PLACEMENT_SURFACE
+		kind = GameInput.Target.STACKABLE_DISH if dish != null else GameInput.Target.PLACEMENT_SURFACE
 	if route and game_input.target != kind:
 		game_input.set_context(game_input.hand_mode, kind, game_input.selected_tool)
 	if changed:

@@ -4,6 +4,8 @@ extends RefCounted
 
 var node: Node3D
 var origin_slot_id: StringName
+var origin_kind: DishBody.Location = DishBody.Location.REGISTERED
+var origin_pose: Transform3D
 var rotation: Basis
 var bounds: AABB
 var clearance_shape: BoxShape3D
@@ -11,9 +13,13 @@ var safe_pose: Transform3D
 var _placement_faces: PackedVector3Array
 var _placement_shapes: Array[ConvexPolygonShape3D] = []
 var _support_points: PackedVector3Array
+var _stack_points: PackedVector3Array
 
 func _init(item_node: Node3D) -> void:
 	node = item_node
+	origin_pose = node.global_transform
+	if node is DishBody:
+		origin_kind = (node as DishBody).location
 	rotation = Basis(Vector3.RIGHT, Vector3.BACK, Vector3.DOWN)
 	if node is CleaningTool and (node as CleaningTool).tool_kind == ToolState.Tool.SPONGE:
 		rotation = rotation.inverse()
@@ -71,3 +77,14 @@ func get_support_points() -> PackedVector3Array:
 					score = point.dot(direction)
 			_support_points.append(best)
 	return _support_points
+
+func get_stack_points() -> PackedVector3Array:
+	if _stack_points.is_empty():
+		var cells: Dictionary[Vector2i, Vector3] = {}
+		for point in get_placement_faces():
+			var cell := Vector2i(floori((point.x - bounds.position.x) / bounds.size.x * 12.0), floori((point.z - bounds.position.z) / bounds.size.z * 12.0))
+			if not cells.has(cell) or point.y < cells[cell].y:
+				cells[cell] = point
+		for point: Vector3 in cells.values():
+			_stack_points.append(point)
+	return _stack_points

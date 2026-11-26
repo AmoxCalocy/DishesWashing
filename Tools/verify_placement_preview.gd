@@ -35,7 +35,7 @@ func expect_preview(code: PlacementResult.Code, context: String, slot: KitchenSl
 		return
 	expect_code(preview.result, code, context)
 	var expected: PlacementResult
-	var state: DishState = preview.dish_states.get(carry.selected_dish.instance_id)
+	var state: DishState = carry.dish_states.get(carry.selected_dish.instance_id)
 	if slot != null:
 		check(preview.current_surface.is_empty() and preview.global_transform.is_equal_approx(slot.get_pose()), "Only rack targets copy a complete fixed marker pose.")
 		expected = carry.check_placement(slot, state)
@@ -45,7 +45,7 @@ func expect_preview(code: PlacementResult.Code, context: String, slot: KitchenSl
 			return
 		var hit: Dictionary = targeting.query_placement_surface()
 		check(not hit.is_empty() and Vector2(preview.global_position.x, preview.global_position.z).distance_to(Vector2(hit.position.x, hit.position.z)) < 0.00002, "Free positions must follow the actual crosshair hit without snapping to a preset point.")
-		check(router.target == GameInput.Target.PLACEMENT_SURFACE and targeting.current_slot == null, "Free placement needs its own input context, with no fixed temporary slot.")
+		check(router.target in [GameInput.Target.PLACEMENT_SURFACE, GameInput.Target.STACKABLE_DISH] and targeting.current_slot == null, "Free placement needs its own input context, with no fixed temporary slot.")
 		expected = carry.check_surface_placement(hit, state)
 	check(preview.result.code == expected.code and preview.result.dish_id == expected.dish_id and preview.result.hand_index == expected.hand_index and preview.result.pose.is_equal_approx(expected.pose), "The selected hand and current shared rules must determine the whole preview.")
 	check(hint.visible and hint.text == preview.result.get_reason(), "HUD must explain the same decision as the preview.")
@@ -100,9 +100,8 @@ func verify() -> void:
 	preview.visible = true
 	check(real_hit.get("collider") == hidden_hit.get("collider") and real_hit.get("position") == hidden_hit.get("position") and targeting.query_dish() == null, "A preview must never change ray hits or become a pickup target.")
 	var held_pose: Transform3D = plate.global_transform
-	click()
 	tap(&"game_return")
-	check(carry.held_count() == 1 and plate.global_transform.is_equal_approx(held_pose), "Step 12 must not confirm placement or implement Q return.")
+	check(carry.held_count() == 1 and plate.global_transform.is_equal_approx(held_pose), "Preview and the unimplemented Q return must not move the real dish.")
 	for x: float in [-0.25, -0.18, -0.12, 0.12, 0.18, 0.25]:
 		for z: float in [-0.025, 0.04, 0.08]:
 			await look_at_basin(Vector2(x, z))
@@ -130,7 +129,7 @@ func verify() -> void:
 	await look_at_slot(rack)
 	expect_preview(PlacementResult.Code.MISSING_STATE, "Unknown cleanliness cannot authorize rack placement", rack)
 	var state: DishState = make_state(mug)
-	preview.dish_states[mug.instance_id] = state
+	carry.dish_states[mug.instance_id] = state
 	await ticks()
 	expect_preview(PlacementResult.Code.OK, "Known 95 percent state injected only by the test", rack)
 	check(preview.global_basis.y.dot(Vector3.UP) < -0.99, "Fixed cup rack slots retain their inverted pose.")
@@ -143,7 +142,7 @@ func verify() -> void:
 	await ticks()
 	expect_preview(PlacementResult.Code.OCCUPIED, "Rack occupancy changes are immediate", rack)
 	rack.state.occupant_id = &""
-	preview.dish_states[plate.instance_id] = make_state(plate)
+	carry.dish_states[plate.instance_id] = make_state(plate)
 	for slot: KitchenSlot in registry.slots.values():
 		if slot.config.slot_kind != SlotConfig.Kind.DRAINING_RACK:
 			continue
@@ -187,7 +186,7 @@ func verify() -> void:
 	spare.global_transform = preview.global_transform
 	spare.global_position.x += 0.18
 	await ticks()
-	expect_preview(PlacementResult.Code.NO_SPACE, "A nearby real dish blocks overlapping free positions without any basin occupancy slot")
+	expect_preview(PlacementResult.Code.NO_SPACE, "A registered dish outside basin placement must not become a stack support")
 	spare.global_transform = spare_pose
 	await ticks()
 	await look_at_basin(Vector2(-0.25, -0.08))

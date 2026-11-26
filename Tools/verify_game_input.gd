@@ -140,14 +140,20 @@ func verify() -> void:
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.WATER_STREAM, ToolState.Tool.SPONGE, &"wet_sponge")
 	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.SLOT, ToolState.Tool.NONE, &"place_dish")
 	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.PLACEMENT_SURFACE, ToolState.Tool.NONE, &"place_dish")
+	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.STACKABLE_DISH, ToolState.Tool.NONE, &"place_dish")
 	expect_primary(GameInput.HandMode.CLOSE_UP, GameInput.Target.DISH, ToolState.Tool.SPONGE, &"use_tool")
 	expect_primary(GameInput.HandMode.SOAP_BOTTLE, GameInput.Target.DISH, ToolState.Tool.NONE, &"pump_soap")
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.NONE, ToolState.Tool.NONE, &"")
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.WATER_STREAM, ToolState.Tool.NONE, &"")
 	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.DISH, ToolState.Tool.NONE, &"pickup_dish")
 	for tool in [ToolState.Tool.SPONGE, ToolState.Tool.SPRAYER]:
-		for target in [GameInput.Target.DISH, GameInput.Target.NONE, GameInput.Target.SLOT, GameInput.Target.PLACEMENT_SURFACE, GameInput.Target.CLEANING_TOOL]:
+		for target in [GameInput.Target.DISH, GameInput.Target.STACKABLE_DISH, GameInput.Target.NONE, GameInput.Target.CLEANING_TOOL]:
 			expect_primary(GameInput.HandMode.CARRYING, target, tool, &"use_tool")
+		for target in [GameInput.Target.SLOT, GameInput.Target.PLACEMENT_SURFACE]:
+			expect_primary(GameInput.HandMode.CARRYING, target, tool, &"place_dish")
+			router.carrying_dish = false
+			expect_primary(GameInput.HandMode.CARRYING, target, tool, &"use_tool")
+			router.carrying_dish = true
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.CLEANING_TOOL, ToolState.Tool.NONE, &"pickup_tool")
 	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.CLEANING_TOOL, ToolState.Tool.NONE, &"pickup_tool")
 	expect_primary(GameInput.HandMode.CLOSE_UP, GameInput.Target.DISH, ToolState.Tool.NONE, &"")

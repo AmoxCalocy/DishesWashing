@@ -39,7 +39,8 @@ func _show_preview(_slot: KitchenSlot, result: PlacementResult) -> void:
 func _show_surface(active: bool) -> void:
 	if active:
 		target_name.visible = true
-		target_name.text = "水槽 · 自由放置"
+		var dish: DishBody = (get_node(targeting_path) as DishTargeting).current_dish
+		target_name.text = dish.display_name + " · 左键叠放 · E 拿取" if dish != null else "水槽 · 自由放置"
 	else:
 		_show_tool((get_node(targeting_path) as DishTargeting).current_tool)
 
@@ -48,6 +49,8 @@ func _show_target(dish: DishBody) -> void:
 	target_name.text = dish.display_name if dish != null else ""
 	if dish != null and carry != null and carry.held_tool() != null:
 		target_name.text += " · 按住左键操作" + (" · E 拿取" if carry.free_hand() >= 0 else "")
+	elif dish != null and game_input.target == GameInput.Target.STACKABLE_DISH:
+		target_name.text += " · 左键叠放 · E 拿取"
 
 func _show_slot(slot: KitchenSlot) -> void:
 	if slot != null:
@@ -86,11 +89,13 @@ func _refresh_inventory() -> void:
 	elif game_input.hand_mode == GameInput.HandMode.TRANSITION:
 		hand_hint.text = "正在切换视角"
 	elif carry.held_dish != null and carry.held_tool() != null:
-		hand_hint.text = "按住左键操作准星所指餐具 · F 沉浸清洗手中餐具 · E 归回工具"
+		hand_hint.text = "左键放到水槽／架位 · 按住左键操作已放置餐具 · F 沉浸 · E 归回工具"
 	elif carry.held_tool() != null:
 		hand_hint.text = "按住左键操作餐具 · WASD 移动 / 鼠标瞄准 · E 拿取目标餐具，移开后 E 归回工具"
 	elif carry.free_hand() < 0:
-		hand_hint.text = "1 选择左手餐具 · 2 选择右手餐具 · 清洗需餐具和工具各一件"
+		hand_hint.text = "1 选择左手餐具 · 2 选择右手餐具 · 左键放下／叠放 · E 拿取"
+	elif carry.selected_dish != null:
+		hand_hint.text = "水槽／架位左键放下 · 水槽内餐具左键叠放、E 拿取"
 	else:
 		hand_hint.text = "瞄准餐具或清洗工具，左键拿取" + (" · E 归回工具" if carry.held_tool() != null else "")
 

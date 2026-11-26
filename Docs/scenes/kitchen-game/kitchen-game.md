@@ -1,6 +1,6 @@
 # 厨房可玩入口
 
-> 第 1～12 步及普通工具操作、沉浸中键旋转追加需求｜2026-11-26｜用户已确认验证通过
+> 第 1～13 步及水槽重叠堆放、普通工具操作、沉浸中键旋转追加需求｜2026-11-26｜用户已确认验证通过
 
 打开 [project.godot](../../../project.godot)，等待导入后按 F5，运行 [kitchen-game.tscn](../../../Scenes/kitchen-game.tscn)。独立展示器仍可打开 [kitchen-demo.tscn](../../../Scenes/kitchen-demo.tscn) 按 F6，使用 1～4、R、右键拖动和失焦释放。
 
@@ -9,12 +9,12 @@
 | 场景／输入 | 当前行为 |
 | --- | --- |
 | WASD、鼠标 | 普通状态按镜头水平朝向行走并直接观察，胶囊阻挡厨房柜体、地面和边界；沉浸及过渡停止行走与环顾 |
-| 准星、左键（未持工具） | 1.5 米内第一处真实表面识别餐具／清洗工具；左键拿取。先拿的在左下、第二件在右下，允许两餐具或餐具加一个工具 |
+| 准星、左键（未持工具） | 1.5 米内识别第一处真实表面。空手左键拿取；搬运时对准水槽／架位左键放置当前餐具，对准已放水槽餐具左键叠放、E 拿取。先拿左下、第二件右下，允许两餐具或餐具加工具 |
 | 左键按住（普通持工具） | 中央准星瞄准已放置餐具，海绵贴面持续擦动并压缩，喷头对准真实命中点；可边走边看，松开回原手位。移开、遮挡、超距停止接触，仍按住时重新命中可继续；尚无出水或去污 |
 | E（普通状态） | 可拿取目标餐具；持工具且另一手为空时优先拿取目标餐具，其他持工具情形尝试归回。工具归回须原位 1.5 米内且无遮挡，另一手不换边；未持工具时也可拿取海绵／喷头 |
 | F | 一件餐具加一个工具时进入沉浸；只移动同一餐具、保持玩家位置／观察方向／FOV。沉浸中仅 F 返回搬运 |
 | 1／2（普通持餐具） | 分别选择左手／右手餐具，HUD 名称后显示“当前”。只有一件自动选中；第二件拿起保留原选择；空手／工具不可选，提示后保留原选择，不调换手位 |
-| 准星（普通持餐具） | 水槽内部连续自由选择落点，盘杯共用区域；只有沥水架吸附固定完整姿态。绿／红预览及文字说明当前判定，超距、遮挡、菜单及沉浸清除；本步左键仍不确认放下 |
+| 准星（普通持餐具） | 水槽内部自由选择落点，盘杯可交叠；只有沥水架吸附固定完整姿态。绿／红预览说明当前判定，左键重新查询后确认，失败继续持有。持工具时对准已放餐具仍优先使用工具，对准裸露槽底或架位可放下餐具 |
 | 鼠标（沉浸） | 海绵、喷头在画面内自由跟随；移出餐具或旋转后不自动吸附、收回，四角限制保证模型完整可见 |
 | 左键按住（沉浸） | 命中当前餐具才主动接触／瞄准。海绵须移动才计擦洗并压缩，喷头实际喷嘴对准命中点；松开恢复自由移动，尚无出水或去污 |
 | 中键拖动、Q/E（沉浸） | 旋转餐具；Q 左、E 右，按住连续旋转，松开停止。同时按住抵消。旋转中停止使用，不转镜头；沉浸右键不旋转、不放大，也不取消左键使用 |
@@ -24,15 +24,15 @@
 
 1/2/3 不切换、生成或归回实体工具。Q 在沉浸只旋转；搬运的餐具 Q 返回只有输入意图，尚未执行。普通搬运持餐具时右键不放大；实际搬运旋转、滚轮和允许范围待第 16 步。
 
-托盘初始两盘一杯，沥水架与水槽为空。水槽旧“临时盘位”“临时杯位”和标记已移除，预览跟随真实命中自由移动；托盘点仅用于初始化与来源，固定放置目标只保留 8 个架位。双持两件餐具后，可重新 F5 再测试餐具加工具；当前仍无手动确认放下动作。
+托盘初始两盘一杯，沥水架与水槽为空。水槽旧“临时盘位”“临时杯位”和标记已移除，预览跟随真实命中自由移动；托盘点仅用于初始化与来源，固定放置目标只保留 8 个架位。按 1／2 选择要放下的餐具，成功只清空对应手位。自由放置仍为原实例，可再次拿取，手位保留本次完整来源供未来 Q 返回。
 
 普通操作可先只拿海绵或喷头，对准托盘上的盘杯按住左键；它不拿起餐具或更改目标占用，也不操作手中餐具。想操作所持餐具时，同持餐具与工具并按 F。普通工具姿态受近裁剪、空间与接近路径检查，喷头还须距原位 1.5 米内；模型接触不表示已满足供水或湿润条件。
 
 ## 已知边界与后续
 
-第 12 步水槽自由落点与架位固定预览已验收；实际放下、自由位置记录和再次拿取在第 13 步，Q 返回在第 14 步。判定与预览不改变实际餐具、占用或运行状态，不预留目标。只有沥水位要求对应实例的实际 95% 清洁度，托盘来源和水槽自由点允许脏餐具，泡沫不阻止入架。OrderState／DishState 尚未绑定玩法，缺少清洁状态时架位红色显示“无法确认餐具清洁度”；专项注入已知状态验证门槛。
+第 13 步及水槽交叠追加需求已验收，实际确认、自由位置记录和再次拿取已接入；下一项为第 14 步 Q 安全返回。判定和预览保持只读，不预留目标。左键确认前重查所选手位及最新目标，成功后同步移动原身体／碰撞、记录唯一位置和支撑、更新架位占用及匹配状态，最后只解除所选手位；同物理帧重复确认被阻止。只有沥水位要求对应实例的实际 95% 清洁度，托盘来源和水槽自由点允许脏餐具，泡沫不阻止入架。OrderState／DishState 尚未绑定玩法，缺少清洁状态时架位红色显示“无法确认餐具清洁度”；专项注入已知状态验证门槛。
 
-正式注册项为 3 个托盘初始点和 8 个架位，共享判定覆盖完整姿态、身份、兼容、含杯柄尺寸、占用、1.5 米、视锥、真实遮挡及最终空间。自由水槽判定额外读取八个底圈点的真实支撑，浅坡对齐，保留约 0.5 mm 间隙；槽壁过陡、支撑不足或与槽壁／其他餐具穿插时红色拒绝。预览不模拟堆叠、自由滚落或插入轨迹；供水、湿润、施液、去污、泡沫及订单仍未绑定，泵瓶仍是静态世界模型。
+正式注册项为 3 个托盘初始点和 8 个架位，共享判定覆盖完整姿态、身份、兼容、含杯柄尺寸、占用、1.5 米、视锥、真实遮挡及最终空间。水槽先读取底圈真实槽底支撑，再按实际陶瓷底面与三角形空间查询计算叠放高度，保留约 0.5 mm 间隙。槽壁过陡、支撑不足或最终穿插时红色拒绝；可见的 BASIN 餐具可作支撑，托盘／架位餐具仍遮挡。下层支撑上层时拒绝拿取并提示“请先拿走上面的餐具”，移走上层后可取回下层。当前是自动静态落位，不模拟自由滚落、刚体平衡或插入轨迹；供水、湿润、施液、去污、泡沫及订单仍未绑定，泵瓶仍是静态世界模型。
 
 背景模糊仍在第 17 步：只模糊厨房，餐具、工具、污渍、泡沫和 UI 保持清晰。第 18 步才做完整暂停。喷头已使用实际模型和连续动态软管，但软管仍是简化曲线，可能穿过餐具，长度限制与避障在供水步骤补齐；不能据此宣称完整软管物理已通过。
 
@@ -46,13 +46,14 @@
 | [Scenes/player.tscn](../../../Scenes/player.tscn) | 玩家胶囊、相机，以及左／右搬运与清洗锚点 |
 | [Scenes/game-hud.tscn](../../../Scenes/game-hud.tscn)、[game_hud.gd](../../../Scripts/UI/game_hud.gd) | 准星目标名、左右手状态、按模式显示的操作提示和菜单 |
 | [game_input.gd](../../../Scripts/Input/game_input.gd) | 17 个映射的未消费输入、普通持工具持续使用与 E 优先级；沉浸中键和 Q/E 旋转、鼠标模式及持续输入清除 |
-| [dish_carry.gd](../../../Scripts/Dishes/dish_carry.gd) | 双手拿取原实例、来源占用解除、安全搬运、普通工具接触与 contact_dish、F、旋转、自由工具及 E 归回 |
-| [hand_item.gd](../../../Scripts/Dishes/hand_item.gd) | 每手独立节点、来源、姿态、包围盒、查询形状及安全位置缓存 |
+| [dish_carry.gd](../../../Scripts/Dishes/dish_carry.gd) | 双手拿取原实例、真实来源、共享清洁状态引用、确认放置与唯一位置／占用提交、安全搬运、普通工具接触与 contact_dish、F、旋转及 E 归回 |
+| [hand_item.gd](../../../Scripts/Dishes/hand_item.gd) | 每手独立节点、来源类型／完整姿态／可选槽位、包围盒、查询形状、叠放底面采样及安全位置缓存 |
 | [cleaning_tool.gd](../../../Scripts/Tools/cleaning_tool.gd) | 原工具身份、类型、归位父节点和姿态，以及归回距离／遮挡检查 |
 | [world_cleaning_tools.gd](../../../Scripts/Tools/world_cleaning_tools.gd) | 在真实表面生成后封装原工具并移除旧遮挡；更新喷头软管与归位显示 |
-| [dish_targeting.gd](../../../Scripts/Interaction/dish_targeting.gd)、[mesh_surface_collision.gd](../../../Scripts/Interaction/mesh_surface_collision.gd) | 第一处真实表面、持物排除及工具层；沉浸目标由 DishCarry 管理，不被世界查询清除 |
-| [kitchen_slot_registry.gd](../../../Scripts/Slots/kitchen_slot_registry.gd) | 11 个初始／架位注册项、独立占用与来源；固定目标只查询架位，is_basin_hit 识别真实槽内形状并排除台面与边沿 |
-| [placement_rules.gd](../../../Scripts/Slots/placement_rules.gd)、[placement_result.gd](../../../Scripts/Slots/placement_result.gd) | check_placement／check_surface_placement 共用只读规则；分别返回注册姿态／自由姿态和原因，自由结果无槽位 ID，确认和 Q 提交前仍须重查 |
+| [dish_targeting.gd](../../../Scripts/Interaction/dish_targeting.gd)、[mesh_surface_collision.gd](../../../Scripts/Interaction/mesh_surface_collision.gd) | 第一处真实表面、持物排除及工具层；区分 DISH 与 STACKABLE_DISH，沉浸目标由 DishCarry 管理，不被世界查询清除 |
+| [kitchen_slot_registry.gd](../../../Scripts/Slots/kitchen_slot_registry.gd) | 11 个初始／架位注册项、独立占用与来源；固定目标只查询架位，is_basin_hit 识别真实槽内形状，is_basin_support 另接受已放水槽餐具，排除台面与边沿 |
+| [placement_rules.gd](../../../Scripts/Slots/placement_rules.gd)、[placement_result.gd](../../../Scripts/Slots/placement_result.gd) | check_placement／check_surface_placement 共用只读规则；分别返回注册姿态／自由姿态、原因和支撑身份，自由结果无槽位 ID，确认已接入并重查，未来 Q 同样须重查 |
+| [dish_body.gd](../../../Scripts/Dishes/dish_body.gd) | 独立身份、REGISTERED／BASIN／HELD 位置类别、放置包围盒与 support_dish_ids，原节点姿态记录自由位置 |
 | [placement_preview.gd](../../../Scripts/Slots/placement_preview.gd) | 所选餐具的可见网格副本、独立绿／红材质与 HUD 原因；无碰撞、身份、占用或拾取，不影响正式盘杯材质 |
 
 完整文件职责、配置与生成器列表见 [architecture.md](../../memory-bank/architecture.md)。世界查询掩码为 13：餐具 1、环境 4、清洗工具 8；玩家 2 和步行代理 16 被排除。沉浸表面检测只读餐具层，再要求命中当前所持实例。工具和环境使用实际三角面，继续保留杯内、杯柄孔与盆底开口。
@@ -61,7 +62,7 @@
 
 ## 验证与来源
 
-第 1～12 步及追加需求已由用户确认通过。AI 实施期间实际运行专项与相关回归；具体范围与结果见 [progress.md](../../memory-bank/progress.md)。在仓库根目录运行，各项应退出 0 且无脚本错误：
+第 1～13 步及水槽交叠等追加需求已由用户确认通过。AI 实施期间实际运行专项与相关回归；具体范围与结果见 [progress.md](../../memory-bank/progress.md)。在仓库根目录运行，各项应退出 0 且无脚本错误：
 
 ```powershell
 $godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
@@ -72,10 +73,12 @@ $godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
 & $godotExe --headless --path . --script Tools/verify_world_tool_use.gd
 & $godotExe --headless --path . --script Tools/verify_placement_rules.gd
 & $godotExe --headless --path . --script Tools/verify_placement_preview.gd
+& $godotExe --headless --path . --script Tools/verify_dish_placement.gd
+& $godotExe --headless --path . --script Tools/verify_basin_stacking.gd
 & $godotExe --headless --path . --script Tools/verify_kitchen_slots.gd
 ```
 
-成功标识依次为 DISH_CARRY_OK、DUAL_WIELD_OK、GAME_INPUT_OK、WORLD_TOOL_USE_OK、PLACEMENT_RULES_OK、PLACEMENT_PREVIEW_OK、KITCHEN_SLOTS_OK。搬运、双持和工具专项保留左右手、原实例、来源、近裁剪、普通操作、F、中键／Q/E、软管、距离／遮挡及中断恢复；脚本只改实例内存，不写场景、资产、配置或进度。
+成功标识依次为 DISH_CARRY_OK、DUAL_WIELD_OK、GAME_INPUT_OK、WORLD_TOOL_USE_OK、PLACEMENT_RULES_OK、PLACEMENT_PREVIEW_OK、DISH_PLACEMENT_OK、BASIN_STACKING_OK、KITCHEN_SLOTS_OK。搬运、双持和工具专项保留左右手、原实例、来源、近裁剪、普通操作、F、中键／Q/E、软管、距离／遮挡及中断恢复；脚本只改实例内存，不写场景、资产、配置或进度。
 
 已有回归脚本仍为 verify_player_movement.gd、verify_mouse_look.gd、verify_dish_targeting.gd、verify_kitchen_slots.gd、verify_runtime_state.gd 和 verify_cleanliness.gd。图形捕获、鼠标手感和真实窗口失焦由 F5 交互检查，无头脚本不代替用户试玩或性能测量。
 
@@ -83,9 +86,31 @@ $godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
 
 第 12 步专项输出 PLACEMENT_PREVIEW_OK，覆盖盘子 18 个、杯子 12 个水槽位置及小幅连续移动、同一点切换类型、独立实际网格与支撑间隙、8 个架位、未知／边界清洁度与占用变化、真实餐具重叠、墙、超距、菜单／失焦及 F 恢复。共用规则、槽位、输入、搬运、瞄准、双持和普通工具 7 项回归通过，导入、默认入口启动、空白与 UID 检查通过。图形画面已由 AI 渲染并查看，修正后的最终版本由用户确认验收。
 
+第 13 步新增 [确认专项](../../../Tools/verify_dish_placement.gd)与[水槽堆放专项](../../../Tools/verify_basin_stacking.gd)，覆盖实际提交、8 架位、盘杯自由位置／再次拿取、来源与另一手、旧绿色结果失效、重复请求、真实边线／支撑、上到下拿取、支撑变化后重查及工具优先级。最终两专项、预览、规则、输入、普通工具、双持、瞄准与槽位均退出 0；导入、默认入口启动、图形渲染和查看通过。原搬运专项在第 13 步核心阶段通过，后续叠放版拿取由新集成专项覆盖。当前共有 14 份验证脚本、44 个唯一 GDScript UID、17 个输入映射。
+
 ## 当前玩法预览
 
-2026-11-26 第 12 步：水槽自由落点、盘杯共用区域和无效位置原因。旧盘位／杯位标记已移除；下图幽灵仅作预览，实际放置尚未实现。
+2026-11-26 第 13 步及交叠追加需求最终画面：两盘一杯保留各自身份与实际厚度，槽内自由落点无固定标记。以下由 Godot 图形模式捕获并查看，未展示供水或去污。
+
+| 叠放预览 | 确认后的实际原模型 |
+| --- | --- |
+| ![餐盘上方绿色叠放预览](step13-stack-preview.png) | ![两盘与杯子在水槽内交叠放置](step13-stack-placed.png) |
+
+| 下层拿取受阻 | 从上层拿取 |
+| --- | --- |
+| ![下层仍支撑上层时提示先拿走上方餐具](step13-stack-lower-pickup.png) | ![取回上方马克杯并保留其来源](step13-stack-top-pickup.png) |
+
+下列为第 13 步核心确认实现阶段画面，早于叠放追加版的 HUD 提示；现行输入以本页操作表为准。架位画面由专项注入匹配实例的已知 95% 清洁状态，正式玩法仍缺少清洁状态，不会默认授权入架。
+
+| 水槽实际放置 | 普通工具接触已放餐具 |
+| --- | --- |
+| ![餐盘已实际放到水槽自由位置](step13-free-placed.png) | ![普通海绵接触水槽内已放餐盘](step13-cleaning-placed.png) |
+
+| 再次拿取原模型 | 已知清洁状态的架位确认夹具 |
+| --- | --- |
+| ![重新拿起水槽原餐盘](step13-repicked.png) | ![专项注入已知95%状态后完成架位放置](step13-rack-placed.png) |
+
+以下为历史阶段画面。2026-11-26 第 12 步：水槽自由落点、盘杯共用区域和无效位置原因。旧盘位／杯位标记已移除；下图幽灵仅作预览，实际放置尚未实现。
 
 | 餐盘自由预览 | 马克杯自由预览 |
 | --- | --- |

@@ -10,9 +10,6 @@ const INVALID_COLOR: Color = Color(1.0, 0.2, 0.12, 0.45)
 @export var carry_path: NodePath
 @onready var carry: DishCarry = get_node(carry_path) as DishCarry
 
-## Bind references to authoritative runtime states when gameplay provides them.
-## The current scene leaves this empty; verification may inject known states.
-var dish_states: Dictionary[StringName, DishState] = {}
 var current_slot: KitchenSlot
 var current_surface: Dictionary = {}
 var result: PlacementResult
@@ -25,6 +22,7 @@ func _ready() -> void:
 	_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	carry.game_input.mode_changed.connect(_on_mode_changed)
+	carry.inventory_changed.connect(_clear)
 
 func _physics_process(_delta: float) -> void:
 	if not _enabled():
@@ -36,7 +34,7 @@ func _physics_process(_delta: float) -> void:
 		_clear()
 		return
 	var dish: DishBody = carry.selected_dish
-	var next: PlacementResult = carry.check_placement(slot, dish_states.get(dish.instance_id)) if slot != null else carry.check_surface_placement(surface, dish_states.get(dish.instance_id))
+	var next: PlacementResult = carry.check_placement(slot) if slot != null else carry.check_surface_placement(surface)
 	var changed: bool = current_slot != slot or result == null or result.code != next.code or result.dish_id != next.dish_id or result.hand_index != next.hand_index or not result.pose.is_equal_approx(next.pose)
 	if not is_instance_valid(_source_dish) or _source_dish != dish:
 		_rebuild(dish)
