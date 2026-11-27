@@ -1,0 +1,39 @@
+{
+    "date": "2026-11-27",
+    "timezone": "Asia/Shanghai",
+    "scope": "Preliminary render work only; not full-game FPS or MVP performance acceptance.",
+    "environment": {
+        "godot": "4.7.2.stable.official.ed1daf0bf",
+        "renderer": "Compatibility",
+        "graphics_api": "OpenGL 3.3.0",
+        "driver_reported": "NVIDIA 591.86",
+        "gpu": "NVIDIA GeForce RTX 2080 Ti",
+        "cpu": "12th Gen Intel(R) Core(TM) i5-12400F",
+        "ram_bytes": 34211758080,
+        "os": "Microsoft Windows 11 Pro",
+        "os_version": "10.0.22631",
+        "render_pixels": [1920, 1080],
+        "msaa_3d": "4x, unchanged project setting",
+        "vsync_during_sampling": "disabled; restored afterward"
+    },
+    "method": {
+        "script": "Tools/verify_immersion_focus.gd",
+        "arguments": "--path . --script Tools/verify_immersion_focus.gd -- --capture",
+        "warmup_physics_ticks_per_case": 15,
+        "samples_per_case": 30,
+        "cpu": "RenderingServer frame setup plus measured CPU time of active source and foreground viewports.",
+        "gpu": "Sum of RenderingServer measured GPU time of active viewports.",
+        "comparison": "Same immersive mug+sponge pose: original single-pass rendering versus background blur and sharp foreground composition.",
+        "limitations": "No full-game frame-time, export-build, second-machine or minimum-spec measurement. Measurements below were taken during step 17 implementation."
+    },
+    "native": {
+        "cpu_render_ms": 0.651566669956843,
+        "gpu_render_ms": 0.586899995803833,
+        "samples": 30
+    },
+    "focused": {
+        "cpu_render_ms": 0.997266662124793,
+        "gpu_render_ms": 0.983700003723303,
+        "samples": 30
+    }
+}

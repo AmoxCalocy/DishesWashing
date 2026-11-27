@@ -1,6 +1,6 @@
 # 厨房可玩入口
 
-> 第 1～16 步及 G 物理松手、无预览、普通中键等追加需求｜2026-11-27｜用户已确认验证通过
+> 第 1～17 步及 G 物理松手、无预览、普通中键等追加需求｜2026-11-27｜用户已确认验证通过
 
 打开 [project.godot](../../../project.godot)，导入后按 F5 运行 [kitchen-game.tscn](../../../Scenes/kitchen-game.tscn)。独立展示器仍可打开 [kitchen-demo.tscn](../../../Scenes/kitchen-demo.tscn) 按 F6，使用 1～4、R、右键拖动和失焦释放。
 
@@ -33,13 +33,15 @@
 
 第 16 步已统一普通和沉浸的中键拖动；沉浸另保留 Q/E。旋转可翻看盘背、杯内，靠近真实环境时停在安全角度；普通 G 和选择另一手会结束旧中键输入。滚轮只在沉浸调整餐具距离，普通、过渡和菜单不调距；旋转／调距不移动相机或改变 FOV，调整后需重新按左键使用工具。同次持有的 F 往返保留角度、所选距离及原手位。
 
+第 17 步已接入背景模糊：F 进入／退出时约 0.2 秒淡入／淡出，餐具、工具和 UI 始终清晰，玩家相机不动。不同站位、朝向和滚轮距离均使用同一规则；菜单／失焦保留目的模式的画面，过渡仍会继续，恢复不续用旧接触。退出后厨房恢复清晰并停止额外前景渲染。
+
 ## 当前边界与后续
 
 正式 DishState／OrderState 尚未接入，DishCarry.dish_states 生产为空；架位按 G 时显示“无法确认餐具清洁度”，不会默认洗净。已知清洁状态只由验证夹具注入，实际 0.95 门槛保留，泡沫不拒绝。
 
 当前餐具已使用 Jolt 重力、多凸体碰撞与旋转；物理杯口和杯柄保持开放。释放点在第一处真实表面前留出体积和约 6 cm 下落余量，未命中时位于镜头前 0.8 m；最终角度与位置不由静态落位求解器指定。边缘可能滑落或倾倒，这是松手后的物理行为。
 
-第 16 步及普通中键修正已验收，下一项为第 17 步背景模糊，尚未开始；第 18 步完整暂停。供水、湿润、施液、去污、泡沫与订单仍未接入；喷头原位限制为 1.5 米，软管仍是简化曲线，没有完整长度约束或避障。
+第 17 步背景模糊已验收，下一项为第 18 步暂停与失焦处理，尚未开始。供水、湿润、施液、去污、泡沫与订单仍未接入；喷头原位限制为 1.5 米，软管仍是简化曲线，没有完整长度约束或避障。后续污渍／泡沫视觉须纳入清晰前景，本步透明检查片只是合成验证夹具。
 
 ## 实现与文件边界
 
@@ -54,6 +56,7 @@
 | [dish_targeting.gd](../../../Scripts/Interaction/dish_targeting.gd)、[mesh_surface_collision.gd](../../../Scripts/Interaction/mesh_surface_collision.gd) | 2 米最近真实表面、0.1 mm 射线足迹、10 倍局部三角面与倒数缩放；持物排除、菜单清除与沉浸上下文隔离 |
 | [kitchen_slot_registry.gd](../../../Scripts/Slots/kitchen_slot_registry.gd)、[placement_rules.gd](../../../Scripts/Slots/placement_rules.gd) | 11 项注册、独立占用、仅架位固定目标与共用资格；不再解算水槽自由最终姿态 |
 | [cleaning_tool.gd](../../../Scripts/Tools/cleaning_tool.gd)、[world_cleaning_tools.gd](../../../Scripts/Tools/world_cleaning_tools.gd) | 原海绵／喷头包装与移除旧原位碰撞、归位检查、视觉软管 |
+| [immersion_focus.gd](../../../Scripts/Rendering/immersion_focus.gd)、[immersion_background_blur.gdshader](../../../Shaders/immersion_background_blur.gdshader) | 背景 mip 模糊、同一原持物的透明清晰视口、相机／尺寸／灯光同步与退出恢复；不修改物理或输入规则 |
 | [project.godot](../../../project.godot) | Godot 4.7.2 Compatibility、G 物理键及内置 Jolt；薄陶瓷接触容差 0.5 mm、预测接触 2 mm、4 次位置迭代 |
 
 交互查询掩码仍为 13：餐具 1、环境 4、工具 8。独立运动体用层 6（32），WORLD 掩码 46，包含环境、工具、玩家及其他物理餐具，排除查询身体 1 和玩家柜体代理 16，避免把水槽封成实心。持有时运动体冻结且层／掩码为 0；架位冻结并保留物理层 32。
@@ -62,13 +65,17 @@
 
 ## 验证与来源
 
-用户于 2026-11-27 确认第 16 步最终普通中键版本通过。AI 在本步运行 DISH_MANIPULATION_OK 与 7 项相关回归、导入和默认启动，并查看 6 张实际画面；中键修正后重跑专项、输入、镜头及图形，普通选中右手／F 返回两张已更新。各步实际执行范围和来源见 [progress.md](../../memory-bank/progress.md)。当前 17 份验证脚本、46 个唯一 GDScript UID、18 个输入映射。无头验证不代替真实窗口操作或性能测量。
+用户于 2026-11-27 确认第 17 步通过。AI 实施阶段运行 IMMERSION_FOCUS_OK 及输入、镜头、搬运、双持、普通工具、F 切换、旋转调距 7 项回归，导入、默认启动均通过；图形模式通过 12 组工具／站位／距离和 2 组透明／尺寸对照，并归档 7 张代表图。各步来源见 [progress.md](../../memory-bank/progress.md)。当前 18 份验证脚本、48 个唯一 GDScript UID，另有 1 个着色器 UID；输入仍为 18 个映射。
+
+开发机 i5-12400F／约 32 GiB／RTX 2080 Ti／Windows 11，1080p、关闭垂直同步各 30 帧：原单次渲染与模糊合成的 CPU 渲染均值约 0.652→0.997 ms，GPU 0.587→0.984 ms。完整环境、原始均值和采样方法见 [step17-render-timing.json](step17-render-timing.json)；这是当前场景的初步渲染工作，不是完整 MVP 帧率或第二台机器验收。无头验证不代替真实窗口操作或图形测量。
 
 在仓库根目录运行，均应退出 0 且无脚本错误：
 
 ```powershell
 $godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
 & $godotExe --headless --editor --path . --quit
+& $godotExe --headless --path . --script Tools/verify_immersion_focus.gd
+& $godotExe --path . --script Tools/verify_immersion_focus.gd -- --capture
 & $godotExe --headless --path . --script Tools/verify_dish_manipulation.gd
 & $godotExe --headless --path . --script Tools/verify_close_transition.gd
 & $godotExe --headless --path . --script Tools/verify_dual_wield.gd
@@ -81,13 +88,33 @@ $godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
 & $godotExe --headless --path . --quit-after 60
 ```
 
-对应成功标识为 DISH_MANIPULATION_OK、CLOSE_TRANSITION_OK、DUAL_WIELD_OK、WORLD_TOOL_USE_OK、DISH_DROP_OK、DISH_PLACEMENT_OK、BASIN_STACKING_OK、PLACEMENT_PREVIEW_OK、GAME_INPUT_OK。旋转／调距专项覆盖 8 组盘杯／工具／手位、上下限、真实表面及近裁剪、障碍、中断和 30／120 Hz Q/E；F 专项覆盖 40 组站位朝向往返。已知清洁状态仅夹具注入，生产仍为空。保留旧预览专项文件名，现检查“预览已移除”。其余脚本按同格式执行，本步实际执行范围见进度记录。
+对应成功标识为 IMMERSION_FOCUS_OK、DISH_MANIPULATION_OK、CLOSE_TRANSITION_OK、DUAL_WIELD_OK、WORLD_TOOL_USE_OK、DISH_DROP_OK、DISH_PLACEMENT_OK、BASIN_STACKING_OK、PLACEMENT_PREVIEW_OK、GAME_INPUT_OK。模糊专项无头模式会明确跳过图形检查；图形模式保存对照 PNG／本机耗时 JSON 到忽略的 Temp，并在采样后恢复垂直同步。旋转／调距专项覆盖 8 组盘杯／工具／手位、上下限、真实表面及近裁剪、障碍、中断和 30／120 Hz Q/E；F 专项覆盖 40 组站位朝向往返。已知清洁状态仅夹具注入，生产仍为空。保留旧预览专项文件名，现检查“预览已移除”。其余脚本按同格式执行，本步实际执行范围见进度记录。
 
 F5 手动检查：拿取盘／杯与海绵／喷头，从不同站位和朝向 F 往返；将工具移动到两侧后返回，检查相机、角度、原手位和正常搬运距离。切换途中连按 F／G，或 Esc／Alt+Tab 后明确继续，不误放、不自动续用旧输入；近距离 Q/E 仅旋转，F 才退出。无头模式不证明真实窗口捕获和 Alt+Tab 行为。
 
 第 16 步另检查普通 1／2 当前手中键拖动，另一手与镜头不跟转；中键按住期间释放右键仍能旋转。F 后用滚轮反复到盘／杯各自上下限，翻面、倾斜并重新按左键接触，确认盘背和杯内可达、不穿近裁剪；F 往返保留角度和所选距离，Esc／失焦后不续用旧中键。
 
+第 17 步另检查不同站位与距离下厨房背景明显模糊、原餐具／工具和 HUD 保持清晰；F 返回后背景清晰，无轮廓残影。转动杯柄、观察杯口与边缘，缩放窗口后不变形或闪烁；Esc／失焦后继续按钮可点击，真实接触与工具自由移动仍可用。
+
 ## 当前实际画面
+
+2026-11-27 第 17 步 Godot Compatibility 图形模式画面。首行零模糊图用于同姿态对照；蓝色 40% alpha 片仅由验证夹具添加，用于检查透明合成，不属于实际清洗功能。
+
+| 同姿态零模糊对照 | 中心最近餐盘＋海绵 |
+| --- | --- |
+| ![背景清晰的合成对照，持物姿态不变](step17-focus-reference.png) | ![厨房背景模糊，原餐盘和海绵保持清晰](step17-focus-plate.png) |
+
+| 左侧最远餐盘 | 右侧最远杯子 |
+| --- | --- |
+| ![左侧朝向与0.56米餐盘](step17-focus-left.png) | ![右侧朝向与0.52米杯子及喷头软管](step17-focus-right.png) |
+
+| 中心杯内与喷头 | 透明测试片与杯柄开口（1080p） |
+| --- | --- |
+| ![杯内与喷头清晰，背景模糊](step17-focus-mug.png) | ![透明片混合背景，杯柄开口保留](step17-focus-alpha.png) |
+
+![F返回后餐具与工具恢复手位，背景恢复清晰](step17-return-carry.png)
+
+以下第 15、16 步截图保留当时表现，早于第 17 步背景模糊；现行画面以上方为准。
 
 2026-11-27 第 16 步及普通中键修正后的画面，均由 Godot Compatibility 图形模式捕获并查看；最近／最远指餐具根节点到相机的深度，餐具、工具与背景保持当前场景表现。
 

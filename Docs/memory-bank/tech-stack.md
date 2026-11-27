@@ -1,6 +1,6 @@
 # 技术栈建议：洗碗时光
 
-> 版本：0.12｜日期：2026-11-27｜适用范围：单人、第一人称、PC 端 3D 洗碗游戏的首个可玩版本
+> 版本：0.13｜日期：2026-11-27｜适用范围：单人、第一人称、PC 端 3D 洗碗游戏的首个可玩版本
 
 ## 1. 推荐方案
 
@@ -31,7 +31,7 @@ Unity 是合理备选，尤其适合已有 Unity/C# 经验或现成资产的团�
 
 ### 场景与交互
 
-第 1～16 步及追加需求已验收；保留第 14 步 G 物理松手、无预览与普通 Q 无返回，以及第 15 步 F 路径／返回修复。第 16 步完成两态中键旋转、沉浸滚轮与盘杯几何边界；下一项为第 17 步背景模糊，完整暂停仍待第 18 步。
+第 1～17 步及追加需求已验收；保留 G 物理松手、无预览、普通 Q 无返回、F 路径／返回修复、两态中键和沉浸滚轮边界。第 17 步完成 Compatibility 背景模糊、清晰持物及 UI；下一项为第 18 步暂停与失焦处理。
 
 - 玩法入口仍由手工维护，展示器独立。GameInput 使用未消费事件，18 个映射；G 只在普通持餐具时发出一次 drop_dish，清除旧左键持续使用，Q 仅用于沉浸旋转。左键负责拿取或工具使用，1／2 只选择稳定手位。
 - DishTargeting 的世界范围为 2 米，覆盖地面餐具；首个真实表面仍遮挡，排除所有持物。Jolt 对共享三角顶点可能漏检，因此加四条横／竖偏移 0.1 mm 的平行射线，仍取最近真实命中；不能穿过前景物件。MeshSurfaceCollision 现用 10 倍局部坐标及倒数形状缩放，保留真实孔洞、短射线和变换精度。
@@ -46,7 +46,15 @@ Unity 是合理备选，尤其适合已有 Unity/C# 经验或现成资产的团�
 - 第 16 步按用户修正复用 game_rotate_close 为两态中键旋转，普通仅操作 1／2 当前餐具；右键 game_rotate 只保留普通空手／只持工具／持瓶的 FOV 放大，持餐具不旋转或放大。选择、G、菜单及失焦清除旧中键输入，右键释放不结束中键。Q/E 保持沉浸专用与按物理 delta 的 90°/s。
 - DishBody 导出 close_min_distance／close_max_distance，盘默认 0.40～0.56 m，mug.tscn 覆盖为 0.36～0.52 m；HandItem 独立保存默认 0.45 m 的 close_distance，沉浸滚轮每格 0.02 m，F 以该值确定目标姿态。最多 3° 小步旋转结合半径弧线余量、真实空间与 near + 0.015 m 检查；调距检查数值范围及平移路径，拒绝不改当前值。旋转基底归一化，不累计缩放，沉浸真实命中增加 0.1 mm 射线足迹。
 - DISH_MANIPULATION_OK 检查两态中键、8 组盘杯／工具／手位、上下限、真实正反面及杯内、倾斜工具接触、近裁剪、障碍、中断与 30／120 Hz Q/E；生产状态仍未接入，MVP 清洗不能由旋转／接触检查冒充完成。
-- 软管保持分段圆柱与端点切向曲线，仅缩放自身长度轴；仍没有完整避障或长度约束。右键 FOV 放大与 F 拉近分别处理；第 17 步不静默切换渲染器。
+- 软管保持分段圆柱与端点切向曲线，仅缩放自身长度轴；仍没有完整避障或长度约束。右键 FOV 放大与 F 拉近分别处理。
+
+### 近距离背景模糊（第 17 步）
+
+[ImmersionFocus](../../Scripts/Rendering/immersion_focus.gd) 仅由手工玩法入口实例化。主相机暂时排除原持物的渲染层，背景 CanvasItem 着色器以 `hint_screen_texture`／mip LOD 3.2 混合清晰与模糊画面；同一 World3D 的透明 SubViewport 使用匹配的相机投影和实际渲染像素，单独绘制原餐具、工具及喷头软管，再以预乘 alpha 合成。HUD 位于更高 CanvasLayer，效果控件不消费鼠标。没有复制餐具身份，也不修改物理层或射线规则。
+
+渲染层 20 用于清晰持物，层 19 临时加入原灯光，让两个相机获得相同光照；它们与物理碰撞层无关。每次绘制前同步变换、FOV、裁剪、MSAA 与尺寸；F 约 0.2 秒淡入／淡出，失败进入不启用，退出恢复所有原渲染层和相机掩码，并停用额外视口。菜单／失焦保留目标模式的效果，当前过渡仍继续，完整冻结属于第 18 步。后续新增污渍／泡沫网格须纳入清晰前景，当前未实现这些玩法。
+
+[专项](../../Tools/verify_immersion_focus.gd) 在无头模式检查状态、身份、视角、层恢复、真实接触和菜单点击；图形模式另检查 12 组站位／工具／距离、两组透明／尺寸对照及真实像素差异。开发机 i5-12400F、约 32 GiB 内存、RTX 2080 Ti、Windows 11，1080p／关闭垂直同步／各 30 帧初测：CPU 渲染均值 0.652→0.997 ms，GPU 0.587→0.984 ms。记录的是渲染工作，不能作为完整 MVP 的稳定 60 FPS 或第二台机器验收；原始均值与方法见[性能记录](../scenes/kitchen-game/step17-render-timing.json)。
 
 ### 污渍与清洁
 
@@ -98,6 +106,7 @@ Unity 是合理备选，尤其适合已有 Unity/C# 经验或现成资产的团�
 
 - [Godot 发布策略与支持状态](https://docs.godotengine.org/en/stable/about/release_policy.html)
 - [Godot 渲染器概览](https://docs.godotengine.org/en/stable/tutorials/rendering/renderers.html)
+- [Godot 屏幕读取着色器](https://docs.godotengine.org/en/stable/tutorials/shaders/screen-reading_shaders.html)
 - [Godot 导入 3D 场景](https://docs.godotengine.org/en/stable/tutorials/assets_pipeline/importing_3d_scenes/index.html)
 - [Godot 文件路径与 user://](https://docs.godotengine.org/en/stable/tutorials/io/data_paths.html)
 - [Godot 项目导出](https://docs.godotengine.org/en/stable/tutorials/export/exporting_projects.html)

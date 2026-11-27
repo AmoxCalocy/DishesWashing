@@ -41,7 +41,7 @@
 
 ## 双持与沉浸操作验证
 
-第 10 步及追加需求已通过用户验收。[搬运专项](../Tools/verify_dish_carry.gd)检查当前来源占用、原实例、安全位置、近裁剪和障碍；[双持专项](../Tools/verify_dual_wield.gd)检查左右手顺序、餐具加工具、F、中键与 Q/E、两工具自由移动及 E 归回。沉浸工具不自动吸附，按 F 才回固定手位；背景模糊仍待第 17 步，第 14 步已改为 G 物理松手，供水、去污和软管避障仍待后续。现行操作、图形预览和命令见 [可玩入口说明](scenes/kitchen-game/kitchen-game.md)。
+第 10 步及追加需求已通过用户验收。[搬运专项](../Tools/verify_dish_carry.gd)检查当前来源占用、原实例、安全位置、近裁剪和障碍；[双持专项](../Tools/verify_dual_wield.gd)检查左右手顺序、餐具加工具、F、中键与 Q/E、两工具自由移动及 E 归回。沉浸工具不自动吸附，按 F 才回固定手位；背景模糊已于第 17 步验收，第 14 步已改为 G 物理松手，供水、去污和软管避障仍待后续。现行操作、图形预览和命令见 [可玩入口说明](scenes/kitchen-game/kitchen-game.md)。
 
 第 15 步于 2026-11-27 通过用户验收。[F 切换专项](../Tools/verify_close_transition.gd)覆盖盘杯、两工具、左右手顺序与五组站位／朝向共 40 组往返，以及真实空间／路径、原实例／状态／视角保留、喷头范围、重复输入和进入／退出中断。F 返回须取得新的安全姿态，受阻保留沉浸；自由工具不再挡住另一手返回，菜单后完成进入不重置光标。专项与 7 项相关回归、导入、默认启动和图形检查通过，成功标识 CLOSE_TRANSITION_OK；第 16 步旋转与滚轮现也已通过验收。
 
@@ -49,7 +49,13 @@
 
 第 16 步及普通中键修正于 2026-11-27 通过用户验收。普通与沉浸统一用中键拖动旋转，普通只操作 1／2 当前餐具；沉浸 Q/E 保留。滚轮仅沉浸调距，每格 0.02 m，盘 0.40～0.56 m、杯 0.36～0.52 m，默认 0.45 m；旋转／调距检查真实空间与近裁剪，F 往返保留所选距离／角度，调整后需重新按左键使用工具。
 
-[旋转与调距专项](../Tools/verify_dish_manipulation.gd)覆盖 8 组盘杯／工具／手位、正反面与杯内、倾斜工具接触、障碍、中断及 30／120 Hz Q/E。实施阶段专项及 7 项回归、导入、默认启动和图形检查通过；中键修正后重跑专项、输入、镜头及图形，成功标识 DISH_MANIPULATION_OK。当前[中键右手旋转](scenes/kitchen-game/step16-selected-right.png)、[盘背最近距离](scenes/kitchen-game/step16-plate-near-back.png)和[杯内最近距离](scenes/kitchen-game/step16-mug-near-inside.png)可供对照；下一项为第 17 步背景模糊。
+[旋转与调距专项](../Tools/verify_dish_manipulation.gd)覆盖 8 组盘杯／工具／手位、正反面与杯内、倾斜工具接触、障碍、中断及 30／120 Hz Q/E。实施阶段专项及 7 项回归、导入、默认启动和图形检查通过；中键修正后重跑专项、输入、镜头及图形，成功标识 DISH_MANIPULATION_OK。[中键右手旋转](scenes/kitchen-game/step16-selected-right.png)、[盘背最近距离](scenes/kitchen-game/step16-plate-near-back.png)和[杯内最近距离](scenes/kitchen-game/step16-mug-near-inside.png)保留当时画面。
+
+## 沉浸背景模糊验证
+
+第 17 步于 2026-11-27 通过用户验收。Compatibility 下随 F 约 0.2 秒淡入／淡出背景模糊，原餐具、工具与 HUD 清晰；相机位置、朝向、FOV 和真实交互保持原规则，退出恢复原渲染层并停止额外视口。
+
+[模糊专项](../Tools/verify_immersion_focus.gd)及 7 项相关回归、导入、启动通过；图形模式另通过 12 组工具／站位／距离及 2 组透明材质／尺寸对照，成功标识 IMMERSION_FOCUS_OK。[清晰对照](scenes/kitchen-game/step17-focus-reference.png)、[模糊餐盘](scenes/kitchen-game/step17-focus-plate.png)、[杯内与喷头](scenes/kitchen-game/step17-focus-mug.png)和[透明边缘夹具](scenes/kitchen-game/step17-focus-alpha.png)可供比较。1080p／RTX 2080 Ti／关闭垂直同步各 30 帧初测 GPU 渲染均值约 0.587→0.984 ms，完整环境与方法见[性能记录](scenes/kitchen-game/step17-render-timing.json)和[进度记录](memory-bank/progress.md)；不是完整 MVP 性能验收。下一项为第 18 步暂停与失焦处理。
 
 ## 普通模式工具操作验证
 
@@ -57,7 +63,7 @@
 
 ## 餐具松手、固定架位与无预览验证
 
-第 1～16 步及追加需求已验收；第 14 步按用户修正取消普通 Q 返回和全部落位预览，改为 G 物理松手。台面、托盘、地面与水槽共用重力／碰撞，只有沥水架保留固定完整姿态；F 场景覆盖与两态中键／沉浸滚轮均已通过，下一项为第 17 步背景模糊。
+第 1～17 步及追加需求已验收；第 14 步按用户修正取消普通 Q 返回和全部落位预览，改为 G 物理松手。台面、托盘、地面与水槽共用重力／碰撞，只有沥水架保留固定完整姿态；F 场景覆盖、两态中键／沉浸滚轮和背景模糊均已通过，下一项为第 18 步暂停与失焦处理。
 
 | 检查 | 当前范围 |
 | --- | --- |
@@ -67,14 +73,14 @@
 | [原预览专项](../Tools/verify_placement_preview.gd) | 保留文件名，现验证幽灵与绿／红标签已删除、瞄准不提交／预留、展示器独立；PLACEMENT_PREVIEW_OK |
 | [共用注册规则](../Tools/verify_placement_rules.gd) | 完整姿态、类型／尺寸／占用、真实空间、实际 95%／泡沫／未知状态和选中手位；PLACEMENT_RULES_OK |
 
-当前 17 份验证脚本、46 个唯一 UID、18 个输入映射。正式清洁状态未绑定，按 G 入架时未知状态继续拒绝。运行命令、当前[F 返回手位](scenes/kitchen-game/step16-return-carry.png)与[自然堆放画面](scenes/kitchen-game/step14-free-stack.png)、历史阶段说明见[可玩入口](scenes/kitchen-game/kitchen-game.md)；实现及来源见[进度记录](memory-bank/progress.md)。
+当前 18 份验证脚本、48 个唯一 GDScript UID，另有 1 个着色器 UID；输入映射仍为 18 个。正式清洁状态未绑定，按 G 入架时未知状态继续拒绝。运行命令、当前[F 返回手位](scenes/kitchen-game/step17-return-carry.png)与[自然堆放画面](scenes/kitchen-game/step14-free-stack.png)、历史阶段说明见[可玩入口](scenes/kitchen-game/kitchen-game.md)；实现及来源见[进度记录](memory-bank/progress.md)。
 
 ## 已组装场景
 
 | 场景 | 说明与打开方式 | 预览 |
 | --- | --- | --- |
 | 简单厨房场景 | [Godot 运行、Blender 编辑与组装说明](scenes/kitchen-demo/kitchen-demo.md) | [Godot 全貌](scenes/kitchen-demo/godot-overview.png) / [Godot 玩家视角](scenes/kitchen-demo/godot-player.png) / [Blender 全貌](scenes/kitchen-demo/kitchen-demo-overview.png) |
-| 厨房可玩入口 | [F5 G 松手、两态中键、沉浸滚轮及工具验收说明](scenes/kitchen-game/kitchen-game.md) | [中键旋转右手](scenes/kitchen-game/step16-selected-right.png) / [盘背最近](scenes/kitchen-game/step16-plate-near-back.png) / [杯内最近](scenes/kitchen-game/step16-mug-near-inside.png) / [返回手位](scenes/kitchen-game/step16-return-carry.png) |
+| 厨房可玩入口 | [F5 G 松手、中键／滚轮、背景模糊及工具验收说明](scenes/kitchen-game/kitchen-game.md) | [沉浸餐盘](scenes/kitchen-game/step17-focus-plate.png) / [沉浸杯内](scenes/kitchen-game/step17-focus-mug.png) / [透明边缘](scenes/kitchen-game/step17-focus-alpha.png) / [返回手位](scenes/kitchen-game/step17-return-carry.png) |
 
 ## 模型说明与预览
 
