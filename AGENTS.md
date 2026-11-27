@@ -2,7 +2,7 @@
 
 ## Project Structure & Scope
 
-This project uses Godot 4.7.2, GDScript, Compatibility rendering, Blender 5.3.0 and the built-in Jolt backend. It has a kitchen viewer and separate gameplay entry with WASD, collision, mouse look/zoom, real-surface targeting, 11 registered origin/rack poses and two stable hand slots. Steps 1–14 and additions are accepted as of 2026-11-26. Ordinary 1/2 selects a dish and G releases it into gravity on counters, tray, floor or basin; only the rack retains fixed placement. Ordinary Q return and all placement previews are removed. Keep physical tools, F immersion, middle-drag/Q/E rotation and free immersive tool movement. Actual washing is planned; MVP covers plates and mugs, with extra types/classification post-MVP.
+This project uses Godot 4.7.2, GDScript, Compatibility rendering, Blender 5.3.0 and the built-in Jolt backend. It has a kitchen viewer and separate gameplay entry with WASD, collision, mouse look/zoom, real-surface targeting, 11 registered origin/rack poses and two stable hand slots. Steps 1–15 and additions are accepted as of 2026-11-27. Ordinary 1/2 selects a dish and G releases it into gravity on counters, tray, floor or basin; only the rack retains fixed placement. Ordinary Q return and all placement previews are removed. Keep physical tools, verified F round trips and space/interruption checks, middle-drag/Q/E rotation and free immersive tool movement. Actual washing is planned; MVP covers plates and mugs, with extra types/classification post-MVP.
 
 - `project.godot`: project entry point; main scene is `Scenes/kitchen-game.tscn`.
 - `Scenes/kitchen-game.tscn`: hand-authored gameplay entry inheriting the kitchen layout, with the viewer script removed and viewer overlay hidden. Generators must not overwrite this file.
@@ -92,7 +92,7 @@ Verify registered origins/rack poses and real support:
 
 Success prints `KITCHEN_SLOTS_OK` and exits with code 0. It checks 3 tray origins and 8 rack slots, compatible types, full poses, independent occupancy and 11 simultaneous real dish poses for surface-edge intersections and approximately 0.5 mm support gaps. It also checks removal of fixed basin markers, placed-dish soap intentions and viewer isolation. F5 has an empty rack and no basin plate/cup markers; F6 keeps the original display. Actual placement and pump execution are not implemented by this check.
 
-`KitchenSlot.get_pose()` returns the complete marker transform; do not add another half-height. Free dish poses follow physics, without slot IDs or static support records. `accepts` and `is_empty` are partial checks; use the shared DishCarry checks. The registry owns per-scene SlotState occupancy; future OrderState integration must share or explicitly replace it. `initial_slot_id` is initialization data, not the current position or most recent pickup origin. World queries exclude all held RIDs. In CLOSE_UP/TRANSITION, DishTargeting must not overwrite DishCarry's surface target. Preserve the per-step acceptance workflow: steps 1–14 and additions are accepted; step 15 has not begun.
+`KitchenSlot.get_pose()` returns the complete marker transform; do not add another half-height. Free dish poses follow physics, without slot IDs or static support records. `accepts` and `is_empty` are partial checks; use the shared DishCarry checks. The registry owns per-scene SlotState occupancy; future OrderState integration must share or explicitly replace it. `initial_slot_id` is initialization data, not the current position or most recent pickup origin. World queries exclude all held RIDs. In CLOSE_UP/TRANSITION, DishTargeting must not overwrite DishCarry's surface target. Preserve the per-step acceptance workflow: steps 1–15 and additions are accepted; step 16 ordinary rotation/scroll bounds has not begun.
 
 ## Dual-hand, ordinary tool and immersive verification
 
@@ -112,9 +112,19 @@ The ordinary tool check prints `WORLD_TOOL_USE_OK` and exits 0. It covers both t
 
 Background blur is still step 17; ordinary carry rotation/scroll limits are incomplete step 16 work. Pause currently blocks input without freezing the scene. Hose links must scale their local Y length after orientation, not world Y; continuity/radius checks are not collision/length simulation. Water, wetness eligibility, dirt removal, soap and orders are not yet scene gameplay. Details and current screenshots are in `Docs/scenes/kitchen-game/kitchen-game.md`.
 
+## F transition scene coverage (step 15)
+
+```powershell
+& $godotExe --headless --path . --script Tools/verify_close_transition.gd
+```
+
+Success prints `CLOSE_TRANSITION_OK` and exits 0. It covers 40 plate/mug, sponge/sprayer, pickup-order/hand and station/heading round trips; original identity/RID, source, occupancy, held motion body, camera pose/FOV, approximately 0.2 s transitions, blocked WASD, Q/E rotation, fresh input after exit, real wall/destination/travel space, return obstruction, sprayer home range and entry/exit interruptions. Known DishState dirt/foam/detergent values are injected only by the fixture; production remains unbound.
+
+F validates translation paths in both directions with the dish's current angle. Exit must first obtain a fresh safe carry pose; failure keeps immersion and both original items with feedback. During F, carry solving excludes both held RIDs so a freely positioned tool cannot block the other hand's return; ordinary carry still uses its existing item avoidance and environment clearance. A real rack may shorten carry distance. Repeated F/G/E during transition cannot switch, drop or return anything. Completing entry behind a menu must not warp its cursor. Esc/focus clears old input, while the current Tween and world physics continue; full freezing remains step 18. F5 verifies actual capture, tool movement to both sides, stable hand restoration and menu/focus recovery.
+
 ## G release, rack rules and removed previews (step 14)
 
-Steps 1–14 and requested additions are accepted as of 2026-11-26. The next task is step 15 F scene coverage; do not restore the cancelled ordinary Q return or placement previews. G releases the selected 1/2 dish while retaining the other hand; ordinary left click picks up or uses a tool. Q/E and middle-drag still rotate only in immersion. G is ignored in immersion, transitions and UI.
+Steps 1–15 and requested additions are accepted as of 2026-11-27. The next task is step 16 ordinary rotation/scroll bounds; do not restore the cancelled ordinary Q return or placement previews. G releases the selected 1/2 dish while retaining the other hand; ordinary left click picks up or uses a tool. Q/E and middle-drag still rotate only in immersion. G is ignored in immersion, transitions and UI.
 
 ```powershell
 & $godotExe --headless --path . --script Tools/verify_dish_drop.gd
@@ -124,7 +134,7 @@ Steps 1–14 and requested additions are accepted as of 2026-11-26. The next tas
 & $godotExe --headless --path . --script Tools/verify_placement_rules.gd
 ```
 
-Success markers are DISH_DROP_OK, DISH_PLACEMENT_OK, BASIN_STACKING_OK, PLACEMENT_PREVIEW_OK and PLACEMENT_RULES_OK, all exit 0. There are 15 verification scripts, 44 unique script UIDs and 18 input mappings. The old preview check now verifies that the ghost and green/red label are absent. PlacementPreview source/UID, its scene node and HUD bindings have been removed.
+Success markers are DISH_DROP_OK, DISH_PLACEMENT_OK, BASIN_STACKING_OK, PLACEMENT_PREVIEW_OK and PLACEMENT_RULES_OK, all exit 0. There are 16 verification scripts, 45 unique script UIDs and 18 input mappings. The old preview check now verifies that the ghost and green/red label are absent. PlacementPreview source/UID, its scene node and HUD bindings have been removed.
 
 DishBody retains its original StaticBody3D query mesh and identity. A separate RigidBody3D with cached convex decomposition handles movement, with REGISTERED/HELD/WORLD locations. On release the motion body becomes a sibling of the original dish; the original query body follows its full pose. Pickup freezes and reparents the motion body back under the dish. Never create replacement dish identities or leave independent motion bodies behind during cleanup.
 

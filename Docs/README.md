@@ -37,11 +37,13 @@
 
 ## 托盘初始点与架位验证
 
-第 9 步建立注册器，第 12 步按用户修正移除两个固定水槽位及标记。[正式布局](../Resources/Kitchen/kitchen-layout.tres)现为 3 个托盘初始点和 8 个架位，固定放置目标只保留沥水架。[槽位专项](../Tools/verify_kitchen_slots.gd)检查 11 项完整姿态、独立占用、实际承托与网格穿插、无水槽固定标记、施液意图及展示器隔离。水槽预览自由跟随真实命中，F6 原展示布置保持不变；G 物理松手及固定架位确认已于第 14 步验收，泵压仍待后续。
+第 9 步建立注册器，第 12 步按用户修正移除两个固定水槽位及标记。[正式布局](../Resources/Kitchen/kitchen-layout.tres)现为 3 个托盘初始点和 8 个架位，固定放置目标只保留沥水架。[槽位专项](../Tools/verify_kitchen_slots.gd)检查 11 项完整姿态、独立占用、实际承托与网格穿插、无水槽固定标记、施液意图及展示器隔离。水槽使用 G 物理松手，已移除预览，F6 原展示布置保持不变；G 物理松手及固定架位确认已于第 14 步验收，泵压仍待后续。
 
 ## 双持与沉浸操作验证
 
 第 10 步及追加需求已通过用户验收。[搬运专项](../Tools/verify_dish_carry.gd)检查当前来源占用、原实例、安全位置、近裁剪和障碍；[双持专项](../Tools/verify_dual_wield.gd)检查左右手顺序、餐具加工具、F、中键与 Q/E、两工具自由移动及 E 归回。沉浸工具不自动吸附，按 F 才回固定手位；背景模糊仍待第 17 步，第 14 步已改为 G 物理松手，供水、去污和软管避障仍待后续。现行操作、图形预览和命令见 [可玩入口说明](scenes/kitchen-game/kitchen-game.md)。
+
+第 15 步于 2026-11-27 通过用户验收。[F 切换专项](../Tools/verify_close_transition.gd)覆盖盘杯、两工具、左右手顺序与五组站位／朝向共 40 组往返，以及真实空间／路径、原实例／状态／视角保留、喷头范围、重复输入和进入／退出中断。F 返回须取得新的安全姿态，受阻保留沉浸；自由工具不再挡住另一手返回，菜单后完成进入不重置光标。专项与 7 项相关回归、导入、默认启动和图形检查通过，成功标识 CLOSE_TRANSITION_OK；下一项为第 16 步旋转与滚轮边界。
 
 ## 普通模式工具操作验证
 
@@ -49,7 +51,7 @@
 
 ## 餐具松手、固定架位与无预览验证
 
-第 1～14 步及追加需求已验收；第 14 步按用户修正取消普通 Q 返回和全部落位预览，改为 G 物理松手。台面、托盘、地面与水槽共用重力／碰撞，只有沥水架保留固定完整姿态；下一项为第 15 步 F 场景覆盖。
+第 1～15 步及追加需求已验收；第 14 步按用户修正取消普通 Q 返回和全部落位预览，改为 G 物理松手。台面、托盘、地面与水槽共用重力／碰撞，只有沥水架保留固定完整姿态；F 场景覆盖及修复已于第 15 步验收，下一项为第 16 步旋转与滚轮边界。
 
 | 检查 | 当前范围 |
 | --- | --- |
@@ -59,14 +61,14 @@
 | [原预览专项](../Tools/verify_placement_preview.gd) | 保留文件名，现验证幽灵与绿／红标签已删除、瞄准不提交／预留、展示器独立；PLACEMENT_PREVIEW_OK |
 | [共用注册规则](../Tools/verify_placement_rules.gd) | 完整姿态、类型／尺寸／占用、真实空间、实际 95%／泡沫／未知状态和选中手位；PLACEMENT_RULES_OK |
 
-当前 15 份验证脚本、44 个唯一 UID、18 个输入映射。正式清洁状态未绑定，按 G 入架时未知状态继续拒绝。运行命令、当前[自然堆放画面](scenes/kitchen-game/step14-free-stack.png)、历史阶段说明见[可玩入口](scenes/kitchen-game/kitchen-game.md)；实现及来源见[进度记录](memory-bank/progress.md)。
+当前 16 份验证脚本、45 个唯一 UID、18 个输入映射。正式清洁状态未绑定，按 G 入架时未知状态继续拒绝。运行命令、当前[F 返回手位](scenes/kitchen-game/step15-return-left.png)与[自然堆放画面](scenes/kitchen-game/step14-free-stack.png)、历史阶段说明见[可玩入口](scenes/kitchen-game/kitchen-game.md)；实现及来源见[进度记录](memory-bank/progress.md)。
 
 ## 已组装场景
 
 | 场景 | 说明与打开方式 | 预览 |
 | --- | --- | --- |
 | 简单厨房场景 | [Godot 运行、Blender 编辑与组装说明](scenes/kitchen-demo/kitchen-demo.md) | [Godot 全貌](scenes/kitchen-demo/godot-overview.png) / [Godot 玩家视角](scenes/kitchen-demo/godot-player.png) / [Blender 全貌](scenes/kitchen-demo/kitchen-demo-overview.png) |
-| 厨房可玩入口 | [F5 G 松手、无预览、工具及沉浸验收说明](scenes/kitchen-game/kitchen-game.md) | [松手前](scenes/kitchen-game/step14-free-carry.png) / [下落中](scenes/kitchen-game/step14-free-falling.png) / [自然堆放](scenes/kitchen-game/step14-free-stack.png) / [地面餐具](scenes/kitchen-game/step14-free-floor.png) |
+| 厨房可玩入口 | [F5 G 松手、无预览、工具及沉浸验收说明](scenes/kitchen-game/kitchen-game.md) | [F 切换中](scenes/kitchen-game/step15-transition.png) / [沉浸杯子](scenes/kitchen-game/step15-close-mug.png) / [返回手位](scenes/kitchen-game/step15-return-left.png) / [自然堆放](scenes/kitchen-game/step14-free-stack.png) |
 
 ## 模型说明与预览
 

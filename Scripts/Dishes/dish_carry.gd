@@ -370,7 +370,9 @@ func _solve_pose(item: HandItem, side: int) -> bool:
 	query.shape = item.clearance_shape
 	query.transform = Transform3D(basis, start) * Transform3D(Basis.IDENTITY, item.bounds.get_center())
 	query.collision_mask = MeshSurfaceCollision.QUERY_MASK
-	query.exclude = [(item.node as CollisionObject3D).get_rid()]
+	# During F, the other held item can still be in front of the carry path.
+	# Both items return to separate anchors; neither is a world obstruction.
+	query.exclude = targeting.excluded_bodies if _close_item != null else [(item.node as CollisionObject3D).get_rid()]
 	query.margin = SURFACE_GAP
 	var space: PhysicsDirectSpaceState3D = camera.get_world_3d().direct_space_state
 	if not space.intersect_shape(query, 1).is_empty():
@@ -396,7 +398,8 @@ func _enter_close() -> void:
 	query.transform = Transform3D(Basis.IDENTITY, close_anchor.global_position)
 	query.collision_mask = MeshSurfaceCollision.QUERY_MASK
 	query.exclude = targeting.excluded_bodies
-	if not camera.get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty():
+	var close_pose: Transform3D = camera.global_transform * Transform3D(item.rotation, close_anchor.position)
+	if not camera.get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty() or not _transition_path_is_clear(item, close_pose):
 		message_requested.emit("前方清洗空间不足，请稍微后退")
 		return
 	_close_item = item
@@ -409,12 +412,18 @@ func _enter_close() -> void:
 	_transition.tween_property(item.node, "transform", Transform3D(item.rotation, close_anchor.position), 0.2)
 	_transition.finished.connect(func() -> void:
 		_cursor = camera.get_viewport().get_visible_rect().size * 0.5
-		camera.get_viewport().warp_mouse(_cursor)
+		if not game_input.interface_open:
+			camera.get_viewport().warp_mouse(_cursor)
 		game_input.set_context(GameInput.HandMode.CLOSE_UP, GameInput.Target.NONE, tool.tool_kind)
 	)
 
 func _exit_close() -> void:
 	if _close_item == null:
+		return
+	var item: HandItem = _close_item
+	var side: int = hands.find(item)
+	if not _solve_pose(item, side) or not _transition_path_is_clear(item, item.safe_pose):
+		message_requested.emit("返回手位空间不足，请移开障碍后再按 F")
 		return
 	_using = false
 	_rotating = false
@@ -422,14 +431,25 @@ func _exit_close() -> void:
 	_position_idle_tool(true)
 	if _transition != null and _transition.is_running():
 		_transition.kill()
-	var item: HandItem = _close_item
-	var side: int = hands.find(item)
-	_solve_pose(item, side)
 	var local_pose: Transform3D = camera.global_transform.affine_inverse() * item.safe_pose
 	game_input.set_context(GameInput.HandMode.TRANSITION, GameInput.Target.NONE, game_input.selected_tool)
 	_transition = create_tween()
 	_transition.tween_property(item.node, "transform", local_pose, 0.2)
 	_transition.finished.connect(_finish_exit)
+
+func _transition_path_is_clear(item: HandItem, destination: Transform3D) -> bool:
+	# F keeps the dish angle, so a box sweep covers the whole translation.
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = item.clearance_shape
+	query.transform = item.node.global_transform * Transform3D(Basis.IDENTITY, item.bounds.get_center())
+	query.collision_mask = MeshSurfaceCollision.QUERY_MASK
+	query.exclude = targeting.excluded_bodies
+	query.margin = SURFACE_GAP
+	var space: PhysicsDirectSpaceState3D = camera.get_world_3d().direct_space_state
+	if not space.intersect_shape(query, 1).is_empty():
+		return false
+	query.motion = destination.origin - item.node.global_position
+	return space.cast_motion(query)[0] >= 1.0
 
 func _finish_exit() -> void:
 	var side: int = hands.find(_close_item)

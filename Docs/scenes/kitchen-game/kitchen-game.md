@@ -1,6 +1,6 @@
 # 厨房可玩入口
 
-> 第 1～14 步及 G 物理松手、无预览等追加需求｜2026-11-26｜用户已确认验证通过
+> 第 1～15 步及 G 物理松手、无预览等追加需求｜2026-11-27｜用户已确认验证通过
 
 打开 [project.godot](../../../project.godot)，导入后按 F5 运行 [kitchen-game.tscn](../../../Scenes/kitchen-game.tscn)。独立展示器仍可打开 [kitchen-demo.tscn](../../../Scenes/kitchen-demo.tscn) 按 F6，使用 1～4、R、右键拖动和失焦释放。
 
@@ -15,7 +15,7 @@
 | G（固定沥水架位） | 最新目标通过兼容／尺寸／占用／距离／可见性／空间／实际 95% 后吸附完整姿态；未知清洁度继续持有并提示 |
 | 左键按住（普通持工具） | 操作准星所指已放餐具；海绵贴面持续擦动并压缩，喷头对准命中点，可边走边看。松开回手位，失效命中停止接触；尚无出水或去污 |
 | E（普通持工具） | 有空手且对准餐具时拿取；其他持工具情形尝试原位归回，须距原位 1.5 米内且无遮挡，另一手不换边 |
-| F | 一件餐具加工具进入／退出沉浸，约 0.2 秒只移动同一餐具；不移动玩家、转相机或改 FOV，只有 F 返回搬运 |
+| F | 一件餐具加工具进入／退出沉浸，约 0.2 秒只移动同一餐具；不移动玩家、转相机或改 FOV。重查终点与平移路径，返回空间不足时保留沉浸并提示，只有 F 返回搬运 |
 | 鼠标、左键（沉浸） | 海绵／喷头自由跟随，离面或旋转后不吸附／收回；主动左键命中当前餐具才接触／瞄准，海绵还须移动鼠标 |
 | 中键拖动、Q/E（沉浸） | 旋转餐具，按住 Q 左／E 右，松开停止，同时按住抵消；旋转时停止工具使用 |
 | Q（普通状态） | 已取消返回／放下动作；不自动回来源或寻找水槽 |
@@ -27,13 +27,15 @@
 
 托盘初始两盘一杯，水槽和架位为空。正式注册仍为 3 个托盘初始点和 8 个架位；托盘点不作为手动固定目标，水槽不恢复盘位／杯位。其余位置由松手后的物理模拟决定，来源只作记录，已移除静态支撑依赖及“先拿上层”的锁定规则。
 
+第 15 步已覆盖不同站位、朝向及两种手位顺序的 F 往返。工具移到餐具两侧后退出，双方恢复安全搬运手位；F 返回求解排除另一手持物，真实环境仍参与避障，靠近架体时可缩短搬运距离。过渡中重复 F／G／E 不执行额外动作，沉浸中 Q/E 只旋转。进入／退出途中 Esc 或失焦后，当前切换可继续到目的模式，菜单光标不被拉回餐具中心；恢复不自动继续旧行走、使用或旋转，完整冻结仍在第 18 步。
+
 ## 当前边界与后续
 
 正式 DishState／OrderState 尚未接入，DishCarry.dish_states 生产为空；架位按 G 时显示“无法确认餐具清洁度”，不会默认洗净。已知清洁状态只由验证夹具注入，实际 0.95 门槛保留，泡沫不拒绝。
 
 当前餐具已使用 Jolt 重力、多凸体碰撞与旋转；物理杯口和杯柄保持开放。释放点在第一处真实表面前留出体积和约 6 cm 下落余量，未命中时位于镜头前 0.8 m；最终角度与位置不由静态落位求解器指定。边缘可能滑落或倾倒，这是松手后的物理行为。
 
-下一项为第 15 步 F 场景覆盖。第 16 步补齐普通旋转与滚轮，第 17 步背景模糊，第 18 步完整暂停。供水、湿润、施液、去污、泡沫与订单仍未接入；喷头原位限制为 1.5 米，软管仍是简化曲线，没有完整长度约束或避障。背景模糊尚未实现。
+第 15 步已验收，下一项为第 16 步普通旋转与滚轮边界；第 17 步背景模糊，第 18 步完整暂停。供水、湿润、施液、去污、泡沫与订单仍未接入；喷头原位限制为 1.5 米，软管仍是简化曲线，没有完整长度约束或避障。背景模糊尚未实现。
 
 ## 实现与文件边界
 
@@ -42,7 +44,7 @@
 | [kitchen-game.tscn](../../../Scenes/kitchen-game.tscn)、[game-hud.tscn](../../../Scenes/game-hud.tscn) | 手工玩法入口、准星、手位与菜单；已移除 PlacementPreview 节点和 PlacementHint 标签，生成器不得覆盖 |
 | [player.tscn](../../../Scenes/player.tscn) | 玩家胶囊、相机、左右搬运与清洗锚点 |
 | [game_input.gd](../../../Scripts/Input/game_input.gd) | 18 个映射；G 一次松手、普通 Q 无返回、左键拿取／工具使用、E 优先级、F 与沉浸旋转 |
-| [dish_carry.gd](../../../Scripts/Dishes/dish_carry.gd) | 原实例双手拿取、G 释放／架位提交、来源／占用／匹配状态、安全搬运与工具接触、F 和旋转 |
+| [dish_carry.gd](../../../Scripts/Dishes/dish_carry.gd) | 原实例双手拿取、G 释放／架位提交、来源／占用／匹配状态、安全搬运与工具接触、F 双向路径／返回姿态／菜单光标保护和旋转 |
 | [dish_body.gd](../../../Scripts/Dishes/dish_body.gd) | 原 StaticBody3D 精确查询与身份、REGISTERED／HELD／WORLD、独立多凸体 motion_body 与姿态同步／清理 |
 | [hand_item.gd](../../../Scripts/Dishes/hand_item.gd) | 每手来源、角度、包围盒、安全姿态、真实薄三角空间检查；旧支撑采样已删除 |
 | [dish_targeting.gd](../../../Scripts/Interaction/dish_targeting.gd)、[mesh_surface_collision.gd](../../../Scripts/Interaction/mesh_surface_collision.gd) | 2 米最近真实表面、0.1 mm 射线足迹、10 倍局部三角面与倒数缩放；持物排除、菜单清除与沉浸上下文隔离 |
@@ -56,13 +58,16 @@
 
 ## 验证与来源
 
-用户已确认最终第 14 步通过。AI 实施期间运行全部 15 份验证脚本、导入和默认启动，并渲染查看下方 5 张当前画面；各自范围和实际来源见 [progress.md](../../memory-bank/progress.md)。当前 44 个唯一 GDScript UID、18 个输入映射。无头验证不代替用户手感验收或性能测量。
+用户于 2026-11-27 确认第 15 步通过。AI 在本步实际运行 CLOSE_TRANSITION_OK 与 7 项相关回归、导入和默认启动，并在 Compatibility 图形模式检查鼠标／中断、捕获查看 5 张新画面；未在本步重跑其余八份专项。各步范围和实际来源见 [progress.md](../../memory-bank/progress.md)。当前 16 份验证脚本、45 个唯一 GDScript UID、18 个输入映射。无头验证不代替用户手感验收或性能测量。
 
 在仓库根目录运行，均应退出 0 且无脚本错误：
 
 ```powershell
 $godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
 & $godotExe --headless --editor --path . --quit
+& $godotExe --headless --path . --script Tools/verify_close_transition.gd
+& $godotExe --headless --path . --script Tools/verify_dual_wield.gd
+& $godotExe --headless --path . --script Tools/verify_world_tool_use.gd
 & $godotExe --headless --path . --script Tools/verify_dish_drop.gd
 & $godotExe --headless --path . --script Tools/verify_dish_placement.gd
 & $godotExe --headless --path . --script Tools/verify_basin_stacking.gd
@@ -71,9 +76,23 @@ $godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
 & $godotExe --headless --path . --quit-after 60
 ```
 
-对应成功标识为 DISH_DROP_OK、DISH_PLACEMENT_OK、BASIN_STACKING_OK、PLACEMENT_PREVIEW_OK、GAME_INPUT_OK。保留旧预览专项文件名，当前检查的是“预览已移除”。其他脚本按相同格式重跑；输入、移动、镜头、目标、注册、搬运、双持、工具、共用规则、状态隔离与清洁度均已通过。
+对应成功标识为 CLOSE_TRANSITION_OK、DUAL_WIELD_OK、WORLD_TOOL_USE_OK、DISH_DROP_OK、DISH_PLACEMENT_OK、BASIN_STACKING_OK、PLACEMENT_PREVIEW_OK、GAME_INPUT_OK。F 专项覆盖 40 组往返、身份／手位／来源／视角、注入状态保持、真实空间与路径、喷头原位范围和进入／退出中断；生产仍无清洁状态。保留旧预览专项文件名，当前检查的是“预览已移除”。其他脚本按相同格式重跑，实际最近执行来源见进度记录。
+
+F5 手动检查：拿取盘／杯与海绵／喷头，从不同站位和朝向 F 往返；将工具移动到两侧后返回，检查相机、角度、原手位和正常搬运距离。切换途中连按 F／G，或 Esc／Alt+Tab 后明确继续，不误放、不自动续用旧输入；近距离 Q/E 仅旋转，F 才退出。无头模式不证明真实窗口捕获和 Alt+Tab 行为。
 
 ## 当前实际画面
+
+2026-11-27 第 15 步 F 场景覆盖及修复后的画面，均由 Godot Compatibility 图形模式捕获并查看；镜头保持当前站位和朝向，背景模糊、供水与实际去污尚未实现。
+
+| 左侧站位搬运 | 同站位切换中 |
+| --- | --- |
+| ![餐盘左手、海绵右手，保持当前观察方向](step15-carry-left.png) | ![同一餐盘在约0.2秒内移动到清洗锚点](step15-transition.png) |
+
+| 沉浸餐盘 | F 返回原手位 |
+| --- | --- |
+| ![餐盘拉近，原相机与厨房背景不变](step15-close-plate.png) | ![餐盘与海绵恢复正常搬运距离和原手位](step15-return-left.png) |
+
+![右侧朝向的沉浸杯子与左手喷头，自由工具不依赖杯子表面](step15-close-mug.png)
 
 2026-11-26 第 14 步最终 G 物理松手画面，均由 Godot 图形模式捕获并查看；没有落位幽灵、绿／红标签、供水或去污。
 
