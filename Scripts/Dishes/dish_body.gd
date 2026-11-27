@@ -10,6 +10,8 @@ static var _motion_shapes: Dictionary = {}
 @export var initial_slot_id: StringName
 @export var dish_type: StringName
 @export var display_name: String
+@export_range(0.25, 0.8, 0.01) var close_min_distance: float = 0.40
+@export_range(0.25, 0.8, 0.01) var close_max_distance: float = 0.56
 
 ## The node's global_transform records a free position; it has no SlotState.
 var location: Location = Location.REGISTERED

@@ -122,12 +122,12 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 				command_requested.emit(command, true)
 		return
 	if action in [&"game_rotate", &"game_rotate_close"]:
-		if (action == &"game_rotate_close" and hand_mode == HandMode.CLOSE_UP) or (action == &"game_rotate" and hand_mode == HandMode.CARRYING and carrying_dish):
+		if action == &"game_rotate_close" and (hand_mode == HandMode.CLOSE_UP or (hand_mode == HandMode.CARRYING and carrying_dish)):
 			_rotating = pressed
 			if pressed:
 				_release_primary()
 			command_requested.emit(&"rotate_dish", pressed)
-		elif action == &"game_rotate" and hand_mode in [HandMode.EMPTY, HandMode.SOAP_BOTTLE, HandMode.CARRYING]:
+		elif action == &"game_rotate" and (hand_mode in [HandMode.EMPTY, HandMode.SOAP_BOTTLE] or (hand_mode == HandMode.CARRYING and not carrying_dish)):
 			_zooming_view = pressed
 			command_requested.emit(&"zoom_view", pressed)
 		return
@@ -169,16 +169,19 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 		&"game_drop":
 			if hand_mode == HandMode.CARRYING and carrying_dish:
 				_release_primary()
+				_release_rotation()
 				command_requested.emit(&"drop_dish", true)
 		&"game_tool_none", &"game_tool_sponge", &"game_tool_sprayer":
 			if hand_mode != HandMode.SOAP_BOTTLE:
 				_release_primary()
 				if hand_mode == HandMode.CARRYING and carrying_dish and action != &"game_tool_sprayer":
+					_release_rotation()
 					command_requested.emit(&"select_left_dish" if action == &"game_tool_none" else &"select_right_dish", true)
 				else:
 					command_requested.emit(action, true)
 		&"game_zoom_in", &"game_zoom_out":
 			if hand_mode == HandMode.CLOSE_UP:
+				_release_primary()
 				command_requested.emit(action, true)
 
 func _resolve_primary() -> StringName:
@@ -217,13 +220,16 @@ func _release_primary() -> void:
 		_primary_command = &""
 		command_requested.emit(previous, false)
 
+func _release_rotation() -> void:
+	if _rotating:
+		_rotating = false
+		command_requested.emit(&"rotate_dish", false)
+
 func _clear_held() -> void:
 	_held.clear()
 	rotation_axis_changed.emit(0.0)
 	_release_primary()
-	if _rotating:
-		_rotating = false
-		command_requested.emit(&"rotate_dish", false)
+	_release_rotation()
 	if _zooming_view:
 		_zooming_view = false
 		command_requested.emit(&"zoom_view", false)

@@ -8,6 +8,8 @@ signal message_requested(message: String)
 const SURFACE_GAP: float = 0.004
 const KEY_ROTATION_SPEED: float = PI * 0.5
 const FREE_TOOL_DEPTH: float = 0.32
+const DISTANCE_STEP: float = 0.02
+const ROTATION_STEP: float = PI / 60.0
 
 @export var input_path: NodePath
 @export var targeting_path: NodePath
@@ -51,6 +53,7 @@ var _close_item: HandItem
 var _using: bool = false
 var _rotating: bool = false
 var _rotation_axis: float = 0.0
+var _rotation_blocked: bool = false
 var _cursor: Vector2
 var _stroke_distance: float = 0.0
 var _transition: Tween
@@ -179,7 +182,8 @@ func _on_command_requested(command: StringName, pressed: bool) -> void:
 				_position_idle_tool()
 		return
 	if command == &"rotate_dish":
-		_rotating = pressed and game_input.hand_mode == GameInput.HandMode.CLOSE_UP
+		_rotating = pressed and not game_input.interface_open and game_input.hand_mode in [GameInput.HandMode.CARRYING, GameInput.HandMode.CLOSE_UP] and get_selected_dish_item() != null
+		_rotation_blocked = false
 		if pressed:
 			_using = false
 			_stop_contact()
@@ -202,6 +206,8 @@ func _on_command_requested(command: StringName, pressed: bool) -> void:
 			_return_tool()
 		&"select_left_dish", &"select_right_dish":
 			_select_dish_hand(0 if command == &"select_left_dish" else 1)
+		&"game_zoom_in", &"game_zoom_out":
+			_adjust_close_distance(-DISTANCE_STEP if command == &"game_zoom_in" else DISTANCE_STEP)
 
 func _pickup(command: StringName) -> void:
 	if game_input.hand_mode not in [GameInput.HandMode.EMPTY, GameInput.HandMode.CARRYING]:
@@ -395,10 +401,11 @@ func _enter_close() -> void:
 	sphere.radius = item.bounds.size.length() * 0.5 + item.bounds.get_center().length() + 0.13
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = sphere
-	query.transform = Transform3D(Basis.IDENTITY, close_anchor.global_position)
+	var position: Vector3 = _close_position(item)
+	query.transform = Transform3D(Basis.IDENTITY, camera.to_global(position))
 	query.collision_mask = MeshSurfaceCollision.QUERY_MASK
 	query.exclude = targeting.excluded_bodies
-	var close_pose: Transform3D = camera.global_transform * Transform3D(item.rotation, close_anchor.position)
+	var close_pose: Transform3D = camera.global_transform * Transform3D(item.rotation, position)
 	if not camera.get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty() or not _transition_path_is_clear(item, close_pose):
 		message_requested.emit("前方清洗空间不足，请稍微后退")
 		return
@@ -409,7 +416,7 @@ func _enter_close() -> void:
 	game_input.set_context(GameInput.HandMode.TRANSITION, GameInput.Target.NONE, tool.tool_kind)
 	item.node.reparent(camera)
 	_transition = create_tween()
-	_transition.tween_property(item.node, "transform", Transform3D(item.rotation, close_anchor.position), 0.2)
+	_transition.tween_property(item.node, "transform", Transform3D(item.rotation, position), 0.2)
 	_transition.finished.connect(func() -> void:
 		_cursor = camera.get_viewport().get_visible_rect().size * 0.5
 		if not game_input.interface_open:
@@ -462,7 +469,7 @@ func _on_cursor(position: Vector2) -> void:
 	_cursor = position
 
 func _on_rotation(relative: Vector2) -> void:
-	if _close_item == null or not _rotating or game_input.interface_open:
+	if not _rotating or game_input.interface_open or game_input.hand_mode not in [GameInput.HandMode.CARRYING, GameInput.HandMode.CLOSE_UP]:
 		return
 	_rotate_dish(relative * 0.01)
 
@@ -474,8 +481,62 @@ func _on_rotation_axis_changed(axis: float) -> void:
 		_position_idle_tool()
 
 func _rotate_dish(angles: Vector2) -> void:
-	_close_item.rotation = (Basis(Vector3.UP, -angles.x) * Basis(Vector3.RIGHT, -angles.y) * _close_item.rotation).orthonormalized()
-	_close_item.node.transform = Transform3D(_close_item.rotation, close_anchor.position)
+	var item: HandItem = _close_item if _close_item != null else get_selected_dish_item()
+	if item == null:
+		return
+	# Small steps plus a radius-based margin guard the arc between samples.
+	angles = angles.limit_length(PI)
+	var count: int = maxi(1, ceili(angles.length() / ROTATION_STEP))
+	var step: Vector2 = angles / float(count)
+	var radius: float = item.bounds.size.length() * 0.5 + item.bounds.get_center().length()
+	for index in count:
+		var rotation: Basis = (Basis(Vector3.UP, -step.x) * Basis(Vector3.RIGHT, -step.y) * item.rotation).orthonormalized()
+		var pose := Transform3D(camera.global_basis * rotation, item.node.global_position)
+		if not _dish_pose_is_safe(item, pose, SURFACE_GAP + radius * step.length()):
+			if not _rotation_blocked:
+				message_requested.emit("旋转空间不足，请移开障碍或调整距离")
+			_rotation_blocked = true
+			break
+		_rotation_blocked = false
+		item.rotation = rotation
+		item.node.global_transform = pose
+		if _close_item == null:
+			item.safe_pose = pose
+
+func _close_position(item: HandItem) -> Vector3:
+	var position: Vector3 = close_anchor.position
+	position.z = -item.close_distance
+	return position
+
+func _dish_pose_is_safe(item: HandItem, pose: Transform3D, margin: float = SURFACE_GAP) -> bool:
+	var facing: AABB = camera.global_transform.affine_inverse() * pose * item.bounds
+	if -facing.end.z < camera.near + 0.015:
+		return false
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = item.clearance_shape
+	query.transform = pose * Transform3D(Basis.IDENTITY, item.bounds.get_center())
+	query.collision_mask = MeshSurfaceCollision.QUERY_MASK
+	query.exclude = targeting.excluded_bodies if _close_item != null else [(item.node as CollisionObject3D).get_rid()]
+	query.margin = margin
+	return camera.get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+func _adjust_close_distance(amount: float) -> void:
+	if _close_item == null or game_input.hand_mode != GameInput.HandMode.CLOSE_UP:
+		return
+	_using = false
+	_stop_contact()
+	_position_idle_tool()
+	var item: HandItem = _close_item
+	var dish := item.node as DishBody
+	var distance: float = clampf(item.close_distance + amount, dish.close_min_distance, dish.close_max_distance)
+	var position: Vector3 = close_anchor.position
+	position.z = -distance
+	var pose: Transform3D = camera.global_transform * Transform3D(item.rotation, position)
+	if not _dish_pose_is_safe(item, pose) or not _transition_path_is_clear(item, pose):
+		message_requested.emit("调整距离的空间不足")
+		return
+	item.close_distance = distance
+	item.node.global_transform = pose
 
 func _on_mode_changed() -> void:
 	if game_input.interface_open:
@@ -493,7 +554,16 @@ func _update_close() -> void:
 	var from: Vector3 = camera.project_ray_origin(_cursor)
 	var query := PhysicsRayQueryParameters3D.create(from, from + camera.project_ray_normal(_cursor) * 1.5, MeshSurfaceCollision.DISH_LAYER)
 	query.hit_back_faces = false
-	var hit: Dictionary = camera.get_world_3d().direct_space_state.intersect_ray(query)
+	var space: PhysicsDirectSpaceState3D = camera.get_world_3d().direct_space_state
+	var hit: Dictionary = space.intersect_ray(query)
+	var end: Vector3 = query.to
+	# Distance/rotation changes can put the cursor on Jolt triangle seams.
+	for offset: Vector3 in [camera.global_basis.x * 0.0001, camera.global_basis.x * -0.0001, camera.global_basis.y * 0.0001, camera.global_basis.y * -0.0001]:
+		query.from = from + offset
+		query.to = end + offset
+		var sample: Dictionary = space.intersect_ray(query)
+		if not sample.is_empty() and (hit.is_empty() or from.distance_squared_to(sample.position) < from.distance_squared_to(hit.position)):
+			hit = sample
 	var valid: bool = hit.get("collider") == _close_item.node
 	var target: GameInput.Target = GameInput.Target.DISH if valid else GameInput.Target.NONE
 	if game_input.target != target:

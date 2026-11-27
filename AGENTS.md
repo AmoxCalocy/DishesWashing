@@ -2,7 +2,7 @@
 
 ## Project Structure & Scope
 
-This project uses Godot 4.7.2, GDScript, Compatibility rendering, Blender 5.3.0 and the built-in Jolt backend. It has a kitchen viewer and separate gameplay entry with WASD, collision, mouse look/zoom, real-surface targeting, 11 registered origin/rack poses and two stable hand slots. Steps 1–15 and additions are accepted as of 2026-11-27. Ordinary 1/2 selects a dish and G releases it into gravity on counters, tray, floor or basin; only the rack retains fixed placement. Ordinary Q return and all placement previews are removed. Keep physical tools, verified F round trips and space/interruption checks, middle-drag/Q/E rotation and free immersive tool movement. Actual washing is planned; MVP covers plates and mugs, with extra types/classification post-MVP.
+This project uses Godot 4.7.2, GDScript, Compatibility rendering, Blender 5.3.0 and the built-in Jolt backend. It has a kitchen viewer and separate gameplay entry with WASD, collision, mouse look/zoom, real-surface targeting, 11 registered origin/rack poses and two stable hand slots. Steps 1–16 and additions are accepted as of 2026-11-27. Ordinary 1/2 selects a dish; middle drag rotates that dish in both ordinary and immersive modes, and G releases it into gravity outside immersion. Only the rack retains fixed placement. Ordinary Q return and all placement previews are removed. Keep physical tools, verified F round trips, immersive Q/E, type-specific close wheel ranges and free immersive tool movement. Actual washing is planned; MVP covers plates and mugs, with extra types/classification post-MVP.
 
 - `project.godot`: project entry point; main scene is `Scenes/kitchen-game.tscn`.
 - `Scenes/kitchen-game.tscn`: hand-authored gameplay entry inheriting the kitchen layout, with the viewer script removed and viewer overlay hidden. Generators must not overwrite this file.
@@ -32,7 +32,7 @@ $blenderExe = 'D:\Blender\blender.exe'
 & $godotExe --headless --path . --quit-after 60
 ```
 
-These commands assemble/render the kitchen, import resources, rebuild the viewer scene, and smoke-test the default gameplay entry, respectively. Run Python generators through Blender, not standalone Python. Preserve manual edits before rebuilding: generators overwrite outputs. Open `project.godot` and press F5 for the gameplay entry; open `Scenes/kitchen-demo.tscn` and press F6 for interactive viewing. Gameplay supports WASD, direct mouse look, player collision, a crosshair and a basic Esc interface. Right mouse zooms when empty-handed, holding only a tool or holding soap; ordinary held dishes retain rotation intentions, and immersion uses middle-drag. Ordinary 1/2 selects left/right dishes.
+These commands assemble/render the kitchen, import resources, rebuild the viewer scene, and smoke-test the default gameplay entry, respectively. Run Python generators through Blender, not standalone Python. Preserve manual edits before rebuilding: generators overwrite outputs. Open `project.godot` and press F5 for the gameplay entry; open `Scenes/kitchen-demo.tscn` and press F6 for interactive viewing. Gameplay supports WASD, direct mouse look, player collision, a crosshair and a basic Esc interface. Right mouse zooms when empty-handed, holding only a tool or holding soap; held dishes rotate with middle drag in both modes. Ordinary 1/2 selects left/right dishes. Wheel distance adjustment is immersive only.
 
 After importing new scripts/resources, verify configuration and runtime-state isolation:
 
@@ -72,7 +72,7 @@ Verify direct mouse look, hold-to-zoom and the original viewer controls:
 & $godotExe --headless --path . --script Tools/verify_mouse_look.gd
 ```
 
-Success prints `MOUSE_LOOK_OK` and exits with code 0. It checks yaw/pitch, walking while looking, mode/focus recovery, FOV restoration and viewer right-drag/presets. Right mouse uses `game_rotate`: `zoom_view` when empty, carrying only a tool or holding soap; rotation intention when ordinarily carrying a dish. Middle mouse uses the separate `game_rotate_close` action only in immersion. Immersive right mouse does not rotate, zoom or cancel tool use. Zoom caches the original FOV, defaults to 35 degrees and restores on release, UI, focus loss or hand-mode change. Keep it separate from the implemented F dish-distance transition. Test real capture and zoom interactively with F5.
+Success prints `MOUSE_LOOK_OK` and exits with code 0. It checks yaw/pitch, walking while looking, mode/focus recovery, FOV restoration and viewer right-drag/presets. Right mouse uses `game_rotate` only for `zoom_view` when empty, carrying only a tool or holding soap; held dishes neither rotate nor zoom with right mouse. Middle mouse retains the action name `game_rotate_close` and now rotates dishes in both modes. Right release must not end a middle drag; immersive right mouse also must not cancel tool use. Zoom caches the original FOV, defaults to 35 degrees and restores on release, UI, focus loss or hand-mode change. Keep FOV zoom separate from F and immersive wheel distance. Test real capture and zoom interactively with F5.
 
 Verify independent dish identities, real surfaces and crosshair targeting:
 
@@ -92,7 +92,7 @@ Verify registered origins/rack poses and real support:
 
 Success prints `KITCHEN_SLOTS_OK` and exits with code 0. It checks 3 tray origins and 8 rack slots, compatible types, full poses, independent occupancy and 11 simultaneous real dish poses for surface-edge intersections and approximately 0.5 mm support gaps. It also checks removal of fixed basin markers, placed-dish soap intentions and viewer isolation. F5 has an empty rack and no basin plate/cup markers; F6 keeps the original display. Actual placement and pump execution are not implemented by this check.
 
-`KitchenSlot.get_pose()` returns the complete marker transform; do not add another half-height. Free dish poses follow physics, without slot IDs or static support records. `accepts` and `is_empty` are partial checks; use the shared DishCarry checks. The registry owns per-scene SlotState occupancy; future OrderState integration must share or explicitly replace it. `initial_slot_id` is initialization data, not the current position or most recent pickup origin. World queries exclude all held RIDs. In CLOSE_UP/TRANSITION, DishTargeting must not overwrite DishCarry's surface target. Preserve the per-step acceptance workflow: steps 1–15 and additions are accepted; step 16 ordinary rotation/scroll bounds has not begun.
+`KitchenSlot.get_pose()` returns the complete marker transform; do not add another half-height. Free dish poses follow physics, without slot IDs or static support records. `accepts` and `is_empty` are partial checks; use the shared DishCarry checks. The registry owns per-scene SlotState occupancy; future OrderState integration must share or explicitly replace it. `initial_slot_id` is initialization data, not the current position or most recent pickup origin. World queries exclude all held RIDs. In CLOSE_UP/TRANSITION, DishTargeting must not overwrite DishCarry's surface target. Preserve the per-step acceptance workflow: steps 1–16 and additions are accepted; step 17 background blur has not begun.
 
 ## Dual-hand, ordinary tool and immersive verification
 
@@ -110,7 +110,17 @@ With a tool and a free hand, ordinary E aimed at a dish picks it up; other held-
 
 The ordinary tool check prints `WORLD_TOOL_USE_OK` and exits 0. It covers both tools and hand sides, plate/cup surfaces, unchanged target occupancy, continuous aiming, walking/look, first-hit occlusion, range, UI/focus interruption, E pickup during use and F coexistence. Ordinary tool poses also check near-plane clearance, space and approach paths; tray rims may require an approach above the surface. Sprayers retain a 1.5 m home-distance limit. Full hose collision and length simulation remain planned.
 
-Background blur is still step 17; ordinary carry rotation/scroll limits are incomplete step 16 work. Pause currently blocks input without freezing the scene. Hose links must scale their local Y length after orientation, not world Y; continuity/radius checks are not collision/length simulation. Water, wetness eligibility, dirt removal, soap and orders are not yet scene gameplay. Details and current screenshots are in `Docs/scenes/kitchen-game/kitchen-game.md`.
+Background blur is still step 17; ordinary middle rotation and immersive wheel bounds were accepted in step 16. Pause currently blocks input without freezing the scene. Hose links must scale their local Y length after orientation, not world Y; continuity/radius checks are not collision/length simulation. Water, wetness eligibility, dirt removal, soap and orders are not yet scene gameplay. Details and current screenshots are in `Docs/scenes/kitchen-game/kitchen-game.md`.
+
+## Dish rotation and close distance (step 16)
+
+```powershell
+& $godotExe --headless --path . --script Tools/verify_dish_manipulation.gd
+```
+
+Success prints `DISH_MANIPULATION_OK` and exits 0. It checks ordinary selected-hand middle drag, unchanged camera/other hand, right-release isolation, ordinary wheel/Q inactivity, both dish types/tools/hand orders, real front/back/cup-interior hits, tilted tool contact, near-plane clearance, obstacle-limited rotation/translation, UI/focus interruption, F angle/distance/state retention and Q/E at 30/120 Hz.
+
+`DishBody.close_min_distance` / `close_max_distance` default to plate limits 0.40–0.56 m; `Scenes/Dishes/mug.tscn` sets 0.36–0.52 m. `HandItem.close_distance` starts at 0.45 m and belongs to that pickup, retaining the chosen value across F. Only immersive wheel moves the dish, 0.02 m per pulse; ordinary/transition/UI wheel cannot. Rotation is split into at most 3-degree increments with radius-based arc clearance and a near + 0.015 m bound. Stop at unsafe geometry rather than preventing full face/back access. Wheel also checks the actual translation path; rejected input keeps the current distance. Both adjustments stop old tool use. Selection/G/UI/focus end old middle holds; right release does not. No new input mapping was added, and ordinary right rotation must not return.
 
 ## F transition scene coverage (step 15)
 
@@ -124,7 +134,7 @@ F validates translation paths in both directions with the dish's current angle. 
 
 ## G release, rack rules and removed previews (step 14)
 
-Steps 1–15 and requested additions are accepted as of 2026-11-27. The next task is step 16 ordinary rotation/scroll bounds; do not restore the cancelled ordinary Q return or placement previews. G releases the selected 1/2 dish while retaining the other hand; ordinary left click picks up or uses a tool. Q/E and middle-drag still rotate only in immersion. G is ignored in immersion, transitions and UI.
+Steps 1–16 and requested additions are accepted as of 2026-11-27. The next task is step 17 background blur; do not restore the cancelled ordinary Q return or placement previews. G releases the selected 1/2 dish while retaining the other hand; ordinary left click picks up or uses a tool. Middle drag rotates dishes in both modes; Q/E remain immersive only. G is ignored in immersion, transitions and UI.
 
 ```powershell
 & $godotExe --headless --path . --script Tools/verify_dish_drop.gd
@@ -134,7 +144,7 @@ Steps 1–15 and requested additions are accepted as of 2026-11-27. The next tas
 & $godotExe --headless --path . --script Tools/verify_placement_rules.gd
 ```
 
-Success markers are DISH_DROP_OK, DISH_PLACEMENT_OK, BASIN_STACKING_OK, PLACEMENT_PREVIEW_OK and PLACEMENT_RULES_OK, all exit 0. There are 16 verification scripts, 45 unique script UIDs and 18 input mappings. The old preview check now verifies that the ghost and green/red label are absent. PlacementPreview source/UID, its scene node and HUD bindings have been removed.
+Success markers are DISH_DROP_OK, DISH_PLACEMENT_OK, BASIN_STACKING_OK, PLACEMENT_PREVIEW_OK and PLACEMENT_RULES_OK, all exit 0. There are 17 verification scripts, 46 unique script UIDs and 18 input mappings. The old preview check now verifies that the ghost and green/red label are absent. PlacementPreview source/UID, its scene node and HUD bindings have been removed.
 
 DishBody retains its original StaticBody3D query mesh and identity. A separate RigidBody3D with cached convex decomposition handles movement, with REGISTERED/HELD/WORLD locations. On release the motion body becomes a sibling of the original dish; the original query body follows its full pose. Pickup freezes and reparents the motion body back under the dish. Never create replacement dish identities or leave independent motion bodies behind during cleanup.
 
@@ -144,7 +154,7 @@ G first requeries an aimed rack slot. Only the rack snaps to fixed full poses af
 
 Other G releases use the current first surface normal and dish volume with about 6 cm release clearance, or a point 0.8 m ahead when no surface is hit. Check the release space, then let gravity determine the final position and angle on counters, tray, floor or basin. There is no surface-only basin authorization, final-pose solver, automatic basin search or origin return. Failure keeps holding with feedback; a same-physics-frame guard prevents releasing the other hand on duplicate input. Free motion has no SlotState or static supporting-dish dependency.
 
-Use selected_dish, selected_dish_hand and get_selected_dish_item(); held_dish and origin_slot_id are first-dish compatibility getters. HandItem still records actual source kind/pose/optional slot, while initial_slot_id remains initialization only. The old check_surface_placement/evaluate_surface, bottom-ring/stack sampling and support_dish_ids were removed. Full pause, supply/wetness/soap/cleaning, complete ordinary rotation/scroll, background blur and performance targets remain in later steps.
+Use selected_dish, selected_dish_hand and get_selected_dish_item(); held_dish and origin_slot_id are first-dish compatibility getters. HandItem still records actual source kind/pose/optional slot, while initial_slot_id remains initialization only. The old check_surface_placement/evaluate_surface, bottom-ring/stack sampling and support_dish_ids were removed. Full pause, supply/wetness/soap/cleaning, background blur and performance targets remain in later steps.
 
 ## Coding Style & Naming Conventions
 

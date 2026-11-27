@@ -9,5 +9,7 @@ collision_mask = 0
 script = ExtResource("1_dish")
 dish_type = &"mug"
 display_name = "马克杯"
+close_min_distance = 0.36
+close_max_distance = 0.52
 
 [node name="Model" parent="." instance=ExtResource("2_model")]

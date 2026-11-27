@@ -118,10 +118,10 @@ func verify() -> void:
 
 	router.set_context(GameInput.HandMode.CARRYING, GameInput.Target.NONE)
 	before = angles()
-	send_button(MOUSE_BUTTON_RIGHT, true)
+	send_button(MOUSE_BUTTON_MIDDLE, true)
 	send_motion(Vector2(300, 200))
-	check(angles().is_equal_approx(before), "Right-button dish rotation must not turn the camera.")
-	send_button(MOUSE_BUTTON_RIGHT, false)
+	check(angles().is_equal_approx(before), "Middle-button dish rotation must not turn the camera.")
+	send_button(MOUSE_BUTTON_MIDDLE, false)
 	send_motion(Vector2(20, 0))
 	check(absf(player.rotation.y - before.x + 0.05) < 0.00001, "Releasing dish rotation must restore mouse look.")
 	for mode in [GameInput.HandMode.CLOSE_UP, GameInput.HandMode.TRANSITION]:
@@ -134,7 +134,7 @@ func verify() -> void:
 	send_motion(Vector2(20, 0))
 	check(absf(player.rotation.y - before.x + 0.05) < 0.00001, "Leaving a locked mode must restore direct look after capture reset.")
 
-	# Right mouse zooms the normal view; held dishes retain their rotation action.
+	# Right mouse zooms eligible normal views; dishes rotate with middle drag.
 	var normal_fov: float = player.view_camera.fov
 	for mode in [GameInput.HandMode.EMPTY, GameInput.HandMode.SOAP_BOTTLE]:
 		router.set_context(mode, GameInput.Target.NONE)

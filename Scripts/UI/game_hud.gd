@@ -81,17 +81,17 @@ func _refresh_inventory() -> void:
 	if _message_time_left > 0.0:
 		return
 	if game_input.hand_mode == GameInput.HandMode.CLOSE_UP:
-		hand_hint.text = ("左键按住操作喷头" if game_input.selected_tool == ToolState.Tool.SPRAYER else "左键按住并移动擦洗") + " · 中键拖动或 Q / E 左右旋转 · F 返回搬运"
+		hand_hint.text = ("左键按住操作喷头" if game_input.selected_tool == ToolState.Tool.SPRAYER else "左键按住并移动擦洗") + " · 中键拖动或 Q / E 旋转 · 滚轮调距 · F 返回搬运"
 	elif game_input.hand_mode == GameInput.HandMode.TRANSITION:
 		hand_hint.text = "正在切换视角"
 	elif carry.held_dish != null and carry.held_tool() != null:
-		hand_hint.text = "G 松手放下餐具 · 按住左键操作餐具 · F 沉浸 · E 归回工具"
+		hand_hint.text = "G 松手放下餐具 · 中键拖动旋转 · 按住左键操作餐具 · F 沉浸 · E 归回工具"
 	elif carry.held_tool() != null:
 		hand_hint.text = "按住左键操作餐具 · WASD 移动 / 鼠标瞄准 · E 拿取目标餐具，移开后 E 归回工具"
 	elif carry.free_hand() < 0:
-		hand_hint.text = "1 选择左手餐具 · 2 选择右手餐具 · G 松手放下 · E 拿取"
+		hand_hint.text = "1 / 2 选择餐具 · 中键拖动旋转当前餐具 · G 松手放下 · E 拿取"
 	elif carry.selected_dish != null:
-		hand_hint.text = "G 松手放下餐具 · 左键 / E 拿取 · 1 / 2 选择餐具"
+		hand_hint.text = "G 松手放下餐具 · 中键拖动旋转 · 左键 / E 拿取 · 1 / 2 选择餐具"
 	else:
 		hand_hint.text = "瞄准餐具或清洗工具，左键拿取" + (" · E 归回工具" if carry.held_tool() != null else "")
 

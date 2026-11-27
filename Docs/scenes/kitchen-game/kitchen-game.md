@@ -1,6 +1,6 @@
 # 厨房可玩入口
 
-> 第 1～15 步及 G 物理松手、无预览等追加需求｜2026-11-27｜用户已确认验证通过
+> 第 1～16 步及 G 物理松手、无预览、普通中键等追加需求｜2026-11-27｜用户已确认验证通过
 
 打开 [project.godot](../../../project.godot)，导入后按 F5 运行 [kitchen-game.tscn](../../../Scenes/kitchen-game.tscn)。独立展示器仍可打开 [kitchen-demo.tscn](../../../Scenes/kitchen-demo.tscn) 按 F6，使用 1～4、R、右键拖动和失焦释放。
 
@@ -11,6 +11,7 @@
 | WASD、鼠标 | 普通状态按镜头水平朝向行走与直接看向，胶囊阻挡柜体、地面和边界；沉浸／过渡停止行走和环顾 |
 | 准星、左键／E（未持工具） | 2 米内第一处真实表面识别餐具／工具并拿取，包含地面餐具；先拿左手、第二件右手 |
 | 1／2 | 普通持餐具时选择左／右餐具，HUD 标注“当前”；单件自动选中，第二件拿起保留选择；不换手、不切换或生成工具 |
+| 中键拖动（普通持餐具） | 只旋转 1／2 当前餐具，相机和另一手角度不变；受真实空间和近裁剪限制，换手选择后需重新按中键 |
 | G（普通持餐具） | 松开当前餐具：台面、托盘、地面和水槽统一由重力落下，可倾倒、滑落、自然叠放并再次拿取；只清空该手 |
 | G（固定沥水架位） | 最新目标通过兼容／尺寸／占用／距离／可见性／空间／实际 95% 后吸附完整姿态；未知清洁度继续持有并提示 |
 | 左键按住（普通持工具） | 操作准星所指已放餐具；海绵贴面持续擦动并压缩，喷头对准命中点，可边走边看。松开回手位，失效命中停止接触；尚无出水或去污 |
@@ -20,7 +21,8 @@
 | 中键拖动、Q/E（沉浸） | 旋转餐具，按住 Q 左／E 右，松开停止，同时按住抵消；旋转时停止工具使用 |
 | Q（普通状态） | 已取消返回／放下动作；不自动回来源或寻找水槽 |
 | G（沉浸／过渡／菜单） | 不释放餐具 |
-| 右键 | 空手、只持工具或测试构造的独占持瓶状态临时收窄 FOV，松开或中断复原；普通持餐具旋转／滚轮范围仍待第 16 步 |
+| 右键 | 普通空手、只持工具或测试构造的独占持瓶状态临时收窄 FOV，松开或中断复原；持餐具不旋转／放大，右键释放不结束中键旋转 |
+| 滚轮（仅沉浸） | 上滚拉近、下滚推远，每格 0.02 m；盘 0.40～0.56 m、杯 0.36～0.52 m，默认 0.45 m；空间／路径受阻保持当前距离，F 往返保留所选值 |
 | Esc、失焦 | 菜单释放鼠标并清除旧输入；继续后不恢复旧操作。目前不冻结场景树或自由刚体，完整暂停在第 18 步 |
 
 画面没有放置幽灵或绿／红落位标签，左键不再放下或叠放。G 被挡住时继续持有并显示文字原因；同一物理帧重复请求不会放掉另一手。G 之前会结束旧左键工具使用。
@@ -29,13 +31,15 @@
 
 第 15 步已覆盖不同站位、朝向及两种手位顺序的 F 往返。工具移到餐具两侧后退出，双方恢复安全搬运手位；F 返回求解排除另一手持物，真实环境仍参与避障，靠近架体时可缩短搬运距离。过渡中重复 F／G／E 不执行额外动作，沉浸中 Q/E 只旋转。进入／退出途中 Esc 或失焦后，当前切换可继续到目的模式，菜单光标不被拉回餐具中心；恢复不自动继续旧行走、使用或旋转，完整冻结仍在第 18 步。
 
+第 16 步已统一普通和沉浸的中键拖动；沉浸另保留 Q/E。旋转可翻看盘背、杯内，靠近真实环境时停在安全角度；普通 G 和选择另一手会结束旧中键输入。滚轮只在沉浸调整餐具距离，普通、过渡和菜单不调距；旋转／调距不移动相机或改变 FOV，调整后需重新按左键使用工具。同次持有的 F 往返保留角度、所选距离及原手位。
+
 ## 当前边界与后续
 
 正式 DishState／OrderState 尚未接入，DishCarry.dish_states 生产为空；架位按 G 时显示“无法确认餐具清洁度”，不会默认洗净。已知清洁状态只由验证夹具注入，实际 0.95 门槛保留，泡沫不拒绝。
 
 当前餐具已使用 Jolt 重力、多凸体碰撞与旋转；物理杯口和杯柄保持开放。释放点在第一处真实表面前留出体积和约 6 cm 下落余量，未命中时位于镜头前 0.8 m；最终角度与位置不由静态落位求解器指定。边缘可能滑落或倾倒，这是松手后的物理行为。
 
-第 15 步已验收，下一项为第 16 步普通旋转与滚轮边界；第 17 步背景模糊，第 18 步完整暂停。供水、湿润、施液、去污、泡沫与订单仍未接入；喷头原位限制为 1.5 米，软管仍是简化曲线，没有完整长度约束或避障。背景模糊尚未实现。
+第 16 步及普通中键修正已验收，下一项为第 17 步背景模糊，尚未开始；第 18 步完整暂停。供水、湿润、施液、去污、泡沫与订单仍未接入；喷头原位限制为 1.5 米，软管仍是简化曲线，没有完整长度约束或避障。
 
 ## 实现与文件边界
 
@@ -43,10 +47,10 @@
 | --- | --- |
 | [kitchen-game.tscn](../../../Scenes/kitchen-game.tscn)、[game-hud.tscn](../../../Scenes/game-hud.tscn) | 手工玩法入口、准星、手位与菜单；已移除 PlacementPreview 节点和 PlacementHint 标签，生成器不得覆盖 |
 | [player.tscn](../../../Scenes/player.tscn) | 玩家胶囊、相机、左右搬运与清洗锚点 |
-| [game_input.gd](../../../Scripts/Input/game_input.gd) | 18 个映射；G 一次松手、普通 Q 无返回、左键拿取／工具使用、E 优先级、F 与沉浸旋转 |
-| [dish_carry.gd](../../../Scripts/Dishes/dish_carry.gd) | 原实例双手拿取、G 释放／架位提交、来源／占用／匹配状态、安全搬运与工具接触、F 双向路径／返回姿态／菜单光标保护和旋转 |
-| [dish_body.gd](../../../Scripts/Dishes/dish_body.gd) | 原 StaticBody3D 精确查询与身份、REGISTERED／HELD／WORLD、独立多凸体 motion_body 与姿态同步／清理 |
-| [hand_item.gd](../../../Scripts/Dishes/hand_item.gd) | 每手来源、角度、包围盒、安全姿态、真实薄三角空间检查；旧支撑采样已删除 |
+| [game_input.gd](../../../Scripts/Input/game_input.gd) | 18 个映射；两态中键旋转、沉浸滚轮、旧输入中断、G 一次松手、普通 Q 无返回、左键／E／F 上下文 |
+| [dish_carry.gd](../../../Scripts/Dishes/dish_carry.gd) | 原实例双手、G 释放／架位、来源／占用／匹配状态、安全搬运与接触、F 路径及返回、旋转弧线／近裁剪、滚轮范围／平移路径 |
+| [dish_body.gd](../../../Scripts/Dishes/dish_body.gd)、[mug.tscn](../../../Scenes/Dishes/mug.tscn) | 原身份与精确查询、独立 motion_body；导出盘默认近距范围，杯封装覆盖为自己的最小／最大距离 |
+| [hand_item.gd](../../../Scripts/Dishes/hand_item.gd) | 每手来源、角度、close_distance、包围盒、安全姿态、真实薄三角空间检查；旧支撑采样已删除 |
 | [dish_targeting.gd](../../../Scripts/Interaction/dish_targeting.gd)、[mesh_surface_collision.gd](../../../Scripts/Interaction/mesh_surface_collision.gd) | 2 米最近真实表面、0.1 mm 射线足迹、10 倍局部三角面与倒数缩放；持物排除、菜单清除与沉浸上下文隔离 |
 | [kitchen_slot_registry.gd](../../../Scripts/Slots/kitchen_slot_registry.gd)、[placement_rules.gd](../../../Scripts/Slots/placement_rules.gd) | 11 项注册、独立占用、仅架位固定目标与共用资格；不再解算水槽自由最终姿态 |
 | [cleaning_tool.gd](../../../Scripts/Tools/cleaning_tool.gd)、[world_cleaning_tools.gd](../../../Scripts/Tools/world_cleaning_tools.gd) | 原海绵／喷头包装与移除旧原位碰撞、归位检查、视觉软管 |
@@ -58,13 +62,14 @@
 
 ## 验证与来源
 
-用户于 2026-11-27 确认第 15 步通过。AI 在本步实际运行 CLOSE_TRANSITION_OK 与 7 项相关回归、导入和默认启动，并在 Compatibility 图形模式检查鼠标／中断、捕获查看 5 张新画面；未在本步重跑其余八份专项。各步范围和实际来源见 [progress.md](../../memory-bank/progress.md)。当前 16 份验证脚本、45 个唯一 GDScript UID、18 个输入映射。无头验证不代替用户手感验收或性能测量。
+用户于 2026-11-27 确认第 16 步最终普通中键版本通过。AI 在本步运行 DISH_MANIPULATION_OK 与 7 项相关回归、导入和默认启动，并查看 6 张实际画面；中键修正后重跑专项、输入、镜头及图形，普通选中右手／F 返回两张已更新。各步实际执行范围和来源见 [progress.md](../../memory-bank/progress.md)。当前 17 份验证脚本、46 个唯一 GDScript UID、18 个输入映射。无头验证不代替真实窗口操作或性能测量。
 
 在仓库根目录运行，均应退出 0 且无脚本错误：
 
 ```powershell
 $godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
 & $godotExe --headless --editor --path . --quit
+& $godotExe --headless --path . --script Tools/verify_dish_manipulation.gd
 & $godotExe --headless --path . --script Tools/verify_close_transition.gd
 & $godotExe --headless --path . --script Tools/verify_dual_wield.gd
 & $godotExe --headless --path . --script Tools/verify_world_tool_use.gd
@@ -76,11 +81,27 @@ $godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
 & $godotExe --headless --path . --quit-after 60
 ```
 
-对应成功标识为 CLOSE_TRANSITION_OK、DUAL_WIELD_OK、WORLD_TOOL_USE_OK、DISH_DROP_OK、DISH_PLACEMENT_OK、BASIN_STACKING_OK、PLACEMENT_PREVIEW_OK、GAME_INPUT_OK。F 专项覆盖 40 组往返、身份／手位／来源／视角、注入状态保持、真实空间与路径、喷头原位范围和进入／退出中断；生产仍无清洁状态。保留旧预览专项文件名，当前检查的是“预览已移除”。其他脚本按相同格式重跑，实际最近执行来源见进度记录。
+对应成功标识为 DISH_MANIPULATION_OK、CLOSE_TRANSITION_OK、DUAL_WIELD_OK、WORLD_TOOL_USE_OK、DISH_DROP_OK、DISH_PLACEMENT_OK、BASIN_STACKING_OK、PLACEMENT_PREVIEW_OK、GAME_INPUT_OK。旋转／调距专项覆盖 8 组盘杯／工具／手位、上下限、真实表面及近裁剪、障碍、中断和 30／120 Hz Q/E；F 专项覆盖 40 组站位朝向往返。已知清洁状态仅夹具注入，生产仍为空。保留旧预览专项文件名，现检查“预览已移除”。其余脚本按同格式执行，本步实际执行范围见进度记录。
 
 F5 手动检查：拿取盘／杯与海绵／喷头，从不同站位和朝向 F 往返；将工具移动到两侧后返回，检查相机、角度、原手位和正常搬运距离。切换途中连按 F／G，或 Esc／Alt+Tab 后明确继续，不误放、不自动续用旧输入；近距离 Q/E 仅旋转，F 才退出。无头模式不证明真实窗口捕获和 Alt+Tab 行为。
 
+第 16 步另检查普通 1／2 当前手中键拖动，另一手与镜头不跟转；中键按住期间释放右键仍能旋转。F 后用滚轮反复到盘／杯各自上下限，翻面、倾斜并重新按左键接触，确认盘背和杯内可达、不穿近裁剪；F 往返保留角度和所选距离，Esc／失焦后不续用旧中键。
+
 ## 当前实际画面
+
+2026-11-27 第 16 步及普通中键修正后的画面，均由 Godot Compatibility 图形模式捕获并查看；最近／最远指餐具根节点到相机的深度，餐具、工具与背景保持当前场景表现。
+
+| 普通右手中键旋转 | F 返回搬运 |
+| --- | --- |
+| ![1／2选中右手杯子，中键只旋转当前餐具](step16-selected-right.png) | ![返回原手位，普通提示已统一为中键](step16-return-carry.png) |
+
+| 餐盘最近 0.40 m：背面 | 餐盘最远 0.56 m：背面 |
+| --- | --- |
+| ![最近距离仍可完整查看餐盘背面](step16-plate-near-back.png) | ![最远距离保留同一背面角度和相机](step16-plate-far-back.png) |
+
+| 杯子最近 0.36 m：杯内 | 杯子最远 0.52 m：倾斜 |
+| --- | --- |
+| ![最近距离杯口与杯内保持可见，喷头自由移动](step16-mug-near-inside.png) | ![最远距离可倾斜杯子，工具保持光标自由位置](step16-mug-far-tilted.png) |
 
 2026-11-27 第 15 步 F 场景覆盖及修复后的画面，均由 Godot Compatibility 图形模式捕获并查看；镜头保持当前站位和朝向，背景模糊、供水与实际去污尚未实现。
 

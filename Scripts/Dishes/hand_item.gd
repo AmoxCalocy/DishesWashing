@@ -7,6 +7,7 @@ var origin_slot_id: StringName
 var origin_kind: DishBody.Location = DishBody.Location.REGISTERED
 var origin_pose: Transform3D
 var rotation: Basis
+var close_distance: float = 0.45
 var bounds: AABB
 var clearance_shape: BoxShape3D
 var safe_pose: Transform3D
@@ -18,6 +19,7 @@ func _init(item_node: Node3D) -> void:
 	origin_pose = node.global_transform
 	if node is DishBody:
 		origin_kind = (node as DishBody).location
+		close_distance = clampf(close_distance, (node as DishBody).close_min_distance, (node as DishBody).close_max_distance)
 	rotation = Basis(Vector3.RIGHT, Vector3.BACK, Vector3.DOWN)
 	if node is CleaningTool and (node as CleaningTool).tool_kind == ToolState.Tool.SPONGE:
 		rotation = rotation.inverse()
