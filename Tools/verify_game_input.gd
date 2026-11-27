@@ -75,7 +75,7 @@ func verify() -> void:
 		&"game_move_left": KEY_A, &"game_move_right": KEY_D,
 		&"game_toggle_close": KEY_F, &"game_interact": KEY_E,
 		&"game_tool_none": KEY_1, &"game_tool_sponge": KEY_2,
-		&"game_tool_sprayer": KEY_3, &"game_return": KEY_Q,
+		&"game_tool_sprayer": KEY_3, &"game_return": KEY_Q, &"game_drop": KEY_G,
 		&"game_orders": KEY_TAB, &"game_menu": KEY_ESCAPE,
 	}
 	for action in keys:
@@ -138,19 +138,17 @@ func verify() -> void:
 
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.DISH, ToolState.Tool.NONE, &"pickup_dish")
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.WATER_STREAM, ToolState.Tool.SPONGE, &"wet_sponge")
-	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.SLOT, ToolState.Tool.NONE, &"place_dish")
-	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.PLACEMENT_SURFACE, ToolState.Tool.NONE, &"place_dish")
-	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.STACKABLE_DISH, ToolState.Tool.NONE, &"place_dish")
+	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.SLOT, ToolState.Tool.NONE, &"")
 	expect_primary(GameInput.HandMode.CLOSE_UP, GameInput.Target.DISH, ToolState.Tool.SPONGE, &"use_tool")
 	expect_primary(GameInput.HandMode.SOAP_BOTTLE, GameInput.Target.DISH, ToolState.Tool.NONE, &"pump_soap")
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.NONE, ToolState.Tool.NONE, &"")
 	expect_primary(GameInput.HandMode.EMPTY, GameInput.Target.WATER_STREAM, ToolState.Tool.NONE, &"")
 	expect_primary(GameInput.HandMode.CARRYING, GameInput.Target.DISH, ToolState.Tool.NONE, &"pickup_dish")
 	for tool in [ToolState.Tool.SPONGE, ToolState.Tool.SPRAYER]:
-		for target in [GameInput.Target.DISH, GameInput.Target.STACKABLE_DISH, GameInput.Target.NONE, GameInput.Target.CLEANING_TOOL]:
+		for target in [GameInput.Target.DISH, GameInput.Target.NONE, GameInput.Target.CLEANING_TOOL]:
 			expect_primary(GameInput.HandMode.CARRYING, target, tool, &"use_tool")
-		for target in [GameInput.Target.SLOT, GameInput.Target.PLACEMENT_SURFACE]:
-			expect_primary(GameInput.HandMode.CARRYING, target, tool, &"place_dish")
+		for target in [GameInput.Target.SLOT]:
+			expect_primary(GameInput.HandMode.CARRYING, target, tool, &"use_tool")
 			router.carrying_dish = false
 			expect_primary(GameInput.HandMode.CARRYING, target, tool, &"use_tool")
 			router.carrying_dish = true
@@ -195,8 +193,15 @@ func verify() -> void:
 		if mode == GameInput.HandMode.CLOSE_UP:
 			check(commands.is_empty() and rotation_axes == [-1.0, 0.0], "Q in close-up must rotate left without leaving close-up.")
 		else:
-			var expected: StringName = &"return_dish" if mode == GameInput.HandMode.CARRYING else &"return_soap"
-			check(commands == [expected], "Q outside close-up must preserve its held-item intention.")
+			check(commands.is_empty(), "Ordinary Q no longer returns or drops items.")
+	for mode in [GameInput.HandMode.EMPTY, GameInput.HandMode.CARRYING, GameInput.HandMode.CLOSE_UP, GameInput.HandMode.SOAP_BOTTLE, GameInput.HandMode.TRANSITION]:
+		router.set_context(mode, GameInput.Target.NONE)
+		commands.clear()
+		send_key(KEY_G, true)
+		send_key(KEY_G, true, true)
+		send_key(KEY_G, false)
+		check(commands == ([&"drop_dish"] if mode == GameInput.HandMode.CARRYING else []), "G is one-shot and ordinary carrying only.")
+	router.set_context(GameInput.HandMode.SOAP_BOTTLE, GameInput.Target.NONE)
 	commands.clear()
 	tap_key(KEY_F)
 	tap_key(KEY_1)

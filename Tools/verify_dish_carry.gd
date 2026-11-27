@@ -189,10 +189,9 @@ func verify() -> void:
 		router.notification(Node.NOTIFICATION_APPLICATION_FOCUS_IN)
 		check(router.interface_open and carry.held_dish == dish, "Focus return must wait for explicit resume and retain the held dish.")
 		(kitchen.get_node("GameHUD/Menu/Center/Panel/Margin/Rows/Resume") as Button).pressed.emit()
-		for command in [&"game_return", &"game_toggle_close"]:
-			action(command, true)
-			action(command, false)
-		check(carry.held_dish == dish and source.is_empty() and router.hand_mode == GameInput.HandMode.CARRYING, "A lone dish must remain carried when Q/F has no valid tool pair.")
+		action(&"game_toggle_close", true)
+		action(&"game_toggle_close", false)
+		check(carry.held_dish == dish and source.is_empty() and router.hand_mode == GameInput.HandMode.CARRYING, "A lone dish must remain carried when F has no valid tool pair.")
 		var poses: Array = [
 			[Vector3(0, 0.03, 0.63), 0.0, -50.0],
 			[Vector3(0.88, 0.03, 0.63), 0.0, -50.0],

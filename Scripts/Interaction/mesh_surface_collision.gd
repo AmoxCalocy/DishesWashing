@@ -6,9 +6,10 @@ const DISH_LAYER: int = 1
 const ENVIRONMENT_LAYER: int = 4
 const TOOL_LAYER: int = 8
 const QUERY_MASK: int = DISH_LAYER | ENVIRONMENT_LAYER | TOOL_LAYER
-# Millimetre-sized bevel triangles need larger local coordinates for ray precision.
+# Millimetre bevels need larger local coordinates; 10x also keeps Jolt's
+# transformed short-ray queries accurate without extreme local magnitudes.
 # The reciprocal shape scale keeps all visible/world dimensions in metres.
-const SHAPE_COORDINATE_SCALE: float = 100.0
+const SHAPE_COORDINATE_SCALE: float = 10.0
 
 static func add_shapes(body: StaticBody3D, visual: Node3D) -> void:
 	for node in visual.find_children("*", "MeshInstance3D", true, false):

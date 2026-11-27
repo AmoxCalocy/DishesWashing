@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="PackedScene" path="res://Scenes/kitchen-demo.tscn" id="1_kitchen"]
 [ext_resource type="Script" path="res://Scripts/Input/game_input.gd" id="2_input"]
@@ -12,7 +12,6 @@
 [ext_resource type="PackedScene" path="res://Scenes/kitchen-slots.tscn" id="10_slots"]
 [ext_resource type="Script" path="res://Scripts/Dishes/dish_carry.gd" id="11_carry"]
 [ext_resource type="Script" path="res://Scripts/Tools/world_cleaning_tools.gd" id="12_tools"]
-[ext_resource type="Script" path="res://Scripts/Slots/placement_preview.gd" id="13_preview"]
 
 [node name="KitchenGame" instance=ExtResource("1_kitchen")]
 script = null
@@ -51,7 +50,6 @@ script = ExtResource("2_input")
 input_path = NodePath("../GameInput")
 targeting_path = NodePath("../DishTargeting")
 carry_path = NodePath("../DishCarry")
-preview_path = NodePath("../PlacementPreview")
 
 [node name="WalkCollision" parent="." instance=ExtResource("5_collision")]
 
@@ -101,7 +99,3 @@ camera_path = NodePath("../Player/ViewCamera")
 anchor_path = NodePath("../Player/ViewCamera/CarryAnchor")
 right_anchor_path = NodePath("../Player/ViewCamera/RightCarryAnchor")
 close_anchor_path = NodePath("../Player/ViewCamera/CleanAnchor")
-
-[node name="PlacementPreview" type="Node3D" parent="."]
-script = ExtResource("13_preview")
-carry_path = NodePath("../DishCarry")

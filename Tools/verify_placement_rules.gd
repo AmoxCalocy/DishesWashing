@@ -186,9 +186,8 @@ func verify() -> void:
 	tap(&"game_tool_none")
 	check(carry.selected_dish == first and carry.hands[1].node == second, "Key 1 selects left without moving the right item.")
 	var held_poses: Array[Transform3D] = [first.global_transform, second.global_transform]
-	tap(&"game_return")
 	click()
-	check(first.global_transform.is_equal_approx(held_poses[0]) and second.global_transform.is_equal_approx(held_poses[1]) and carry.held_count() == 2, "Q and an off-target click must preserve both held dishes.")
+	check(first.global_transform.is_equal_approx(held_poses[0]) and second.global_transform.is_equal_approx(held_poses[1]) and carry.held_count() == 2, "An off-target click must preserve both held dishes.")
 	router.set_interface_open(true)
 	expect_code(carry.check_placement(registry.slots[&"Dirty_Plate_01"]), PlacementResult.Code.INPUT_BLOCKED, "UI blocks the shared placement entry")
 	tap(&"game_tool_sponge")

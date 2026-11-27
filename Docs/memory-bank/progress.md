@@ -1,12 +1,12 @@
 # 开发进度
 
-> 更新日期：2026-11-26（Asia/Shanghai）｜已验收：第 1～13 步及水槽重叠堆放、普通工具和沉浸中键旋转追加需求
+> 更新日期：2026-11-27（Asia/Shanghai）｜已验收：第 1～14 步及 G 物理松手、无预览等追加需求
 
 ## 当前状态
 
-第 1～13 步及水槽重叠堆放、普通工具操作和沉浸中键旋转追加需求已由用户验证通过。2026-11-26 用户确认第 13 步及交叠堆放最终版本通过，并授权更新文档与上传 GitHub。实际左键确认、水槽自由位置记录与再次拿取、盘杯堆放和从上到下拿取已接入；只有沥水架固定，托盘 3 点仅初始化及来源。下一项为第 14 步 Q 安全返回，尚未开始。供水、去污、背景模糊、完整暂停及正式订单仍待后续；部分提前接入不表示第 15、16、19 步整体验收。
+第 1～14 步及 G 物理松手、无预览等追加需求已由用户验证通过。2026-11-26 用户确认最终 G 版本并授权更新文档及上传 GitHub；普通 Q 自动返回已取消。下一项为第 15 步 F 场景覆盖，尚未开始；实际清洗、完整暂停和背景模糊仍待后续。
 
-执行依据为 [实施计划](implementation-plan.md)、[游戏设计文档 0.13](game-design-document.md)与[技术栈 0.9](tech-stack.md)。[architecture.md](architecture.md)描述实际职责。历史步骤保留当时配置和验收边界：第 9、11 步旧 13 位及固定水槽设计、第 12 步纯预览和不叠放范围均是当时记录；现行实现以第 13 步及交叠追加记录为准。
+执行依据为 [实施计划](implementation-plan.md)、[游戏设计文档 0.14](game-design-document.md)和[技术栈 0.10](tech-stack.md)。[architecture.md](architecture.md)描述当前职责。历史第 9、11 步旧固定水槽位，第 12 步预览和第 13 步静态叠放均保留当时范围；第 14 步已按用户修正覆盖，现行 G 物理松手与无预览以本步记录为准。
 
 ## 第 1 步：确认现有基线
 
@@ -541,7 +541,7 @@ $godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
 ### 已完成工作
 
 - 用户在预览初版后明确修正：“水槽里的位置不用固定，玩家可以随意放置餐具，只有沥水架有固定位置”。已移除正式布局中的 Sink_Plate_01／Sink_Mug_01 及 SelectionSurface、圆环和名称标记；注册器保留 3 个托盘初始点及 8 个架位，只有架位参与固定目标查询，托盘点仅初始化及记录来源。
-- 新增 [placement_preview.gd](../../Scripts/Slots/placement_preview.gd) 及 UID，并在手工玩法入口接入。普通搬运以 1／2 选中餐具为对象，复制可见正式网格，杯柄也显示；独立半透明绿／红材质和 HUD PlacementHint 使用同一结果与拒绝原因。幽灵节点不含脚本、身份或碰撞，不影响拾取、射线或占用。
+- 新增 [第 12 步历史预览脚本](https://github.com/AmoxCalocy/DishesWashing/blob/8c39b9e8b342afd419515f9ba89d4dab2365fd51/Scripts/Slots/placement_preview.gd) 及 UID，并在手工玩法入口接入。普通搬运以 1／2 选中餐具为对象，复制可见正式网格，杯柄也显示；独立半透明绿／红材质和 HUD PlacementHint 使用同一结果与拒绝原因。幽灵节点不含脚本、身份或碰撞，不影响拾取、射线或占用。
 - DishTargeting 增加 PLACEMENT_SURFACE 上下文和水槽表面通知，保留首个真实命中、所有持物 RID 排除、1.5 米与遮挡条件。固定查询仅选择架位并保留竖盘、倒杯完整姿态；水槽通过真实盆体／排水口形状识别，排除台面和边沿，不按盘杯分区。菜单、失焦、沉浸和过渡清除预览，恢复后重查。
 - DishCarry.check_surface_placement → PlacementRules.evaluate_surface 提供共用只读自由判定：XZ 连续跟随命中点，八个真实底圈支撑点向下查询并检查接触范围包围中心，浅坡对齐法线，保留约 0.5 mm 支撑间隙。过陡、支撑不足、与槽壁或其他餐具穿插时拒绝。HandItem 缓存三角面查询形状和支撑点，仍每次重查真实世界；不缓存有效性或预留位置。原注册位置判定保持类型、尺寸、占用及架位实际 95% 门槛。
 - 新增 [verify_placement_preview.gd](../../Tools/verify_placement_preview.gd) 及 UID；更新输入、槽位、统一规则和搬运专项以匹配 11 项正式注册配置。当前共 42 个唯一 GDScript UID、12 份验证脚本，输入映射仍为 17 个。未修改 GLB、Blender、资产生成器或原展示场景。
@@ -626,8 +626,58 @@ $godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
 
 更新进度、架构、实施计划、设计文档 0.13、技术栈 0.9、可玩入口、文档导航、相关资产接入补充及 AGENTS.md，归档 8 张实际画面。第 13 步和水槽交叠追加需求标为通过，保持 62 步编号，第 14 步未开始。
 
+## 第 14 步：G 物理松手与移除预览（已验收）
+
+### 已完成工作
+
+- 用户明确取消普通 Q 自动返回，选择“按 G 松手，餐具靠重力自然落下”。普通左键恢复为拿取／工具使用；G 使用当前 1／2 手位，松开选中餐具并保留另一手。沉浸中的 Q/E、中键旋转与 F 保留，G 在沉浸／过渡／界面不执行；按住或重复输入不连发。
+- 台面、托盘、地面、水槽共用物理释放，不再自动返回来源或寻找水槽落点。当前真实命中前留出餐具体积和约 6 cm 下落余量；未命中时在镜头前 0.8 m 释放。检查释放空间后交给重力、旋转和碰撞决定最终姿态，边缘可滑落或倾倒，不把最终位置伪装成静态吸附。
+- DishBody 保留原查询身体、身份及 RID，增加独立多凸体 RigidBody3D，使用 REGISTERED／HELD／WORLD。松手让运动体独立于跟随节点，原身体同步完整姿态；拿取冻结并收回运动体。共享网格缓存只读凸体，不存可变进度。物理杯口／杯柄孔均验证开放。
+- 接入内置 Jolt 并配置 0.5 mm 接触穿透容差、2 mm 预测接触和 4 次位置迭代。运动层 32、WORLD 掩码 46，不包含封住水槽的玩家柜体代理 16；交互掩码仍为 13。真实表面内部改为 10 倍局部坐标，准星增加四条 0.1 mm 平行偏移射线并取最近命中，处理共享顶点漏检。世界范围改为 2 米以便拿取地面餐具，工具原位限制仍为 1.5 米。
+- 移除 PlacementPreview 节点、脚本／UID、PlacementHint 标签、预览信号、PLACEMENT_SURFACE／STACKABLE_DISH 路由、check_surface_placement／evaluate_surface、静态叠放高度求解、底圈／叠放采样和 support_dish_ids。自由支撑交给物理模拟，不再施加“先拿上层”的静态依赖锁。
+- 只有 8 个沥水架位保留固定完整姿态：按 G 重查共用资格，未知或未到实际 95% 不入架；成功才冻结原餐具并同步唯一占用及匹配状态。DishCarry.dish_states 生产仍为空，专项注入已知状态验证架位，不把自由物理放下当作已完成清洗。
+- 新增 [verify_dish_drop.gd](../../Tools/verify_dish_drop.gd) 与 UID；重写放置、堆放与原预览专项以验证当前行为。现有 15 份验证脚本、44 个唯一 UID、18 个输入映射。未修改 GLB、Blender、资产生成器或展示场景。
+
+### 验收结果与来源
+
+用户于 2026-11-26 确认最终 G 物理松手及无预览版本通过，并要求更新文档与上传 GitHub；未另附逐项原始日志。以下是 AI 在实施阶段实际运行的检查，均以最终通过结果记录，不把用户确认写成 AI 真实试玩。
+
+| 验证范围 | 实际结果 |
+| --- | --- |
+| G 盘杯下落、盆体／托盘／台面边缘／地面、原实例再次拿取、状态、物理开口、双手、重复请求、阻止上下文、两工具／两种拿取顺序及 F | DISH_DROP_OK，退出 0 |
+| 8 架位 G 提交、完整姿态／占用／再拿取、左键不放置、未知／未达实际 95% 拒绝 | DISH_PLACEMENT_OK，退出 0 |
+| 两盘一杯真实重力和陶瓷碰撞、盆内交叠、无槽位／静态依赖与再次拿取 | BASIN_STACKING_OK，退出 0 |
+| 预览与绿／红标签已移除，瞄准不提交或预留、展示器独立 | PLACEMENT_PREVIEW_OK，退出 0；保留历史脚本名 |
+| 共用架位规则、目标表面、正式注册、双持、普通工具、原搬运 | PLACEMENT_RULES_OK、DISH_TARGETING_OK、KITCHEN_SLOTS_OK、DUAL_WIELD_OK、WORLD_TOOL_USE_OK、DISH_CARRY_OK，均退出 0 |
+| Jolt 下玩家碰撞／WASD 与镜头、输入和 GUI 消费 | PLAYER_MOVEMENT_OK、MOUSE_LOOK_OK、GAME_INPUT_OK，均退出 0 |
+| 独立状态与实际清洁门槛 | RUNTIME_STATE_OK、CLEANLINESS_OK，均退出 0 |
+| 最终导入、默认玩法入口 | --headless --editor --quit 与 --quit-after 60 均退出 0，无脚本错误 |
+| 实际画面 | AI 使用 Godot 图形模式渲染并查看松手前、下落中、盆内落稳、自然堆放和地面餐具 5 张图；用户确认整体手感 |
+| 文件完整性 | git diff --check 通过，44 个脚本 UID 无重复；临时捕获／探针和缓存不入库 |
+
+物理测试覆盖当前三件盘杯的典型交互，不代表整单清洗、完整暂停、分类收纳或开发机 1080p／60 FPS 目标已验收。
+
+### 重跑方式
+
+在仓库根目录先导入，再运行专项；全部应退出 0 且无脚本错误：
+
+```powershell
+$godotExe = 'D:\Godot\Godot_v4.7.2-stable_win64_console.exe'
+& $godotExe --headless --editor --path . --quit
+& $godotExe --headless --path . --script Tools/verify_dish_drop.gd
+& $godotExe --headless --path . --script Tools/verify_dish_placement.gd
+& $godotExe --headless --path . --script Tools/verify_basin_stacking.gd
+& $godotExe --headless --path . --script Tools/verify_placement_preview.gd
+```
+
+其余脚本使用相同格式重跑。F5：左键／E 拿餐具，按 1／2 选择后 G 松手；查看水槽下落与叠放、地面捡起。持工具仍按住左键操作，E 拿到餐具后 F 沉浸，中键／Q/E 旋转。普通 Q 不再返回，画面没有放置预览。
+
+### 文档与画面归档
+
+2026-11-27 完成验收后的文档同步与提交准备。同步设计文档 0.14、技术栈 0.10、实施计划、架构、可玩入口、导航、相关资产接入说明和 AGENTS.md。归档 [松手前](../scenes/kitchen-game/step14-free-carry.png)、[下落中](../scenes/kitchen-game/step14-free-falling.png)、[盆内落稳](../scenes/kitchen-game/step14-free-basin.png)、[自然堆放](../scenes/kitchen-game/step14-free-stack.png)及[地面餐具](../scenes/kitchen-game/step14-free-floor.png)。第 14 步标记已验收，保持 62 步编号，下一项为第 15 步。
+
 ## 后续衔接
 
-下一项为第 14 步 Q 安全返回。以当前选中 HandItem 的 origin_kind、origin_pose、origin_slot_id 读取真实来源，先尝试仍有效的原位置，再尝试距离内可见且支撑／空间有效的水槽落点；不能沿用第一件兼容读取、旧绿色预览或已消失支撑的旧高度。无有效位置继续持有；不得重建水槽固定盘／杯位或绕过架位门槛。
+下一项为第 15 步 F 沉浸场景覆盖：从不同站位、朝向及真实空间检查 F 往返、原实例／手位、玩家与相机保持、过渡和中断。保留已验收的 G 物理松手、无预览及沉浸 Q/E 旋转，不恢复自动返回、水槽固定盘／杯位、静态支撑求解或上层依赖锁。
 
-DishCarry.dish_states 目前只预留权威引用入口，生产仍为空，OrderState 尚未接入；后续必须协调唯一位置／占用所有权。工具接触不代表供水、湿润或实际去污。完整暂停、背景模糊、插入轨迹、刚体平衡及性能目标继续在各自后续步骤验证。
+第 16 步补齐普通旋转及滚轮边界，第 17 步背景模糊，第 18 步完整暂停；届时须同时冻结自由运动刚体和工具，而非只拦截输入。正式订单接入仍须协调唯一占用并清理独立 motion_body。供水、湿润、施液、去污、评分、保存及性能目标继续按后续步骤验证。

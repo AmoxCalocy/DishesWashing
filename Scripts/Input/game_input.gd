@@ -12,7 +12,7 @@ signal tool_cursor_moved(position: Vector2)
 signal mode_changed
 
 enum HandMode { EMPTY, CARRYING, CLOSE_UP, SOAP_BOTTLE, TRANSITION }
-enum Target { NONE, DISH, SLOT, FAUCET, SOAP_BOTTLE, ORDER_BOARD, WATER_STREAM, CLEANING_TOOL, PLACEMENT_SURFACE, STACKABLE_DISH }
+enum Target { NONE, DISH, SLOT, FAUCET, SOAP_BOTTLE, ORDER_BOARD, WATER_STREAM, CLEANING_TOOL }
 
 const MOVE_ACTIONS: Array[StringName] = [
 	&"game_move_left", &"game_move_right", &"game_move_forward", &"game_move_back",
@@ -20,7 +20,7 @@ const MOVE_ACTIONS: Array[StringName] = [
 const BUTTON_ACTIONS: Array[StringName] = [
 	&"game_primary", &"game_rotate", &"game_rotate_close", &"game_toggle_close", &"game_interact",
 	&"game_tool_none", &"game_tool_sponge", &"game_tool_sprayer",
-	&"game_return", &"game_orders", &"game_zoom_in", &"game_zoom_out",
+	&"game_return", &"game_drop", &"game_orders", &"game_zoom_in", &"game_zoom_out",
 ]
 
 var hand_mode: HandMode = HandMode.EMPTY
@@ -153,7 +153,7 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 				command_requested.emit(&"return_tool", true)
 			elif hand_mode in [HandMode.EMPTY, HandMode.CARRYING]:
 				match target:
-					Target.DISH, Target.STACKABLE_DISH:
+					Target.DISH:
 						command_requested.emit(&"pickup_dish", true)
 					Target.CLEANING_TOOL:
 						command_requested.emit(&"pickup_tool", true)
@@ -165,11 +165,11 @@ func _dispatch(action: StringName, pressed: bool) -> void:
 						if hand_mode == HandMode.EMPTY:
 							command_requested.emit(&"pickup_soap", true)
 		&"game_return":
-			match hand_mode:
-				HandMode.CARRYING:
-					command_requested.emit(&"return_dish", true)
-				HandMode.SOAP_BOTTLE:
-					command_requested.emit(&"return_soap", true)
+			pass # Q is rotation in immersion only; ordinary return is removed.
+		&"game_drop":
+			if hand_mode == HandMode.CARRYING and carrying_dish:
+				_release_primary()
+				command_requested.emit(&"drop_dish", true)
 		&"game_tool_none", &"game_tool_sponge", &"game_tool_sprayer":
 			if hand_mode != HandMode.SOAP_BOTTLE:
 				_release_primary()
@@ -191,8 +191,6 @@ func _resolve_primary() -> StringName:
 			if target == Target.DISH:
 				return &"pickup_dish"
 		HandMode.CARRYING:
-			if carrying_dish and (target in [Target.SLOT, Target.PLACEMENT_SURFACE] or (target == Target.STACKABLE_DISH and selected_tool == ToolState.Tool.NONE)):
-				return &"place_dish"
 			if selected_tool != ToolState.Tool.NONE:
 				return &"use_tool"
 			if target == Target.DISH:

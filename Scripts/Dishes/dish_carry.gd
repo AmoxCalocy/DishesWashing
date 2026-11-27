@@ -98,40 +98,53 @@ func check_placement(slot: KitchenSlot, dish_state: DishState = null) -> Placeme
 	result.hand_index = selected_dish_hand
 	return result
 
-func check_surface_placement(hit: Dictionary, dish_state: DishState = null) -> PlacementResult:
-	if game_input.interface_open or game_input.hand_mode != GameInput.HandMode.CARRYING:
-		return PlacementResult.new(PlacementResult.Code.INPUT_BLOCKED)
-	if dish_state == null and selected_dish != null:
-		dish_state = dish_states.get(selected_dish.instance_id)
-	var result: PlacementResult = PlacementRules.evaluate_surface(get_selected_dish_item(), hit, registry, camera, dish_state, targeting.excluded_bodies, targeting.interaction_distance)
-	result.hand_index = selected_dish_hand
-	return result
-
-func _place_dish() -> void:
+func _drop_dish() -> void:
 	if game_input.hand_mode != GameInput.HandMode.CARRYING or _last_placement_frame == Engine.get_physics_frames():
 		return
 	var item: HandItem = get_selected_dish_item()
 	if item == null:
 		message_requested.emit("请先选择手中的餐具")
 		return
-	# Never authorize from the preview, cached input target, or an old result.
 	var slot: KitchenSlot = targeting.query_placement_slot()
-	var surface: Dictionary = targeting.query_placement_surface() if slot == null else {}
-	if slot == null and surface.is_empty():
-		message_requested.emit("请瞄准距离内可见的水槽或沥水架")
+	if slot != null:
+		var decision: PlacementResult = check_placement(slot)
+		if decision.is_valid:
+			_commit_placement(decision)
+		else:
+			message_requested.emit(decision.get_reason())
 		return
-	var decision: PlacementResult = check_placement(slot) if slot != null else check_surface_placement(surface)
-	if not decision.is_valid:
-		message_requested.emit(decision.get_reason())
+	var pose := Transform3D(item.node.global_basis.orthonormalized(), camera.global_position - camera.global_basis.z * 0.8)
+	var hit: Dictionary = targeting.query_surface()
+	if not hit.is_empty():
+		# Release just before the first real surface, then let gravity decide the
+		# final position and angle. There is no final-pose solver or basin search.
+		var normal: Vector3 = hit.normal
+		var lowest: float = INF
+		for corner in 8:
+			var point := item.bounds.position + item.bounds.size * Vector3(corner & 1, (corner >> 1) & 1, (corner >> 2) & 1)
+			lowest = minf(lowest, (pose.basis * point).dot(normal))
+		pose.origin = hit.position + normal * (0.06 - lowest)
+	if not PlacementRules._has_space(item, pose, camera):
+		message_requested.emit("松手位置被挡住，请稍微移开")
 		return
 	var dish := item.node as DishBody
+	dish.reparent(registry.get_node(registry.dishes_path))
+	dish.release_with_gravity(pose)
+	_sync_dish_state(dish, &"", false)
+	hands[selected_dish_hand] = null
+	_last_placement_frame = Engine.get_physics_frames()
+	_sync_inventory()
+
+func _commit_placement(decision: PlacementResult) -> void:
+	var item: HandItem = hands[decision.hand_index]
+	var slot: KitchenSlot = registry.slots.get(decision.slot_id)
+	var dish := item.node as DishBody
+	dish.stop_motion()
 	# Commit one location and one hand synchronously. Snap the real body so its
 	# visual and collision pose stay aligned; no intermediate flight or reservation.
 	dish.reparent(registry.get_node(registry.dishes_path))
 	dish.global_transform = decision.pose
-	dish.location = DishBody.Location.REGISTERED if slot != null else DishBody.Location.BASIN
-	dish.placement_bounds = item.bounds
-	dish.support_dish_ids.assign(decision.support_dish_ids)
+	dish.location = DishBody.Location.REGISTERED
 	if slot != null:
 		slot.state.occupant_id = dish.instance_id
 	_sync_dish_state(dish, decision.slot_id, false)
@@ -177,8 +190,9 @@ func _on_command_requested(command: StringName, pressed: bool) -> void:
 	match command:
 		&"pickup_dish", &"pickup_tool":
 			_pickup(command)
-		&"place_dish":
-			_place_dish()
+		&"drop_dish":
+			_drop_dish()
+
 		&"toggle_close":
 			if game_input.hand_mode == GameInput.HandMode.CLOSE_UP:
 				_exit_close()
@@ -205,16 +219,12 @@ func _pickup(command: StringName) -> void:
 	var item := HandItem.new(node)
 	if node is DishBody:
 		var dish := node as DishBody
-		for other in registry.get_node(registry.dishes_path).get_children():
-			if other is DishBody and other.location == DishBody.Location.BASIN and other.support_dish_ids.has(dish.instance_id):
-				message_requested.emit("请先拿走上面的餐具")
-				return
 		if dish.location == DishBody.Location.REGISTERED:
 			var slot: KitchenSlot = registry.find_occupied_slot(dish.instance_id)
 			if slot == null or not slot.accepts(dish.dish_type):
 				return
 			item.origin_slot_id = slot.config.slot_id
-		elif dish.location == DishBody.Location.BASIN:
+		elif dish.location == DishBody.Location.WORLD:
 			for slot: KitchenSlot in registry.slots.values():
 				if slot.state.occupant_id == dish.instance_id:
 					return
@@ -224,10 +234,10 @@ func _pickup(command: StringName) -> void:
 		message_requested.emit("手边空间不足，请稍微后退")
 		return
 	if node is DishBody:
+		(node as DishBody).stop_motion()
 		if not item.origin_slot_id.is_empty():
 			registry.slots[item.origin_slot_id].state.occupant_id = &""
 		(node as DishBody).location = DishBody.Location.HELD
-		(node as DishBody).support_dish_ids.clear()
 		_sync_dish_state(node as DishBody, &"", true)
 	hands[side] = item
 	node.reparent(_anchor(side))
@@ -319,12 +329,12 @@ func _world_tool_pose_is_safe(item: HandItem, dish: DishBody, pose: Transform3D,
 	# Reach over the container rim before descending onto the visible surface.
 	var approach: Transform3D = pose
 	approach.origin += normal * maxf(item.bounds.size.length(), 0.12)
-	if dish.location == DishBody.Location.BASIN:
+	if dish.location == DishBody.Location.WORLD:
 		var rim := registry.get_node(registry.basin_path).find_child("Countertop_Surface", true, false) as Node3D
 		approach.origin.y = maxf(approach.origin.y, rim.global_position.y + maxf(item.bounds.size.length(), 0.12))
 	query.motion = approach.origin - item.safe_pose.origin
 	if space.cast_motion(query)[0] < 1.0:
-		if dish.location != DishBody.Location.BASIN:
+		if dish.location != DishBody.Location.WORLD:
 			return false
 		# A low sprayer cannot turn to its contact orientation beside the counter.
 		# Lift in its safe carry orientation, check rotation clearance, then cross.
